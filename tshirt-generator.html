@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tシャツデザインジェネレーター for Printify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- デザインバリエーション用のフォントを読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@700&family=Noto+Sans+JP:wght@700&family=Yuji+Syuku&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .bg-dots-pattern {
+            background-image: linear-gradient(45deg, #4a5568 25%, transparent 25%), linear-gradient(-45deg, #4a5568 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #4a5568 75%), linear-gradient(-45deg, transparent 75%, #4a5568 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        #progress-text {
+            transition: opacity 0.3s ease-in-out;
+        }
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .api-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .api-option {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #4a5568;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .api-option.selected {
+            border-color: #9333ea;
+            background-color: rgba(147, 51, 234, 0.1);
+        }
+        .api-option:hover {
+            border-color: #7c3aed;
+        }
+        .config-section {
+            background-color: #1f2937;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .color-var-btn {
+            padding: 10px 20px;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            background-color: #374151;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .color-var-btn:hover {
+            border-color: #7c3aed;
+            transform: translateY(-2px);
+        }
+        .color-var-btn.active {
+            border-color: #ec4899;
+            background-color: rgba(236, 72, 153, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4 sm:p-6 lg:p-8">
+    <div class="w-full max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+                Tシャツデザインジェネレーター
+            </h1>
+            <p class="text-gray-400 mt-2">
+                テーマを入力して、Printifyで使えるユニークなTシャツデザインのアイディアと画像を生成しましょう。
+            </p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8">
+
+            <!-- API Configuration -->
+            <div class="config-section">
+                <h2 class="text-lg font-semibold mb-3 text-gray-300">画像生成API選択</h2>
+                <div class="api-selector">
+                    <div class="api-option selected" data-api="fal">
+                        <h3 class="font-bold text-pink-300">FAL AI FLUX Dev</h3>
+                        <p class="text-sm text-gray-400 mt-1">メイン - 高品質・高速生成</p>
+                    </div>
+                    <div class="api-option" data-api="gemini">
+                        <h3 class="font-bold text-purple-300">Gemini 2.5 Flash Image</h3>
+                        <p class="text-sm text-gray-400 mt-1">代替 - $0.039/画像</p>
+                    </div>
+                </div>
+
+                <div id="api-status" class="mt-4 bg-gray-900 rounded-lg p-3">
+                    <p class="text-sm text-gray-400">🔒 APIキーはサーバー側で安全に管理されています</p>
+                    <p id="api-status-text" class="text-xs text-gray-500 mt-1">サーバー接続確認中...</p>
+                </div>
+            </div>
+
+            <!-- Step 1: Theme Input -->
+            <div class="mb-6">
+                <label for="theme-input" class="block text-lg font-semibold mb-2 text-gray-300">
+                    ステップ1：デザインのテーマを入力
+                </label>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input
+                        type="text"
+                        id="theme-input"
+                        class="flex-grow bg-gray-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition"
+                        placeholder="例：ハロウィン、クリスマス、日本の和柄、サイバーパンク">
+                    <button
+                        id="generate-ideas-btn"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
+                        disabled>
+                        <span class="btn-text">サーバー接続確認中...</span>
+                        <div class="loader hidden" style="width:24px; height:24px; border-width:3px; margin:auto;"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error Messages -->
+            <div id="error-section" class="hidden my-4">
+                <div class="bg-red-900/50 border border-red-500 rounded-lg p-4">
+                    <p class="text-red-300 font-semibold">エラーが発生しました</p>
+                    <p id="error-message" class="text-red-200 text-sm mt-1"></p>
+                </div>
+            </div>
+
+            <!-- Step 2: Idea Selection -->
+            <div id="ideas-section" class="hidden mb-6">
+                <h2 class="text-lg font-semibold mb-3 text-gray-300">
+                    ステップ2：好きなアイディアを選んで画像を生成
+                </h2>
+                <div id="ideas-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Idea cards will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Step 3: Image Result -->
+            <div id="image-section" class="hidden">
+                <h2 class="text-lg font-semibold mb-3 text-gray-300">
+                    ステップ3：生成された画像を確認・保存
+                </h2>
+                <div class="bg-gray-700 rounded-lg p-4 flex flex-col items-center justify-center min-h-[300px]">
+                    <div id="image-loader" class="text-center hidden">
+                        <div class="loader mx-auto"></div>
+                        <p id="progress-text" class="mt-4 text-gray-400">AIが画像を生成中です...</p>
+                    </div>
+                    <div id="image-display" class="hidden text-center w-full">
+                        <div class="mb-4 bg-dots-pattern rounded-lg p-2 inline-block">
+                            <img
+                                id="generated-image"
+                                src=""
+                                alt="生成されたデザイン素材"
+                                class="max-w-full h-auto max-h-[400px] rounded-lg shadow-md bg-gray-500">
+                        </div>
+                        <p class="text-sm text-gray-400 mb-3">🤍 白Tシャツ用デザイン（黒文字・背景透過）</p>
+                        <div class="flex gap-3 justify-center flex-wrap">
+                            <a
+                                id="download-btn"
+                                href="#"
+                                download="tshirt-design-white.png"
+                                class="inline-block bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
+                                デザインをダウンロード
+                            </a>
+                            <button
+                                id="generate-sns-btn"
+                                class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
+                                SNS投稿文を生成 ✨
+                            </button>
+                            <button
+                                id="create-printify-btn"
+                                class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
+                                Printifyで商品作成 🛒
+                            </button>
+                        </div>
+                        <!-- SNS Post Section -->
+                        <div id="sns-section" class="hidden mt-6 bg-gray-800 rounded-lg p-4">
+                            <h3 class="font-semibold text-purple-300 mb-2">📱 SNS投稿文</h3>
+                            <div id="sns-content" class="bg-gray-900 rounded p-3 text-left">
+                                <p id="sns-text" class="text-sm text-gray-300 whitespace-pre-wrap"></p>
+                            </div>
+                            <button
+                                id="copy-sns-btn"
+                                class="mt-3 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                                📋 コピー
+                            </button>
+                        </div>
+                    </div>
+                     <p id="image-placeholder" class="text-gray-500">ここに生成された画像が表示されます</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-gray-500">
+            <p class="text-xs">&copy; 2025 T-Shirt Design Generator</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import removeBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.2/dist/browser.js';
+
+        // --- Configuration State ---
+        let selectedAPI = 'fal'; // FAL AIをデフォルトに変更
+        let currentDesignIdea = null;
+        let colorVariations = {};
+        let serverReady = false;
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
+
+        // --- DOM Elements ---
+        const themeInput = document.getElementById('theme-input');
+        const generateIdeasBtn = document.getElementById('generate-ideas-btn');
+        const ideasSection = document.getElementById('ideas-section');
+        const ideasContainer = document.getElementById('ideas-container');
+        const imageSection = document.getElementById('image-section');
+        const imageLoader = document.getElementById('image-loader');
+        const progressText = document.getElementById('progress-text');
+        const imageDisplay = document.getElementById('image-display');
+        const imagePlaceholder = document.getElementById('image-placeholder');
+        const generatedImage = document.getElementById('generated-image');
+        const downloadBtn = document.getElementById('download-btn');
+        const errorSection = document.getElementById('error-section');
+        const errorMessage = document.getElementById('error-message');
+        const apiStatusText = document.getElementById('api-status-text');
+        const generateSnsBtn = document.getElementById('generate-sns-btn');
+        const snsSection = document.getElementById('sns-section');
+        const snsText = document.getElementById('sns-text');
+        const copySnsBtn = document.getElementById('copy-sns-btn');
+        const createPrintifyBtn = document.getElementById('create-printify-btn');
+
+        let printifyShopId = null;
+
+        // --- API Selection ---
+        document.querySelectorAll('.api-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.api-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedAPI = option.dataset.api;
+            });
+        });
+
+        // --- Server Health Check ---
+        const checkServerHealth = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    serverReady = true;
+                    apiStatusText.textContent = `✓ サーバー接続成功 | Gemini: ${data.geminiConfigured ? '✓' : '✗'} | FAL: ${data.falConfigured ? '✓' : '✗'} | Printify: ${data.printifyConfigured ? '✓' : '✗'}`;
+                    apiStatusText.classList.remove('text-red-400');
+                    apiStatusText.classList.add('text-green-400');
+                    generateIdeasBtn.disabled = false;
+                    generateIdeasBtn.querySelector('.btn-text').textContent = 'アイディアを生成';
+
+                    // Printifyショップ情報を取得
+                    if (data.printifyConfigured) {
+                        await fetchPrintifyShops();
+                    }
+                } else {
+                    throw new Error('Server not ready');
+                }
+            } catch (error) {
+                serverReady = false;
+                apiStatusText.textContent = '✗ サーバーに接続できません。server.jsを起動してください。';
+                apiStatusText.classList.remove('text-green-400');
+                apiStatusText.classList.add('text-red-400');
+                generateIdeasBtn.disabled = true;
+                generateIdeasBtn.querySelector('.btn-text').textContent = 'サーバー未接続';
+            }
+        };
+
+        // --- Printify Shop取得 ---
+        const fetchPrintifyShops = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/printify-get-shops`);
+                const data = await response.json();
+
+                if (data.shops && data.shops.length > 0) {
+                    printifyShopId = data.shops[0].id;
+                    console.log('Printify Shop ID:', printifyShopId);
+                }
+            } catch (error) {
+                console.error('Printify shops取得エラー:', error);
+            }
+        };
+
+        // --- Error utilities ---
+        const readResponseBodySafely = async (response) => {
+            try {
+                const text = await response.text();
+                try {
+                    return { raw: text, json: JSON.parse(text) };
+                } catch (_) {
+                    return { raw: text };
+                }
+            } catch (_) {
+                return { raw: '' };
+            }
+        };
+
+        const buildApiError = async (response, providerLabel = 'API') => {
+            const { raw, json } = await readResponseBodySafely(response);
+            const rid = response.headers?.get('x-request-id') || response.headers?.get('x-fal-request-id') || null;
+            const messageFromJson = json?.error?.message || json?.message || json?.error || '';
+            const baseMsg = messageFromJson || raw || response.statusText || 'Unknown error';
+            const detail = `${providerLabel}失敗 (${response.status})${rid ? ` [request_id: ${rid}]` : ''}`;
+            const hint = response.status >= 500 ? '提供元側の障害の可能性があります。数分待って再試行してください。' : '';
+            const err = new Error(`${detail}: ${baseMsg}${hint ? `\n\nヒント: ${hint}` : ''}`);
+            err.requestId = rid;
+            err.status = response.status;
+            err.body = raw;
+            return err;
+        };
+
+        // --- Fetch with Retry & Timeout ---
+        const fetchWithRetry = async (input, init = {}, options = { retries: 2, timeoutMs: 30000, providerLabel: 'API' }) => {
+            const { retries, timeoutMs, providerLabel } = options;
+            let attempt = 0;
+            let lastError;
+            while (attempt <= retries) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    const res = await fetch(input, { ...init, signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!res.ok) {
+                        // Retry on 429 or 5xx
+                        if (res.status === 429 || (res.status >= 500 && res.status <= 599)) {
+                            lastError = await buildApiError(res, providerLabel);
+                        } else {
+                            throw await buildApiError(res, providerLabel);
+                        }
+                    } else {
+                        return res;
+                    }
+                } catch (err) {
+                    clearTimeout(timer);
+                    lastError = err;
+                }
+                // exponential backoff: 500ms, 1500ms, 3500ms...
+                const backoff = 500 * Math.pow(2, attempt) + Math.floor(Math.random() * 200);
+                await new Promise(r => setTimeout(r, backoff));
+                attempt++;
+            }
+            throw lastError || new Error('ネットワークエラー');
+        };
+
+        // --- Core Functions ---
+        const handleGenerateIdeas = async () => {
+            const theme = themeInput.value.trim();
+            if (!theme) return showError('テーマを入力してください。');
+            if (!serverReady) return showError('サーバーに接続されていません。');
+
+            setButtonLoading(generateIdeasBtn, true);
+            resetUIForNewIdeas();
+            hideError();
+
+            try {
+                const ideas = await fetchDesignIdeas(theme);
+                displayIdeas(ideas);
+                ideasSection.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error fetching design ideas:', error);
+                showError(`アイディアの生成に失敗しました: ${error.message}`);
+            } finally {
+                setButtonLoading(generateIdeasBtn, false);
+            }
+        };
+
+        const fetchDesignIdeas = async (theme) => {
+            const response = await fetch(`${API_BASE_URL}/generate-ideas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'アイディアの生成に失敗しました');
+            }
+
+            const result = await response.json();
+            return result.ideas;
+        };
+
+        const displayIdeas = (ideas) => {
+            ideasContainer.innerHTML = '';
+            ideas.forEach((idea, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-700 p-4 rounded-lg flex flex-col';
+                card.innerHTML = `
+                    <div class="flex-grow">
+                        <h3 class="font-semibold text-purple-300">アイディア ${index + 1}</h3>
+                        <p class="text-sm text-gray-300 mt-2"><span class="font-medium text-gray-400">モチーフ:</span> ${idea.character}</p>
+                        <p class="text-sm text-gray-300 mt-1"><span class="font-medium text-gray-400">フレーズ:</span> ${idea.phrase}</p>
+                        <p class="text-sm text-gray-300 mt-1"><span class="font-medium text-gray-400">推奨フォント:</span> ${idea.fontStyle}</p>
+                    </div>
+                    <button class="generate-image-btn w-full mt-4 bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">このアイディアで画像を生成</button>
+                `;
+                card.querySelector('.generate-image-btn').addEventListener('click', (e) => handleImageGeneration(e, idea));
+                ideasContainer.appendChild(card);
+            });
+        };
+
+        const handleImageGeneration = async (event, idea) => {
+            currentDesignIdea = idea;
+            toggleAllGenerateButtons(false);
+            event.target.textContent = "生成中...";
+            updateImageUI('loading', 'ステップ1/3: キャラクターを生成中...');
+            hideError();
+            snsSection.classList.add('hidden');
+
+            try {
+                const generatedImgBlob = await generateCharacterImage(idea.character);
+                updateImageUI('loading', 'ステップ2/3: 背景を確実に除去中...');
+                const transparentImgBlob = await removeBackground(generatedImgBlob);
+                updateImageUI('loading', 'ステップ3/3: カラーバリエーションを生成中...');
+
+                // Generate all 3 color variations
+                colorVariations = {
+                    light: await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle, 'light'),
+                    dark: await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle, 'dark'),
+                    color: await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle, 'color')
+                };
+
+                updateImageUI('success', null, colorVariations.light);
+            } catch (error) {
+                console.error('Error during image generation process:', error);
+                showError(`画像生成エラー: ${error.message}`);
+                updateImageUI('error');
+            } finally {
+                toggleAllGenerateButtons(true);
+            }
+        };
+
+        const generateCharacterImage = async (character) => {
+            const response = await fetch(`${API_BASE_URL}/generate-image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ character, api: selectedAPI })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '画像の生成に失敗しました');
+            }
+
+            const result = await response.json();
+            const fetchRes = await fetch(result.image);
+            return await fetchRes.blob();
+        };
+
+        const compositeTextOntoImage = (imageBlob, text, fontStyle, colorVariant = 'light') => {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                const url = URL.createObjectURL(imageBlob);
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    canvas.width = 3951;
+                    canvas.height = 4800;
+
+                    const textHeightArea = canvas.height * 0.20;
+                    const maxImgHeight = canvas.height - textHeightArea;
+                    const ratio = Math.min((canvas.width * 0.9) / img.width, maxImgHeight / img.height);
+                    const finalImgWidth = img.width * ratio;
+                    const finalImgHeight = img.height * ratio;
+                    const imgX = (canvas.width - finalImgWidth) / 2;
+                    const imgY = (maxImgHeight - finalImgHeight) / 2;
+
+                    ctx.drawImage(img, imgX, imgY, finalImgWidth, finalImgHeight);
+
+                    // Color variation settings
+                    const colorSchemes = {
+                        light: { fill: 'black', stroke: 'white', lineWidth: 20 },  // 白Tシャツ用
+                        dark: { fill: 'white', stroke: 'black', lineWidth: 20 },   // 黒Tシャツ用
+                        color: { fill: 'white', stroke: 'black', lineWidth: 25 }   // カラーT用（縁を太く）
+                    };
+
+                    const scheme = colorSchemes[colorVariant];
+                    ctx.fillStyle = scheme.fill;
+                    ctx.strokeStyle = scheme.stroke;
+                    ctx.lineWidth = scheme.lineWidth;
+
+                    const fontSize = Math.min(canvas.width / (text.length * 1.1), textHeightArea * 0.8);
+
+                    const fontFamily = getFontFamily(fontStyle);
+                    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const textY = maxImgHeight + (textHeightArea / 2);
+                    const textX = canvas.width / 2;
+
+                    ctx.strokeText(text, textX, textY);
+                    ctx.fillText(text, textX, textY);
+
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = (e) => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error("画像の読み込みに失敗しました"));
+                }
+                img.src = url;
+            });
+        };
+
+        const getFontFamily = (style) => {
+            switch(style) {
+                case 'pop': return "'M PLUS Rounded 1c', sans-serif";
+                case 'horror': return "'DotGothic16', sans-serif";
+                case 'retro': return "'Yuji Syuku', serif";
+                default: return "'Noto Sans JP', sans-serif";
+            }
+        };
+
+        // --- SNS Post Generation ---
+        const handleGenerateSNS = async () => {
+            if (!currentDesignIdea) return;
+
+            generateSnsBtn.disabled = true;
+            generateSnsBtn.textContent = '生成中...';
+            hideError();
+
+            try {
+                const snsPost = await generateSNSPost(currentDesignIdea);
+                snsText.textContent = snsPost;
+                snsSection.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error generating SNS post:', error);
+                showError(`SNS投稿文の生成に失敗しました: ${error.message}`);
+            } finally {
+                generateSnsBtn.disabled = false;
+                generateSnsBtn.textContent = 'SNS投稿文を生成 ✨';
+            }
+        };
+
+        const generateSNSPost = async (idea) => {
+            const response = await fetch(`${API_BASE_URL}/generate-sns`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idea })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'SNS投稿文の生成に失敗しました');
+            }
+
+            const result = await response.json();
+            return result.snsPost;
+        };
+
+        copySnsBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(snsText.textContent);
+                const originalText = copySnsBtn.textContent;
+                copySnsBtn.textContent = '✅ コピーしました！';
+                setTimeout(() => {
+                    copySnsBtn.textContent = originalText;
+                }, 2000);
+            } catch (error) {
+                showError('コピーに失敗しました。手動でコピーしてください。');
+            }
+        });
+
+        // --- UI Helper Functions ---
+
+        const resetUIForNewIdeas = () => {
+            ideasSection.classList.add('hidden');
+            imageSection.classList.add('hidden');
+            ideasContainer.innerHTML = '';
+            currentDesignIdea = null;
+        };
+
+        const updateImageUI = (state, progressMessage = '', imageUrl = '') => {
+            imageSection.classList.remove('hidden');
+            imageLoader.classList.toggle('hidden', state !== 'loading');
+            imageDisplay.classList.toggle('hidden', state !== 'success');
+            imagePlaceholder.classList.toggle('hidden', state !== 'error' && state !== 'initial');
+
+            if (state === 'loading') {
+                progressText.textContent = progressMessage;
+            }
+
+            if (state === 'success') {
+                generatedImage.src = imageUrl;
+                downloadBtn.href = imageUrl;
+            } else if (state === 'error') {
+                imagePlaceholder.textContent = '画像の生成に失敗しました。';
+            }
+        };
+
+        const setButtonLoading = (button, isLoading) => {
+            const btnText = button.querySelector('.btn-text');
+            const loader = button.querySelector('.loader');
+            button.disabled = isLoading;
+            btnText.classList.toggle('hidden', isLoading);
+            loader.classList.toggle('hidden', !isLoading);
+            if (!isLoading && button.id === 'generate-ideas-btn' && serverReady) {
+                btnText.textContent = 'アイディアを生成';
+            }
+        };
+
+        const toggleAllGenerateButtons = (enabled) => {
+            document.querySelectorAll('.generate-image-btn').forEach(btn => {
+                btn.disabled = !enabled;
+                btn.classList.toggle('opacity-50', !enabled);
+                if (enabled) {
+                   btn.textContent = "このアイディアで画像を生成";
+                }
+            });
+        };
+
+        const showError = (message) => {
+            errorSection.classList.remove('hidden');
+            errorMessage.textContent = message;
+            window.scrollTo({ top: errorSection.offsetTop - 100, behavior: 'smooth' });
+        };
+
+        const hideError = () => {
+            errorSection.classList.add('hidden');
+        };
+
+        // --- Printify商品作成 ---
+        const handleCreatePrintifyProduct = async () => {
+            if (!printifyShopId) {
+                return showError('Printify Shop IDが取得できていません。APIキーを確認してください。');
+            }
+
+            if (!generatedImage.src) {
+                return showError('画像が生成されていません。先にデザインを生成してください。');
+            }
+
+            createPrintifyBtn.disabled = true;
+            createPrintifyBtn.textContent = 'アップロード中...';
+            hideError();
+
+            try {
+                // 1. 画像をPrintifyにアップロード
+                progressText.textContent = 'Printifyに画像をアップロード中...';
+                const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageData: generatedImage.src,
+                        fileName: `tshirt-design-${Date.now()}.png`
+                    })
+                });
+
+                if (!uploadResponse.ok) {
+                    const error = await uploadResponse.json();
+                    throw new Error(error.error || '画像のアップロードに失敗しました');
+                }
+
+                const uploadResult = await uploadResponse.json();
+                console.log('画像アップロード成功:', uploadResult);
+
+                // 2. 商品を作成
+                progressText.textContent = 'Printifyで商品を作成中...';
+                const title = currentDesignIdea ? `${currentDesignIdea.phrase} - オリジナルTシャツ` : 'カスタムTシャツデザイン';
+                const description = currentDesignIdea ? `AIが生成した「${currentDesignIdea.character}」をモチーフにしたユニークなデザインTシャツです。` : 'AI生成デザインのオリジナルTシャツ';
+
+                const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        shopId: printifyShopId,
+                        imageId: uploadResult.imageId,
+                        title: title,
+                        description: description,
+                        tags: ['AI生成', 'オリジナル', 'カスタム']
+                    })
+                });
+
+                if (!productResponse.ok) {
+                    const error = await productResponse.json();
+                    throw new Error(error.error || '商品の作成に失敗しました');
+                }
+
+                const productResult = await productResponse.json();
+                console.log('商品作成成功:', productResult);
+
+                alert(`✅ ${productResult.message}\n\nURL: ${productResult.productUrl}`);
+
+            } catch (error) {
+                console.error('Printify商品作成エラー:', error);
+                showError(`Printify連携エラー: ${error.message}`);
+            } finally {
+                createPrintifyBtn.disabled = false;
+                createPrintifyBtn.textContent = 'Printifyで商品作成 🛒';
+            }
+        };
+
+        // --- Event Listeners ---
+        generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
+        generateSnsBtn.addEventListener('click', handleGenerateSNS);
+        createPrintifyBtn.addEventListener('click', handleCreatePrintifyProduct);
+
+        themeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !generateIdeasBtn.disabled) handleGenerateIdeas();
+        });
+
+        // --- App Initialization ---
+        console.log('🚀 Tシャツデザインジェネレーター起動');
+        checkServerHealth();
+    </script>
+</body>
+</html>
