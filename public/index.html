@@ -64,6 +64,28 @@
             border-radius: 10px;
             margin-bottom: 20px;
         }
+        .api-checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #374151;
+        }
+        .api-checkbox-option:hover {
+            border-color: #9333ea;
+        }
+        .api-checkbox-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .api-checkbox-option input[type="checkbox"]:checked + span {
+            color: #a78bfa;
+        }
         .theme-category {
             margin-bottom: 24px;
         }
@@ -104,14 +126,16 @@
 
             <!-- API Configuration -->
             <div class="config-section">
-                <h2 class="text-lg font-semibold mb-3 text-gray-300">画像生成API選択</h2>
-                <div class="api-selector">
-                    <div class="api-option selected" data-api="gemini">
-                        <h3 class="font-bold text-purple-300">Gemini 2.5 Flash Image</h3>
-                    </div>
-                    <div class="api-option" data-api="seedream">
-                        <h3 class="font-bold text-pink-300">Seedream 4.0</h3>
-                    </div>
+                <h2 class="text-lg font-semibold mb-3 text-gray-300">画像生成API選択（複数選択可能）</h2>
+                <div class="api-selector-checkboxes flex gap-4 flex-wrap">
+                    <label class="api-checkbox-option">
+                        <input type="checkbox" id="api-gemini" value="gemini" checked>
+                        <span class="font-bold text-purple-300">✓ Gemini 2.5 Flash Image</span>
+                    </label>
+                    <label class="api-checkbox-option">
+                        <input type="checkbox" id="api-seedream" value="seedream" checked>
+                        <span class="font-bold text-pink-300">✓ Seedream 4.0</span>
+                    </label>
                 </div>
 
                 <div id="api-status" class="mt-4 bg-gray-900 rounded-lg p-3">
@@ -229,9 +253,16 @@
 
             <!-- Step 2: Idea Selection -->
             <div id="ideas-section" class="hidden mb-6">
-                <h2 class="text-lg font-semibold mb-3 text-gray-300">
-                    ステップ2：好きなアイディアを選んで画像を生成
-                </h2>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-semibold text-gray-300">
+                        ステップ2：好きなアイディアを選んで画像を生成
+                    </h2>
+                    <button
+                        id="generate-all-btn"
+                        class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300 text-sm">
+                        🎨 全4つの画像を一括生成
+                    </button>
+                </div>
                 <div id="ideas-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Idea cards will be inserted here -->
                 </div>
@@ -248,31 +279,16 @@
                         <p id="progress-text" class="mt-4 text-gray-400">AIが画像を生成中です...</p>
                     </div>
                     <div id="image-display" class="hidden text-center w-full">
-                        <div class="mb-4 bg-dots-pattern rounded-lg p-2 inline-block">
-                            <img
-                                id="generated-image"
-                                src=""
-                                alt="生成されたデザイン素材"
-                                class="max-w-full h-auto max-h-[400px] rounded-lg shadow-md bg-gray-500">
+                        <!-- Multiple images grid -->
+                        <div id="images-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                            <!-- Generated images will be inserted here -->
                         </div>
                         <p class="text-sm text-gray-400 mb-3">🤍 白Tシャツ用デザイン（黒文字・背景透過）</p>
                         <div class="flex gap-3 justify-center flex-wrap">
-                            <a
-                                id="download-btn"
-                                href="#"
-                                download="tshirt-design-white.png"
-                                class="inline-block bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                デザインをダウンロード
-                            </a>
                             <button
-                                id="generate-sns-btn"
-                                class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                SNS投稿文を生成 ✨
-                            </button>
-                            <button
-                                id="create-printify-btn"
+                                id="create-all-printify-btn"
                                 class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                Printifyで商品作成 🛒
+                                🛒 全画像でPrintify商品作成（順次実行）
                             </button>
                         </div>
                         <!-- SNS Post Section -->
@@ -305,6 +321,8 @@
         let currentDesignIdea = null;
         let serverReady = false;
         let selectedTheme = null; // 選択されたテーマ
+        let generatedImages = []; // 生成された画像データ配列 { idea, api, imageData, designIdea }
+        let designIdeas = []; // 生成されたアイデア配列
         const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
 
         // --- DOM Elements ---
@@ -333,6 +351,9 @@
         const snsText = document.getElementById('sns-text');
         const copySnsBtn = document.getElementById('copy-sns-btn');
         const createPrintifyBtn = document.getElementById('create-printify-btn');
+        const generateAllBtn = document.getElementById('generate-all-btn');
+        const imagesGrid = document.getElementById('images-grid');
+        const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
 
         let printifyShopId = null;
 
@@ -447,6 +468,7 @@
         };
 
         const displayIdeas = (ideas) => {
+            designIdeas = ideas; // Save to global variable for bulk generation
             ideasContainer.innerHTML = '';
             ideas.forEach((idea, index) => {
                 const card = document.createElement('div');
@@ -1010,10 +1032,254 @@
             }
         };
 
+        // ========================================
+        // NEW: Bulk Generation Functions
+        // ========================================
+
+        // Get selected APIs from checkboxes
+        const getSelectedAPIs = () => {
+            const apis = [];
+            if (document.getElementById('api-gemini').checked) apis.push('gemini');
+            if (document.getElementById('api-seedream').checked) apis.push('seedream');
+            return apis;
+        };
+
+        // Generate all 4 ideas with selected APIs (max 8 images)
+        const handleGenerateAllImages = async () => {
+            const selectedAPIs = getSelectedAPIs();
+            if (selectedAPIs.length === 0) {
+                return showError('少なくとも1つのAPIを選択してください');
+            }
+            if (designIdeas.length === 0) {
+                return showError('アイデアが生成されていません');
+            }
+
+            generateAllBtn.disabled = true;
+            generateAllBtn.textContent = '生成中...';
+            generatedImages = [];
+            hideError();
+            hideSuccess();
+
+            // Show loader
+            imageSection.classList.remove('hidden');
+            imageLoader.classList.remove('hidden');
+            imageDisplay.classList.add('hidden');
+            progressText.textContent = `${designIdeas.length}個のアイデア × ${selectedAPIs.length}個のAPI = 最大${designIdeas.length * selectedAPIs.length}枚の画像を生成中...`;
+
+            try {
+                // Generate images in parallel for all combinations
+                const generatePromises = [];
+                for (const idea of designIdeas) {
+                    for (const api of selectedAPIs) {
+                        generatePromises.push(
+                            generateSingleImage(idea, api)
+                                .then(imageData => {
+                                    if (imageData) {
+                                        generatedImages.push({ idea, api, imageData, designIdea: idea });
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error(`Failed to generate image for ${idea.phrase} with ${api}:`, err);
+                                })
+                        );
+                    }
+                }
+
+                await Promise.all(generatePromises);
+
+                if (generatedImages.length === 0) {
+                    throw new Error('すべての画像生成に失敗しました');
+                }
+
+                // Display all images in grid
+                displayImagesGrid();
+
+                imageLoader.classList.add('hidden');
+                imageDisplay.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Bulk image generation error:', error);
+                showError(`画像生成エラー: ${error.message}`);
+                imageLoader.classList.add('hidden');
+            } finally {
+                generateAllBtn.disabled = false;
+                generateAllBtn.textContent = '🎨 全4つの画像を一括生成';
+            }
+        };
+
+        // Generate single image
+        const generateSingleImage = async (idea, api) => {
+            const response = await fetch(`${API_BASE_URL}/generate-image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    character: idea.character,
+                    api: api
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '画像生成に失敗しました');
+            }
+
+            const result = await response.json();
+            return result.image;
+        };
+
+        // Display images in grid
+        const displayImagesGrid = () => {
+            imagesGrid.innerHTML = '';
+            generatedImages.forEach((imgData, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-800 rounded-lg p-3 flex flex-col';
+                card.innerHTML = `
+                    <div class="mb-2">
+                        <img src="${imgData.imageData}" alt="${imgData.idea.phrase}" class="w-full h-auto rounded-lg bg-gray-700">
+                    </div>
+                    <p class="text-xs text-gray-400 mb-1">${imgData.idea.phrase}</p>
+                    <p class="text-xs text-purple-300">${imgData.api === 'gemini' ? 'Gemini' : 'Seedream 4.0'}</p>
+                    <a href="${imgData.imageData}" download="design-${index + 1}.png" class="mt-2 text-xs bg-pink-600 hover:bg-pink-700 text-white py-1 px-2 rounded text-center">
+                        ダウンロード
+                    </a>
+                `;
+                imagesGrid.appendChild(card);
+            });
+        };
+
+        // Create Printify products sequentially (to avoid errors)
+        const handleCreateAllPrintifyProducts = async () => {
+            if (generatedImages.length === 0) {
+                return showError('生成された画像がありません');
+            }
+            if (!printifyShopId) {
+                return showError('Printify Shop IDが設定されていません');
+            }
+
+            createAllPrintifyBtn.disabled = true;
+            createAllPrintifyBtn.textContent = `処理中... (0/${generatedImages.length})`;
+            hideError();
+            hideSuccess();
+
+            const results = [];
+            let successCount = 0;
+            let failCount = 0;
+
+            // Process sequentially to avoid API rate limits
+            for (let i = 0; i < generatedImages.length; i++) {
+                const imgData = generatedImages[i];
+                createAllPrintifyBtn.textContent = `処理中... (${i + 1}/${generatedImages.length})`;
+
+                try {
+                    // Upload image
+                    progressText.textContent = `画像 ${i + 1}/${generatedImages.length} をアップロード中...`;
+                    const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            imageDataUrl: imgData.imageData,
+                            fileName: `design-${Date.now()}-${i}.png`
+                        })
+                    });
+
+                    if (!uploadResponse.ok) {
+                        throw new Error('画像アップロード失敗');
+                    }
+
+                    const uploadResult = await uploadResponse.json();
+
+                    // Create product
+                    progressText.textContent = `商品 ${i + 1}/${generatedImages.length} を作成中...`;
+                    const title = generateSEOTitle(imgData.designIdea);
+                    const description = getEnglishDescription(imgData.designIdea);
+
+                    const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            shopId: printifyShopId,
+                            imageId: uploadResult.imageId,
+                            title: title,
+                            description: description,
+                            tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art']
+                        })
+                    });
+
+                    if (!productResponse.ok) {
+                        throw new Error('商品作成失敗');
+                    }
+
+                    const productResult = await productResponse.json();
+                    results.push({ success: true, url: productResult.productUrl, phrase: imgData.idea.phrase });
+                    successCount++;
+
+                    // Wait 2 seconds between requests to avoid rate limits
+                    if (i < generatedImages.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+
+                } catch (error) {
+                    console.error(`Product creation failed for image ${i + 1}:`, error);
+                    results.push({ success: false, error: error.message, phrase: imgData.idea.phrase });
+                    failCount++;
+                }
+            }
+
+            // Show results
+            let resultMessage = `✅ 成功: ${successCount}件\n❌ 失敗: ${failCount}件\n\n`;
+            results.forEach((result, index) => {
+                if (result.success) {
+                    resultMessage += `${index + 1}. ✅ ${result.phrase}\n   ${result.url}\n\n`;
+                } else {
+                    resultMessage += `${index + 1}. ❌ ${result.phrase}\n   エラー: ${result.error}\n\n`;
+                }
+            });
+
+            showSuccess(resultMessage);
+            createAllPrintifyBtn.disabled = false;
+            createAllPrintifyBtn.textContent = '🛒 全画像でPrintify商品作成（順次実行）';
+        };
+
+        // Helper function to generate SEO title (copied from existing code)
+        const generateSEOTitle = (idea) => {
+            if (!idea) return 'Japanese Culture T-Shirt - Unique AI-Generated Design';
+
+            const fontStyle = idea.fontStyle || 'modern';
+            const theme = idea.theme || '';
+
+            const stylePrefixes = {
+                'horror': 'Japanese Horror',
+                'pop': 'Cute Japanese Kawaii',
+                'retro': 'Vintage Japanese',
+                'modern': 'Modern Japanese'
+            };
+
+            const themeKeywords = {
+                '日本の幽霊': 'Ghost',
+                '日本の動物': 'Animal',
+                '日本の妖怪': 'Yokai Monster',
+                '日本の祭り': 'Festival',
+                '日本の侍': 'Samurai Warrior',
+                '日本の忍者': 'Ninja',
+                '和風ハロウィン': 'Halloween'
+            };
+
+            const prefix = stylePrefixes[fontStyle] || 'Japanese';
+            const keyword = themeKeywords[theme] || 'Character';
+
+            return `${prefix} ${keyword} T-Shirt - Traditional Art Design`;
+        };
+
+        // ========================================
+        // END: Bulk Generation Functions
+        // ========================================
+
         // --- Event Listeners ---
         generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
         generateSnsBtn.addEventListener('click', handleGenerateSNS);
         createPrintifyBtn.addEventListener('click', handleCreatePrintifyProduct);
+        generateAllBtn.addEventListener('click', handleGenerateAllImages);
+        createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
 
         // --- App Initialization ---
         console.log('🚀 Tシャツデザインジェネレーター起動');

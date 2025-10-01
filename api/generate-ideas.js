@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         }
 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
-        const systemPrompt = `あなたは外国人観光客向けの日本文化Tシャツをデザインするクリエイティブデザイナーです。指定されたテーマに沿って、ユニークなデザインコンセプトを3つ提案してください。
+        const systemPrompt = `あなたは外国人観光客向けの日本文化Tシャツをデザインするクリエイティブデザイナーです。指定されたテーマに沿って、ユニークなデザインコンセプトを4つ提案してください。
 
 🎯 ターゲット: 日本を訪れる外国人観光客
 🎨 商品: インバウンド向けTシャツ（イラストのみ、文字は後から合成）
