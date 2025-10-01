@@ -124,11 +124,31 @@ CRITICAL:
 
     const result = await response.json();
 
-    if (result.candidates && result.candidates[0]?.content?.parts[0]?.inlineData) {
-        const base64 = result.candidates[0].content.parts[0].inlineData.data;
-        const mimeType = result.candidates[0].content.parts[0].inlineData.mimeType || 'image/jpeg';
-        return res.status(200).json({ image: `data:${mimeType};base64,${base64}` });
-    } else {
-        throw new Error("画像データが見つかりません");
+    // デバッグ: レスポンス構造をログ出力
+    console.log('Gemini Image API response structure:', JSON.stringify({
+        hasCandidates: !!result.candidates,
+        candidatesLength: result.candidates?.length,
+        firstCandidate: result.candidates?.[0] ? {
+            hasContent: !!result.candidates[0].content,
+            partsLength: result.candidates[0].content?.parts?.length,
+            firstPartKeys: result.candidates[0].content?.parts?.[0] ? Object.keys(result.candidates[0].content.parts[0]) : []
+        } : null
+    }, null, 2));
+
+    if (result.candidates && result.candidates[0]?.content?.parts) {
+        const parts = result.candidates[0].content.parts;
+
+        // inlineDataを探す
+        for (const part of parts) {
+            if (part.inlineData) {
+                const base64 = part.inlineData.data;
+                const mimeType = part.inlineData.mimeType || 'image/jpeg';
+                return res.status(200).json({ image: `data:${mimeType};base64,${base64}` });
+            }
+        }
     }
+
+    // エラー時は詳細情報を含める
+    console.error('Gemini Image API - No image data found. Full response:', JSON.stringify(result, null, 2));
+    throw new Error(`画像データが見つかりません。API Response: ${JSON.stringify(result?.candidates?.[0]?.content?.parts || result?.error || 'Unknown error')}`);
 }
