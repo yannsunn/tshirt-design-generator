@@ -38,13 +38,23 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    const prompt = `⚠️⚠️⚠️ CRITICAL INSTRUCTION ⚠️⚠️⚠️
+    const prompt = `⚠️⚠️⚠️ ABSOLUTELY CRITICAL - HIGHEST PRIORITY ⚠️⚠️⚠️
 
-YOU MUST CREATE EXACTLY THIS CHARACTER - DO NOT CREATE ANYTHING ELSE:
+READ THIS CHARACTER DESCRIPTION 3 TIMES BEFORE STARTING:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 MANDATORY CHARACTER DESCRIPTION:
+📝 MANDATORY CHARACTER DESCRIPTION (MUST FOLLOW 100%):
 "${character}"
+
+THIS IS THE ONLY CHARACTER YOU ARE ALLOWED TO CREATE.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IF THE DESCRIPTION SAYS:
+- "Maiko" or "舞妓" → CREATE A HUMAN FEMALE, NOT an animal
+- "Frog" or "カエル" → CREATE A FROG, NOT a human
+- "Cat" or "猫" → CREATE A CAT, NOT anything else
+
+THE CHARACTER TYPE IS SACRED - NEVER CHANGE IT.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🚨 ABSOLUTE REQUIREMENTS (SCORE: 99/100 PRIORITY):
@@ -106,9 +116,9 @@ DO NOT create anything different. ACCURACY IS EVERYTHING.`;
         },
         body: JSON.stringify({
             prompt: prompt,
-            image_size: "square_hd",  // 正方形で余裕のある構図
-            num_inference_steps: 28,
-            guidance_scale: 3.5,
+            image_size: "square_hd",  // 正方形1024x1024で余裕のある構図
+            num_inference_steps: 50,  // 品質向上: 28 → 50
+            guidance_scale: 7.5,      // プロンプト従順度を大幅向上: 3.5 → 7.5
             num_images: 1,
             enable_safety_checker: false  // 日本文化要素が誤検知されないように
         })
@@ -139,13 +149,23 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    const prompt = `⚠️⚠️⚠️ CRITICAL INSTRUCTION ⚠️⚠️⚠️
+    const prompt = `⚠️⚠️⚠️ ABSOLUTELY CRITICAL - HIGHEST PRIORITY ⚠️⚠️⚠️
 
-YOU MUST CREATE EXACTLY THIS CHARACTER - DO NOT CREATE ANYTHING ELSE:
+READ THIS CHARACTER DESCRIPTION 3 TIMES BEFORE STARTING:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 MANDATORY CHARACTER DESCRIPTION:
+📝 MANDATORY CHARACTER DESCRIPTION (MUST FOLLOW 100%):
 "${character}"
+
+THIS IS THE ONLY CHARACTER YOU ARE ALLOWED TO CREATE.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IF THE DESCRIPTION SAYS:
+- "Maiko" or "舞妓" → CREATE A HUMAN FEMALE, NOT an animal
+- "Frog" or "カエル" → CREATE A FROG, NOT a human
+- "Cat" or "猫" → CREATE A CAT, NOT anything else
+
+THE CHARACTER TYPE IS SACRED - NEVER CHANGE IT.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🚨 ABSOLUTE REQUIREMENTS (SCORE: 99/100 PRIORITY):
