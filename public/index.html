@@ -918,16 +918,45 @@
 
                 // 2. 商品を作成
                 progressText.textContent = 'Printifyで商品を作成中...';
-                // 英語のtitle/descriptionを生成（インバウンド観光客向け）
-                const title = currentDesignIdea
-                    ? `Japanese T-Shirt: ${currentDesignIdea.phrase}`
-                    : 'Custom Japanese Culture T-Shirt';
+
+                // Generate SEO-optimized English title (NO Japanese characters)
+                const generateSEOTitle = (idea) => {
+                    if (!idea) return 'Japanese Culture T-Shirt - Unique AI-Generated Design';
+
+                    const fontStyle = idea.fontStyle || 'modern';
+                    const theme = idea.theme || '';
+
+                    // Style-based prefixes for SEO
+                    const stylePrefixes = {
+                        'horror': 'Japanese Horror',
+                        'pop': 'Cute Japanese Kawaii',
+                        'retro': 'Vintage Japanese',
+                        'modern': 'Modern Japanese'
+                    };
+
+                    // Theme-based keywords (map Japanese themes to English SEO keywords)
+                    const themeKeywords = {
+                        '日本の幽霊': 'Ghost',
+                        '日本の動物': 'Animal',
+                        '日本の妖怪': 'Yokai Monster',
+                        '日本の祭り': 'Festival',
+                        '日本の侍': 'Samurai Warrior',
+                        '日本の忍者': 'Ninja',
+                        '和風ハロウィン': 'Halloween'
+                    };
+
+                    const prefix = stylePrefixes[fontStyle] || 'Japanese';
+                    const keyword = themeKeywords[theme] || 'Character';
+
+                    return `${prefix} ${keyword} T-Shirt - Traditional Art Design`;
+                };
+
+                const title = generateSEOTitle(currentDesignIdea);
+
                 // Generate English description without Japanese characters
                 const getEnglishDescription = (idea) => {
                     if (!idea) return 'AI-generated unique Japanese-themed t-shirt design. Perfect souvenir for tourists visiting Japan.';
 
-                    // Extract theme from phrase (usually in Japanese)
-                    const phrase = idea.phrase || '';
                     const fontStyle = idea.fontStyle || 'modern';
 
                     // Generic descriptions based on font style (horror, pop, retro, modern)
@@ -952,7 +981,7 @@
                         imageId: uploadResult.imageId,
                         title: title,
                         description: description,
-                        tags: ['AI生成', 'オリジナル', 'カスタム']
+                        tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art']
                     })
                 });
 
