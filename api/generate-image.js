@@ -38,47 +38,65 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    const prompt = `🎯 PRIMARY OBJECTIVE: Create EXACTLY what is described below, with 100% accuracy.
+    const prompt = `⚠️⚠️⚠️ CRITICAL INSTRUCTION ⚠️⚠️⚠️
 
-📝 CHARACTER DESCRIPTION (MUST FOLLOW EXACTLY):
+YOU MUST CREATE EXACTLY THIS CHARACTER - DO NOT CREATE ANYTHING ELSE:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 MANDATORY CHARACTER DESCRIPTION:
 "${character}"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ CRITICAL: The image MUST match this description precisely. Every detail, color, shape, and element mentioned must be included. This is the MOST IMPORTANT requirement.
+🚨 ABSOLUTE REQUIREMENTS (SCORE: 99/100 PRIORITY):
 
-═══════════════════════════════════════════════════════════
+1. CHARACTER IDENTITY - MOST CRITICAL:
+   ✓ Read the description 3 times before starting
+   ✓ Create the EXACT character/animal/object mentioned
+   ✓ If it says "frog" → MUST be a frog, NOT a girl, NOT a cat, NOT anything else
+   ✓ If it says "wearing kimono" → MUST wear kimono
+   ✓ If it says "holding umbrella" → MUST hold umbrella
 
-Now, create a t-shirt design illustration with these additional requirements:
+   ❌ FORBIDDEN:
+   - Substituting character type (e.g., frog → human)
+   - Ignoring any part of the description
+   - Adding elements not in description
+   - Creating a different character
 
-1. ACCURACY (HIGHEST PRIORITY):
-   - Include ALL elements from the character description
-   - Use the EXACT colors mentioned
-   - Include ALL accessories/decorations mentioned
-   - Match the EXACT character/motif type described
-   - If description says "jack-o'-lantern" → draw a jack-o'-lantern
-   - If description says "has a torii gate on head" → must have torii gate on head
-   - DO NOT substitute or change any elements
+2. EVERY DETAIL MUST MATCH:
+   ✓ Body color: EXACT match to description
+   ✓ Clothing: EXACT match to description
+   ✓ Accessories: Include ALL mentioned items
+   ✓ Eyes: Match size, shape, color from description
+   ✓ Mouth: Match description
+   ✓ Background elements: Include if mentioned
 
-2. Composition (CRITICAL - NEVER CROP):
-   - Character occupies ONLY 40-45% of image center
-   - MINIMUM 40% white space on all four sides
-   - Character must be FULLY VISIBLE - head to toe/bottom
-   - ZOOM OUT significantly to prevent any cropping
-   - Center the character perfectly
-   - ⚠️ CRITICAL: NEVER crop any part of the character at edges
+3. COMPOSITION (to prevent cropping):
+   ✓ Character size: 40-45% of image center
+   ✓ White space: MINIMUM 40% on all sides
+   ✓ Position: Perfectly centered
+   ✓ Visibility: FULL character visible (head to toe)
+   ✓ Zoom: ZOOM OUT to ensure no cropping
+   ✓ Background: SOLID WHITE (#FFFFFF)
 
-3. Style:
-   - Cute Japanese aesthetic (anime/manga or traditional art)
-   - Vibrant colors suitable for t-shirts
-   - SOLID WHITE BACKGROUND (#FFFFFF)
-   - Clean, professional quality
+4. STYLE:
+   ✓ Cute Japanese anime/manga aesthetic
+   ✓ Vibrant colors for t-shirt printing
+   ✓ Clean, professional illustration
+   ✓ NO TEXT (no Japanese, English, or any letters)
 
-4. NO TEXT:
-   - No Japanese characters, no English letters, no symbols
-   - Pure illustration only
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ BEFORE YOU START - VERIFY:
+1. Read character description above 3 times
+2. Identify the main character type (animal/object/person)
+3. List all colors mentioned
+4. List all accessories/clothing mentioned
+5. ONLY THEN start creating the image
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════
+REMINDER: Create ONLY the character described above.
+Character description: "${character}"
 
-FINAL REMINDER: The character description above is MANDATORY. Create EXACTLY what is described, with 100% accuracy. Do not deviate or substitute elements.`;
+DO NOT create anything different. ACCURACY IS EVERYTHING.`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -121,47 +139,65 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    const prompt = `🎯 PRIMARY OBJECTIVE: Create EXACTLY what is described below, with 100% accuracy.
+    const prompt = `⚠️⚠️⚠️ CRITICAL INSTRUCTION ⚠️⚠️⚠️
 
-📝 CHARACTER DESCRIPTION (MUST FOLLOW EXACTLY):
+YOU MUST CREATE EXACTLY THIS CHARACTER - DO NOT CREATE ANYTHING ELSE:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 MANDATORY CHARACTER DESCRIPTION:
 "${character}"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ CRITICAL: The image MUST match this description precisely. Every detail, color, shape, and element mentioned must be included. This is the MOST IMPORTANT requirement.
+🚨 ABSOLUTE REQUIREMENTS (SCORE: 99/100 PRIORITY):
 
-═══════════════════════════════════════════════════════════
+1. CHARACTER IDENTITY - MOST CRITICAL:
+   ✓ Read the description 3 times before starting
+   ✓ Create the EXACT character/animal/object mentioned
+   ✓ If it says "frog" → MUST be a frog, NOT a girl, NOT a cat, NOT anything else
+   ✓ If it says "wearing kimono" → MUST wear kimono
+   ✓ If it says "holding umbrella" → MUST hold umbrella
 
-Now, create a t-shirt design illustration with these additional requirements:
+   ❌ FORBIDDEN:
+   - Substituting character type (e.g., frog → human)
+   - Ignoring any part of the description
+   - Adding elements not in description
+   - Creating a different character
 
-1. ACCURACY (HIGHEST PRIORITY):
-   - Include ALL elements from the character description
-   - Use the EXACT colors mentioned
-   - Include ALL accessories/decorations mentioned
-   - Match the EXACT character/motif type described
-   - If description says "jack-o'-lantern" → draw a jack-o'-lantern
-   - If description says "has a torii gate on head" → must have torii gate on head
-   - DO NOT substitute or change any elements
+2. EVERY DETAIL MUST MATCH:
+   ✓ Body color: EXACT match to description
+   ✓ Clothing: EXACT match to description
+   ✓ Accessories: Include ALL mentioned items
+   ✓ Eyes: Match size, shape, color from description
+   ✓ Mouth: Match description
+   ✓ Background elements: Include if mentioned
 
-2. Composition (CRITICAL - NEVER CROP):
-   - Character occupies ONLY 40-45% of image center
-   - MINIMUM 40% white space on all four sides
-   - Character must be FULLY VISIBLE - head to toe/bottom
-   - ZOOM OUT significantly to prevent any cropping
-   - Center the character perfectly
-   - ⚠️ CRITICAL: NEVER crop any part of the character at edges
+3. COMPOSITION (to prevent cropping):
+   ✓ Character size: 40-45% of image center
+   ✓ White space: MINIMUM 40% on all sides
+   ✓ Position: Perfectly centered
+   ✓ Visibility: FULL character visible (head to toe)
+   ✓ Zoom: ZOOM OUT to ensure no cropping
+   ✓ Background: SOLID WHITE (#FFFFFF)
 
-3. Style:
-   - Cute Japanese aesthetic (anime/manga or traditional art)
-   - Vibrant colors suitable for t-shirts
-   - SOLID WHITE BACKGROUND (#FFFFFF)
-   - Clean, professional quality
+4. STYLE:
+   ✓ Cute Japanese anime/manga aesthetic
+   ✓ Vibrant colors for t-shirt printing
+   ✓ Clean, professional illustration
+   ✓ NO TEXT (no Japanese, English, or any letters)
 
-4. NO TEXT:
-   - No Japanese characters, no English letters, no symbols
-   - Pure illustration only
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ BEFORE YOU START - VERIFY:
+1. Read character description above 3 times
+2. Identify the main character type (animal/object/person)
+3. List all colors mentioned
+4. List all accessories/clothing mentioned
+5. ONLY THEN start creating the image
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════
+REMINDER: Create ONLY the character described above.
+Character description: "${character}"
 
-FINAL REMINDER: The character description above is MANDATORY. Create EXACTLY what is described, with 100% accuracy. Do not deviate or substitute elements.`;
+DO NOT create anything different. ACCURACY IS EVERYTHING.`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
