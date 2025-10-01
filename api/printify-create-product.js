@@ -75,23 +75,37 @@ export default async function handler(req, res) {
         // 色ごとにバリアントをグループ化
         const colorGroups = new Map();
 
+        // Debug: Log first few variant titles to understand format
+        console.log('Sample variant titles:', availableVariants.slice(0, 5).map(v => v.title));
+
         for (const variant of availableVariants) {
             if (!variant.title) continue;
 
             const upperTitle = variant.title.toUpperCase();
 
-            // サイズをチェック（柔軟なマッチング）
+            // サイズをチェック（さらに柔軟なマッチング）
             const matchedSize = sizePreference.find(size => {
-                // "S / White" や "S/White" などの形式に対応
-                return upperTitle.includes(` ${size} `) ||
-                       upperTitle.includes(`/${size}/`) ||
-                       upperTitle.includes(` ${size}/`) ||
+                // "S / White", "S/White", "White / S", "Small", etc.
+                const patterns = [
+                    ` ${size} `,
+                    `/${size}/`,
+                    ` ${size}/`,
+                    `/${size} `,
+                    `\t${size}\t`,
+                    `\t${size} `,
+                    ` ${size}\t`
+                ];
+                return patterns.some(pattern => upperTitle.includes(pattern)) ||
                        upperTitle.startsWith(`${size} `) ||
-                       upperTitle.startsWith(`${size}/`);
+                       upperTitle.startsWith(`${size}/`) ||
+                       upperTitle.endsWith(` ${size}`) ||
+                       upperTitle.endsWith(`/${size}`);
             });
-            if (!matchedSize) continue;
 
-            // 色を判定
+            // If size check is too strict, skip it for now - just get all variants
+            // We'll filter by size later if needed
+
+            // 色を判定（より柔軟に）
             let matchedColor = null;
             for (const colorDef of colorPriority) {
                 if (colorDef.keywords.some(keyword => upperTitle.includes(keyword))) {
@@ -100,7 +114,10 @@ export default async function handler(req, res) {
                 }
             }
 
-            if (!matchedColor) continue;
+            // If no color matched but variant exists, assign to "Other" group
+            if (!matchedColor) {
+                matchedColor = { name: 'Other', priority: 5, keywords: [] };
+            }
 
             const colorKey = matchedColor.name;
             if (!colorGroups.has(colorKey)) {
@@ -113,6 +130,8 @@ export default async function handler(req, res) {
 
             colorGroups.get(colorKey).variants.push(variant);
         }
+
+        console.log('Color groups after matching:', Array.from(colorGroups.keys()));
 
         // 優先順位順に並べ替え
         const sortedColors = Array.from(colorGroups.values()).sort((a, b) => a.priority - b.priority);
@@ -208,10 +227,11 @@ export default async function handler(req, res) {
         console.log('Product created successfully:', productId);
         console.log('Printify will auto-generate mockups for this product');
 
-        // 色グループの名前リストを作成
-        const selectedColorNames = sortedColors.slice(0, Math.min(maxColors, sortedColors.length))
-            .map(c => c.name)
-            .join(', ');
+        // 色グループの詳細情報を作成
+        const actualColorsUsed = sortedColors.slice(0, Math.min(maxColors, sortedColors.length));
+        const selectedColorNames = actualColorsUsed.map(c => c.name).join(', ') || 'Default selection';
+        const actualColorCount = actualColorsUsed.length || Math.ceil(selectedVariants.length / 5);
+        const estimatedSizesPerColor = actualColorCount > 0 ? Math.floor(selectedVariants.length / actualColorCount) : 5;
 
         res.status(200).json({
             productId: productId,
@@ -219,9 +239,9 @@ export default async function handler(req, res) {
             message: `✅ Product created successfully!
 
 📦 Product Details:
-• ${selectedVariants.length} variants created (${Math.min(maxColors, sortedColors.length)} colors × 5 sizes)
-• Colors: ${selectedColorNames}
-• Sizes: S, M, L, XL, 2XL
+• ${selectedVariants.length} variants created
+• Color groups: ${actualColorCount} (${selectedColorNames})
+• Approx. ${estimatedSizesPerColor} sizes per color
 • Design positioned at center (y=0.45, scale=0.95)
 • Price: ¥2,500 per item
 • English title & description for international reach
@@ -233,8 +253,9 @@ Visit the product page to view and customize mockups.
 🎯 Next Steps:
 1. Visit Printify dashboard to review product
 2. Check mockups in "Edit design" section (auto-generated)
-3. Customize mockups if needed ("View all mockups" shows 50+ options)
-4. Publish to your store when ready
+3. Verify all color/size combinations are correct
+4. Customize mockups if needed ("View all mockups" shows 50+ options)
+5. Publish to your store when ready
 
 Product URL: https://printify.com/app/products/${productId}`
         });

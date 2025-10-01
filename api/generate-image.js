@@ -38,35 +38,16 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    // 🔥 CRITICAL FIX: Simplified, direct prompt for maximum accuracy
-    // Problem: Long prompts with warnings dilute the important information
-    // Solution: Short, focused prompt with character description at top and bottom
-    const prompt = `CREATE THIS EXACT CHARACTER (READ 3 TIMES):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${character}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 🔥 CRITICAL FIX v2: Extreme simplicity + negative prompt
+    // Problem: AI STILL ignoring descriptions and creating random cute girls
+    // Solution: ONLY character description + strong negative prompt
 
-MANDATORY RULES:
-1. Character type from description is SACRED - NEVER substitute
-   • Lantern ghost → MUST be lantern ghost (NOT frog, NOT girl)
-   • Frog → MUST be frog (NOT human, NOT cat)
-   • Maiko → MUST be human female (NOT animal)
+    const prompt = `${character}
 
-2. Match EVERY detail:
-   • ALL colors exactly as described
-   • ALL accessories exactly as described
-   • ALL facial features exactly as described
+Japanese anime style illustration, white background, centered, full body visible, no text or letters.`;
 
-3. Composition:
-   • Character: 40-45% size, perfectly centered
-   • Background: solid white (#FFFFFF)
-   • Full character visible (not cropped)
-
-4. Style: Cute Japanese anime/manga, vibrant colors, NO text
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VERIFY: Creating "${character}"
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    // Strong negative prompt to prevent wrong generations
+    const negativePrompt = "cute anime girl with food, cooking, restaurant, plate, dish, modern clothing, school uniform, cheerful smile, question mark, chef, waitress, different character";
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -76,11 +57,12 @@ VERIFY: Creating "${character}"
         },
         body: JSON.stringify({
             prompt: prompt,
-            image_size: "square_hd",  // 正方形1024x1024で余裕のある構図
-            num_inference_steps: 50,  // 品質向上: 28 → 50
-            guidance_scale: 7.5,      // プロンプト従順度を大幅向上: 3.5 → 7.5
+            negative_prompt: negativePrompt,  // ← ADD negative prompt
+            image_size: "square_hd",
+            num_inference_steps: 50,
+            guidance_scale: 9.0,  // ← INCREASE from 7.5 to 9.0 for STRONGER prompt adherence
             num_images: 1,
-            enable_safety_checker: false  // 日本文化要素が誤検知されないように
+            enable_safety_checker: false
         })
     });
 
@@ -109,35 +91,16 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    // 🔥 CRITICAL FIX: Simplified, direct prompt for maximum accuracy
-    // Problem: Long prompts with warnings dilute the important information
-    // Solution: Short, focused prompt with character description at top and bottom
-    const prompt = `CREATE THIS EXACT CHARACTER (READ 3 TIMES):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${character}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 🔥 CRITICAL FIX v2: Extreme simplicity + explicit negative examples
+    // Problem: AI STILL ignoring descriptions and creating random cute girls
+    // Solution: ONLY character description + explicit DO NOT instructions
 
-MANDATORY RULES:
-1. Character type from description is SACRED - NEVER substitute
-   • Lantern ghost → MUST be lantern ghost (NOT frog, NOT girl)
-   • Frog → MUST be frog (NOT human, NOT cat)
-   • Maiko → MUST be human female (NOT animal)
+    const prompt = `${character}
 
-2. Match EVERY detail:
-   • ALL colors exactly as described
-   • ALL accessories exactly as described
-   • ALL facial features exactly as described
+Japanese anime style illustration, white background, centered, full body visible, no text or letters.
 
-3. Composition:
-   • Character: 40-45% size, perfectly centered
-   • Background: solid white (#FFFFFF)
-   • Full character visible (not cropped)
+DO NOT create: cute anime girl with food, cooking scene, restaurant, modern clothing, school uniform, cheerful smile, or any character different from the description above.`;
 
-4. Style: Cute Japanese anime/manga, vibrant colors, NO text
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VERIFY: Creating "${character}"
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
