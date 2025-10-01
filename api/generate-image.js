@@ -27,7 +27,17 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    const prompt = `A cute cartoon vector illustration of: "${character}". The graphic is for a t-shirt. Use a plain, single-color background. CRITICAL: Do NOT include any text, words, or letters. Generate only the character.`;
+    const prompt = `Create a detailed Japanese-themed t-shirt design illustration of: "${character}".
+
+Style requirements:
+- Vibrant, eye-catching colors suitable for t-shirts
+- Japanese cultural aesthetic (anime/manga inspired or traditional art style)
+- Character should fill most of the frame
+- Use a simple, solid-color background that complements the character
+- High contrast and bold details
+- Professional quality suitable for print-on-demand
+
+CRITICAL: Do NOT include ANY text, words, letters, or phrases in the image. Generate ONLY the character/motif illustration.`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -37,10 +47,11 @@ async function generateWithFAL(character, res) {
         },
         body: JSON.stringify({
             prompt: prompt,
-            image_size: "landscape_4_3",
+            image_size: "portrait_16_9",  // 縦長のTシャツデザインに適したサイズ
             num_inference_steps: 28,
             guidance_scale: 3.5,
-            num_images: 1
+            num_images: 1,
+            enable_safety_checker: false  // 日本文化要素が誤検知されないように
         })
     });
 
@@ -69,17 +80,18 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    const prompt = `Create a cute cartoon vector illustration of: "${character}".
+    const prompt = `Create a detailed Japanese-themed t-shirt design illustration of: "${character}".
 
 Style requirements:
-- Cute, friendly, and appealing design
-- Bold outlines and vibrant colors
-- Centered composition suitable for t-shirt printing
-- Plain single-color background
-- No text, words, or letters in the image
-- Character should be the main focus
+- Vibrant, eye-catching colors suitable for t-shirts
+- Japanese cultural aesthetic (anime/manga inspired or traditional art style)
+- Character should fill most of the frame
+- Use a simple, solid-color background that complements the character
+- High contrast and bold details
+- Professional quality suitable for print-on-demand
+- Centered composition
 
-This is for t-shirt design, so make it visually striking and simple.`;
+CRITICAL: Do NOT include ANY text, words, letters, or phrases in the image. Generate ONLY the character/motif illustration.`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],

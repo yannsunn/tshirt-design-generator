@@ -543,33 +543,59 @@
                 const url = URL.createObjectURL(imageBlob);
                 img.onload = () => {
                     URL.revokeObjectURL(url);
-                    canvas.width = 3951;
-                    canvas.height = 4800;
+                    // Printify推奨サイズ（4500x5400が最適）
+                    canvas.width = 4500;
+                    canvas.height = 5400;
 
-                    const textHeightArea = canvas.height * 0.20;
-                    const maxImgHeight = canvas.height - textHeightArea;
-                    const ratio = Math.min((canvas.width * 0.9) / img.width, maxImgHeight / img.height);
-                    const finalImgWidth = img.width * ratio;
-                    const finalImgHeight = img.height * ratio;
-                    const imgX = (canvas.width - finalImgWidth) / 2;
-                    const imgY = (maxImgHeight - finalImgHeight) / 2;
+                    // 画像をキャンバス全体に拡大（アスペクト比を維持しながらカバー）
+                    const canvasRatio = canvas.width / canvas.height;
+                    const imgRatio = img.width / img.height;
 
-                    ctx.drawImage(img, imgX, imgY, finalImgWidth, finalImgHeight);
+                    let drawWidth, drawHeight, drawX, drawY;
 
+                    if (imgRatio > canvasRatio) {
+                        // 画像の方が横長 → 高さを基準に
+                        drawHeight = canvas.height;
+                        drawWidth = img.width * (canvas.height / img.height);
+                        drawX = (canvas.width - drawWidth) / 2;
+                        drawY = 0;
+                    } else {
+                        // 画像の方が縦長 → 幅を基準に
+                        drawWidth = canvas.width;
+                        drawHeight = img.height * (canvas.width / img.width);
+                        drawX = 0;
+                        drawY = (canvas.height - drawHeight) / 2;
+                    }
+
+                    // 画像を描画（キャンバス全体をカバー）
+                    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+
+                    // テキストを画像の上に重ねる（下部に配置）
                     // 白Tシャツ用の設定（黒文字、白縁取り）
                     ctx.fillStyle = 'black';
                     ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 20;
+                    ctx.lineWidth = 30; // 縁取りを太く
 
-                    const fontSize = Math.min(canvas.width / (text.length * 1.1), textHeightArea * 0.8);
+                    // フォントサイズの計算（文字数に応じて調整）
+                    const baseFontSize = canvas.width / (text.length * 0.8);
+                    const maxFontSize = canvas.height * 0.15; // 最大サイズをキャンバス高さの15%に
+                    const fontSize = Math.min(baseFontSize, maxFontSize);
 
                     const fontFamily = getFontFamily(fontStyle);
                     ctx.font = `bold ${fontSize}px ${fontFamily}`;
 
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    const textY = maxImgHeight + (textHeightArea / 2);
+
+                    // テキストを下部に配置（下から15%の位置）
+                    const textY = canvas.height * 0.85;
                     const textX = canvas.width / 2;
+
+                    // 影を追加して可読性向上
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowOffsetX = 5;
+                    ctx.shadowOffsetY = 5;
 
                     ctx.strokeText(text, textX, textY);
                     ctx.fillText(text, textX, textY);
