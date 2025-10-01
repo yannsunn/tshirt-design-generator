@@ -49,6 +49,9 @@ Japanese anime style illustration, white background, centered, full body visible
     // Strong negative prompt to prevent wrong generations
     const negativePrompt = "cute anime girl with food, cooking, restaurant, plate, dish, modern clothing, school uniform, cheerful smile, question mark, chef, waitress, different character";
 
+    // Generate random seed for variation (different output each time)
+    const randomSeed = Math.floor(Math.random() * 1000000);
+
     const response = await fetch('https://fal.run/fal-ai/bytedance/seedream/v4/text-to-image', {
         method: 'POST',
         headers: {
@@ -57,10 +60,11 @@ Japanese anime style illustration, white background, centered, full body visible
         },
         body: JSON.stringify({
             prompt: prompt,
-            negative_prompt: negativePrompt,  // ← ADD negative prompt
+            negative_prompt: negativePrompt,
             image_size: "square_hd",
             num_inference_steps: 50,
-            guidance_scale: 9.0,  // ← INCREASE from 7.5 to 9.0 for STRONGER prompt adherence
+            guidance_scale: 9.0,
+            seed: randomSeed,  // ← ADD random seed for variation
             num_images: 1,
             enable_safety_checker: false
         })
@@ -105,7 +109,7 @@ DO NOT create: cute anime girl with food, cooking scene, restaurant, modern clot
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature: 1.0,
+            temperature: 1.3,  // ← INCREASE from 1.0 to 1.3 for more variation
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 8192,

@@ -88,6 +88,7 @@ export default async function handler(req, res) {
             contents: [{ parts: [{ text: `テーマ: ${theme}` }] }],
             systemInstruction: { parts: [{ text: systemPrompt }] },
             generationConfig: {
+                temperature: 1.2,  // ← ADD temperature for more diverse ideas
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: "ARRAY",
