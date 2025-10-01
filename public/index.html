@@ -317,7 +317,6 @@
 
     <script type="module">
         // --- Configuration State ---
-        let selectedAPI = 'gemini'; // Geminiをデフォルトに変更
         let currentDesignIdea = null;
         let serverReady = false;
         let selectedTheme = null; // 選択されたテーマ
@@ -356,15 +355,6 @@
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
 
         let printifyShopId = null;
-
-        // --- API Selection ---
-        document.querySelectorAll('.api-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('.api-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                selectedAPI = option.dataset.api;
-            });
-        });
 
         // --- Theme Selection ---
         document.querySelectorAll('.theme-button').forEach(button => {
@@ -518,10 +508,14 @@
         };
 
         const generateCharacterImage = async (character) => {
+            // Use first selected API for individual image generation
+            const selectedAPIs = getSelectedAPIs();
+            const apiToUse = selectedAPIs.length > 0 ? selectedAPIs[0] : 'gemini';
+
             const response = await fetch(`${API_BASE_URL}/generate-image`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ character, api: selectedAPI })
+                body: JSON.stringify({ character, api: apiToUse })
             });
 
             if (!response.ok) {
@@ -941,58 +935,7 @@
                 // 2. 商品を作成
                 progressText.textContent = 'Printifyで商品を作成中...';
 
-                // Generate SEO-optimized English title (NO Japanese characters)
-                const generateSEOTitle = (idea) => {
-                    if (!idea) return 'Japanese Culture T-Shirt - Unique AI-Generated Design';
-
-                    const fontStyle = idea.fontStyle || 'modern';
-                    const theme = idea.theme || '';
-
-                    // Style-based prefixes for SEO
-                    const stylePrefixes = {
-                        'horror': 'Japanese Horror',
-                        'pop': 'Cute Japanese Kawaii',
-                        'retro': 'Vintage Japanese',
-                        'modern': 'Modern Japanese'
-                    };
-
-                    // Theme-based keywords (map Japanese themes to English SEO keywords)
-                    const themeKeywords = {
-                        '日本の幽霊': 'Ghost',
-                        '日本の動物': 'Animal',
-                        '日本の妖怪': 'Yokai Monster',
-                        '日本の祭り': 'Festival',
-                        '日本の侍': 'Samurai Warrior',
-                        '日本の忍者': 'Ninja',
-                        '和風ハロウィン': 'Halloween'
-                    };
-
-                    const prefix = stylePrefixes[fontStyle] || 'Japanese';
-                    const keyword = themeKeywords[theme] || 'Character';
-
-                    return `${prefix} ${keyword} T-Shirt - Traditional Art Design`;
-                };
-
                 const title = generateSEOTitle(currentDesignIdea);
-
-                // Generate English description without Japanese characters
-                const getEnglishDescription = (idea) => {
-                    if (!idea) return 'AI-generated unique Japanese-themed t-shirt design. Perfect souvenir for tourists visiting Japan.';
-
-                    const fontStyle = idea.fontStyle || 'modern';
-
-                    // Generic descriptions based on font style (horror, pop, retro, modern)
-                    const styleDescriptions = {
-                        'horror': 'Featuring a spooky Japanese ghost design with traditional elements. Dark and mysterious aesthetic perfect for those who love Japanese horror culture.',
-                        'pop': 'Featuring a cute and colorful Japanese pop art design. Vibrant and playful aesthetic inspired by Japanese kawaii culture.',
-                        'retro': 'Featuring a vintage Japanese retro design with nostalgic elements. Classic aesthetic inspired by traditional Japanese art.',
-                        'modern': 'Featuring a contemporary Japanese design with clean lines. Modern aesthetic blending traditional and contemporary elements.'
-                    };
-
-                    const styleDesc = styleDescriptions[fontStyle] || styleDescriptions['modern'];
-                    return `Unique AI-generated Japanese-themed t-shirt design. ${styleDesc} Perfect souvenir for tourists visiting Japan.`;
-                };
-
                 const description = getEnglishDescription(currentDesignIdea);
 
                 const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
@@ -1030,6 +973,57 @@
                 createPrintifyBtn.disabled = false;
                 createPrintifyBtn.textContent = 'Printifyで商品作成 🛒';
             }
+        };
+
+        // ========================================
+        // Helper Functions (Shared)
+        // ========================================
+
+        // Generate English description without Japanese characters
+        const getEnglishDescription = (idea) => {
+            if (!idea) return 'AI-generated unique Japanese-themed t-shirt design. Perfect souvenir for tourists visiting Japan.';
+
+            const fontStyle = idea.fontStyle || 'modern';
+
+            const styleDescriptions = {
+                'horror': 'Featuring a spooky Japanese ghost design with traditional elements. Dark and mysterious aesthetic perfect for those who love Japanese horror culture.',
+                'pop': 'Featuring a cute and colorful Japanese pop art design. Vibrant and playful aesthetic inspired by Japanese kawaii culture.',
+                'retro': 'Featuring a vintage Japanese retro design with nostalgic elements. Classic aesthetic inspired by traditional Japanese art.',
+                'modern': 'Featuring a contemporary Japanese design with clean lines. Modern aesthetic blending traditional and contemporary elements.'
+            };
+
+            const styleDesc = styleDescriptions[fontStyle] || styleDescriptions['modern'];
+            return `Unique AI-generated Japanese-themed t-shirt design. ${styleDesc} Perfect souvenir for tourists visiting Japan.`;
+        };
+
+        // Generate SEO-optimized title
+        const generateSEOTitle = (idea) => {
+            if (!idea) return 'Japanese Culture T-Shirt - Unique AI-Generated Design';
+
+            const fontStyle = idea.fontStyle || 'modern';
+            const theme = idea.theme || '';
+
+            const stylePrefixes = {
+                'horror': 'Japanese Horror',
+                'pop': 'Cute Japanese Kawaii',
+                'retro': 'Vintage Japanese',
+                'modern': 'Modern Japanese'
+            };
+
+            const themeKeywords = {
+                '日本の幽霊': 'Ghost',
+                '日本の動物': 'Animal',
+                '日本の妖怪': 'Yokai Monster',
+                '日本の祭り': 'Festival',
+                '日本の侍': 'Samurai Warrior',
+                '日本の忍者': 'Ninja',
+                '和風ハロウィン': 'Halloween'
+            };
+
+            const prefix = stylePrefixes[fontStyle] || 'Japanese';
+            const keyword = themeKeywords[theme] || 'Character';
+
+            return `${prefix} ${keyword} T-Shirt - Traditional Art Design`;
         };
 
         // ========================================
@@ -1238,36 +1232,6 @@
             showSuccess(resultMessage);
             createAllPrintifyBtn.disabled = false;
             createAllPrintifyBtn.textContent = '🛒 全画像でPrintify商品作成（順次実行）';
-        };
-
-        // Helper function to generate SEO title (copied from existing code)
-        const generateSEOTitle = (idea) => {
-            if (!idea) return 'Japanese Culture T-Shirt - Unique AI-Generated Design';
-
-            const fontStyle = idea.fontStyle || 'modern';
-            const theme = idea.theme || '';
-
-            const stylePrefixes = {
-                'horror': 'Japanese Horror',
-                'pop': 'Cute Japanese Kawaii',
-                'retro': 'Vintage Japanese',
-                'modern': 'Modern Japanese'
-            };
-
-            const themeKeywords = {
-                '日本の幽霊': 'Ghost',
-                '日本の動物': 'Animal',
-                '日本の妖怪': 'Yokai Monster',
-                '日本の祭り': 'Festival',
-                '日本の侍': 'Samurai Warrior',
-                '日本の忍者': 'Ninja',
-                '和風ハロウィン': 'Halloween'
-            };
-
-            const prefix = stylePrefixes[fontStyle] || 'Japanese';
-            const keyword = themeKeywords[theme] || 'Character';
-
-            return `${prefix} ${keyword} T-Shirt - Traditional Art Design`;
         };
 
         // ========================================
