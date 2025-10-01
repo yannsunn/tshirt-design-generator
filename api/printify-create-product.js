@@ -18,24 +18,74 @@ export default async function handler(req, res) {
 
         // Printify商品作成
         // Blueprint ID: 6 = Gildan 5000 (ベーシックTシャツ)
-        // Print Provider: 99 = Monster Digital (高品質DTG)
+        // Print Provider: 3 = MyLocker (安定したプロバイダー)
+        const blueprintId = 6;
+        const printProviderId = 3;
+
+        // 1. まず利用可能なvariantsを取得
+        const variantsResponse = await fetch(
+            `https://api.printify.com/v1/catalog/blueprints/${blueprintId}/print_providers/${printProviderId}/variants.json`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        if (!variantsResponse.ok) {
+            const errorText = await variantsResponse.text();
+            throw new Error(`Printify Variants API error: ${variantsResponse.status} - ${errorText}`);
+        }
+
+        const variantsData = await variantsResponse.json();
+
+        // 利用可能なvariantから基本サイズ（S, M, L, XL, 2XL）を抽出
+        const availableVariants = variantsData.variants || [];
+        const selectedVariants = [];
+        const variantIds = [];
+
+        // サイズ優先順位
+        const sizePreference = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
+
+        for (const size of sizePreference) {
+            const variant = availableVariants.find(v =>
+                v.title && v.title.toUpperCase().includes(size)
+            );
+            if (variant && selectedVariants.length < 5) {
+                selectedVariants.push({
+                    id: variant.id,
+                    price: 2500, // 基本価格2500円
+                    is_enabled: true
+                });
+                variantIds.push(variant.id);
+            }
+        }
+
+        // variantが見つからない場合は最初の5つを使用
+        if (selectedVariants.length === 0) {
+            for (let i = 0; i < Math.min(5, availableVariants.length); i++) {
+                selectedVariants.push({
+                    id: availableVariants[i].id,
+                    price: 2500,
+                    is_enabled: true
+                });
+                variantIds.push(availableVariants[i].id);
+            }
+        }
+
         const printifyApiUrl = `https://api.printify.com/v1/shops/${shopId}/products.json`;
 
         const payload = {
             title: title || 'カスタムTシャツデザイン',
             description: description || 'AI生成デザインのオリジナルTシャツ',
-            blueprint_id: 6, // Gildan 5000
-            print_provider_id: 99, // Monster Digital
-            variants: [
-                { id: 4011, price: 2500, is_enabled: true }, // S
-                { id: 4012, price: 2500, is_enabled: true }, // M
-                { id: 4013, price: 2500, is_enabled: true }, // L
-                { id: 4014, price: 2500, is_enabled: true }, // XL
-                { id: 4015, price: 2700, is_enabled: true }  // 2XL
-            ],
+            blueprint_id: blueprintId,
+            print_provider_id: printProviderId,
+            variants: selectedVariants,
             print_areas: [
                 {
-                    variant_ids: [4011, 4012, 4013, 4014, 4015],
+                    variant_ids: variantIds,
                     placeholders: [
                         {
                             position: 'front',
