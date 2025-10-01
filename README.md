@@ -147,11 +147,16 @@ tshirt-design-generator/
 │   ├── printify-create-product.js# Printify商品作成
 │   ├── printify-get-shops.js     # Printifyショップ取得
 │   └── health.js                 # ヘルスチェック
-├── index.html                    # メインアプリケーション
-├── vercel.json                   # Vercel設定
-├── .env.example                  # 環境変数テンプレート
-├── .gitignore                    # Git除外設定
-└── README.md                     # このファイル
+├── public/                       # 静的ファイル
+│   ├── index.html                # メインアプリケーション
+│   └── favicon.svg               # ファビコン
+├── IMAGE_GENERATION_RULES.md    # 🎨 画像生成ルール（必読）
+├── TESTING_GUIDE.md             # 🧪 テストガイド
+├── vercel.json                  # Vercel設定
+├── .env.example                 # 環境変数テンプレート
+├── .gitignore                   # Git除外設定
+├── package.json                 # Node.js設定
+└── README.md                    # このファイル
 ```
 
 ---
@@ -377,6 +382,26 @@ MIT License - 商用利用可能
 
 ---
 
+## 📚 重要ドキュメント
+
+### **必読ドキュメント**
+- 📄 **[IMAGE_GENERATION_RULES.md](./IMAGE_GENERATION_RULES.md)** - 画像生成の完全ルール
+  - キャラクターとテーマの一致ルール
+  - 品質パラメータ設定
+  - トラブルシューティング
+
+- 🧪 **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - テストガイド
+  - 10個のテストケース
+  - テスト手順
+  - 成功基準
+
+### **開発者向け**
+- 🔧 **[.env.example](./.env.example)** - 環境変数テンプレート
+- 📦 **[package.json](./package.json)** - Node.js設定
+- ⚙️ **[vercel.json](./vercel.json)** - Vercel設定
+
+---
+
 **作成日**: 2025-09-30
-**最終更新**: 2025-10-01
-**バージョン**: 1.0.0
+**最終更新**: 2025-10-02
+**バージョン**: 2.0.0
