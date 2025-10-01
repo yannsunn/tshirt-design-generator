@@ -793,6 +793,34 @@
             errorSection.classList.add('hidden');
         };
 
+        // --- 画像圧縮（Printifyアップロード用） ---
+        const compressImageForUpload = async (imageSrc) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    // 2250x2700px (半分のサイズ) でも十分高品質
+                    const targetWidth = 2250;
+                    const targetHeight = 2700;
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    const ctx = canvas.getContext('2d');
+
+                    // 高品質リサイズ
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                    // JPEG形式で品質85%に圧縮（ファイルサイズを大幅削減）
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    resolve(compressedDataUrl);
+                };
+                img.onerror = reject;
+                img.src = imageSrc;
+            });
+        };
+
         // --- Printify商品作成 ---
         const handleCreatePrintifyProduct = async () => {
             if (!printifyShopId) {
@@ -808,20 +836,32 @@
             hideError();
 
             try {
+                // 画像を圧縮（4.5MBのVercel制限を回避）
+                progressText.textContent = '画像を圧縮中...';
+                const compressedImage = await compressImageForUpload(generatedImage.src);
+                console.log('Original size:', Math.round(generatedImage.src.length / 1024), 'KB');
+                console.log('Compressed size:', Math.round(compressedImage.length / 1024), 'KB');
+
                 // 1. 画像をPrintifyにアップロード
                 progressText.textContent = 'Printifyに画像をアップロード中...';
                 const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        imageData: generatedImage.src,
-                        fileName: `tshirt-design-${Date.now()}.png`
+                        imageData: compressedImage,
+                        fileName: `tshirt-design-${Date.now()}.jpg`
                     })
                 });
 
                 if (!uploadResponse.ok) {
-                    const error = await uploadResponse.json();
-                    throw new Error(error.error || '画像のアップロードに失敗しました');
+                    const contentType = uploadResponse.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const error = await uploadResponse.json();
+                        throw new Error(error.error || '画像のアップロードに失敗しました');
+                    } else {
+                        const errorText = await uploadResponse.text();
+                        throw new Error(`画像のアップロードに失敗しました: ${uploadResponse.status} - ${errorText.substring(0, 200)}`);
+                    }
                 }
 
                 const uploadResult = await uploadResponse.json();
@@ -845,8 +885,14 @@
                 });
 
                 if (!productResponse.ok) {
-                    const error = await productResponse.json();
-                    throw new Error(error.error || '商品の作成に失敗しました');
+                    const contentType = productResponse.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const error = await productResponse.json();
+                        throw new Error(error.error || '商品の作成に失敗しました');
+                    } else {
+                        const errorText = await productResponse.text();
+                        throw new Error(`商品の作成に失敗しました: ${productResponse.status} - ${errorText.substring(0, 200)}`);
+                    }
                 }
 
                 const productResult = await productResponse.json();
