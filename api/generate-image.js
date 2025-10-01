@@ -38,49 +38,45 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    const prompt = `Create a t-shirt design illustration for international tourists based on this description: "${character}".
+    const prompt = `🎯 PRIMARY OBJECTIVE: Create EXACTLY what is described below, with 100% accuracy.
 
-This is for a T-SHIRT PRINT - simple, clean illustration only.
+📝 CHARACTER DESCRIPTION (MUST FOLLOW EXACTLY):
+"${character}"
 
-🚨 ABSOLUTELY NO TEXT ALLOWED:
-- NO Japanese characters (kanji, hiragana, katakana)
-- NO English letters or words
-- NO numbers or symbols
-- NO text of any kind anywhere in the image
-- This is a PURE ILLUSTRATION ONLY - like a logo or icon
-- If you see any text forming, STOP and remove it
-- The illustration should speak for itself without any words
+⚠️ CRITICAL: The image MUST match this description precisely. Every detail, color, shape, and element mentioned must be included. This is the MOST IMPORTANT requirement.
 
-🚨 CRITICAL FRAMING RULES - MUST PREVENT CROPPING:
-- Character occupies MAXIMUM 50-60% of image area (leave 40-50% as white space)
-- MINIMUM 30-35% white space on ALL FOUR SIDES (top, bottom, left, right)
-- Center the character perfectly in the middle
-- ZOOM WAY OUT - pretend you're taking a photo from far away
-- The character should look SMALL and centered with LOTS of white space around it
-- Think "postage stamp in the middle of a white page"
-- If ANY part might touch the edge, make it EVEN SMALLER
-- Better to have TOO MUCH white space than risk any cropping
+═══════════════════════════════════════════════════════════
 
-COMPOSITION CHECKLIST:
-✓ Top: white space visible above character
-✓ Bottom: white space visible below character
-✓ Left: white space visible on left side
-✓ Right: white space visible on right side
+Now, create a t-shirt design illustration with these additional requirements:
 
-Style requirements:
-- Follow the character description faithfully
-- Vibrant colors suitable for t-shirts
-- Cute, appealing Japanese aesthetic (anime/manga style or traditional Japanese art)
-- Appeal to foreign tourists who love Japanese culture
-- SOLID PURE WHITE BACKGROUND (#FFFFFF) - no gradients, no shadows
-- High contrast and clear edges
-- Professional print-on-demand quality
+1. ACCURACY (HIGHEST PRIORITY):
+   - Include ALL elements from the character description
+   - Use the EXACT colors mentioned
+   - Include ALL accessories/decorations mentioned
+   - Match the EXACT character/motif type described
+   - If description says "jack-o'-lantern" → draw a jack-o'-lantern
+   - If description says "has a torii gate on head" → must have torii gate on head
+   - DO NOT substitute or change any elements
 
-REMEMBER:
-- This is for an international audience
-- Simple, iconic illustration that represents Japanese culture
-- NO TEXT - illustration only
-- Clean, commercial t-shirt design`;
+2. Composition:
+   - Character occupies 50-60% of image (leave large white margins)
+   - Minimum 30% white space on all four sides
+   - Center the character
+   - Ensure nothing gets cropped at edges
+
+3. Style:
+   - Cute Japanese aesthetic (anime/manga or traditional art)
+   - Vibrant colors suitable for t-shirts
+   - SOLID WHITE BACKGROUND (#FFFFFF)
+   - Clean, professional quality
+
+4. NO TEXT:
+   - No Japanese characters, no English letters, no symbols
+   - Pure illustration only
+
+═══════════════════════════════════════════════════════════
+
+FINAL REMINDER: The character description above is MANDATORY. Create EXACTLY what is described, with 100% accuracy. Do not deviate or substitute elements.`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -123,49 +119,45 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    const prompt = `Create a t-shirt design illustration for international tourists based on this description: "${character}".
+    const prompt = `🎯 PRIMARY OBJECTIVE: Create EXACTLY what is described below, with 100% accuracy.
 
-This is for a T-SHIRT PRINT - simple, clean illustration only.
+📝 CHARACTER DESCRIPTION (MUST FOLLOW EXACTLY):
+"${character}"
 
-🚨 ABSOLUTELY NO TEXT ALLOWED:
-- NO Japanese characters (kanji, hiragana, katakana)
-- NO English letters or words
-- NO numbers or symbols
-- NO text of any kind anywhere in the image
-- This is a PURE ILLUSTRATION ONLY - like a logo or icon
-- If you see any text forming, STOP and remove it
-- The illustration should speak for itself without any words
+⚠️ CRITICAL: The image MUST match this description precisely. Every detail, color, shape, and element mentioned must be included. This is the MOST IMPORTANT requirement.
 
-🚨 CRITICAL FRAMING RULES - MUST PREVENT CROPPING:
-- Character occupies MAXIMUM 50-60% of image area (leave 40-50% as white space)
-- MINIMUM 30-35% white space on ALL FOUR SIDES (top, bottom, left, right)
-- Center the character perfectly in the middle
-- ZOOM WAY OUT - pretend you're taking a photo from far away
-- The character should look SMALL and centered with LOTS of white space around it
-- Think "postage stamp in the middle of a white page"
-- If ANY part might touch the edge, make it EVEN SMALLER
-- Better to have TOO MUCH white space than risk any cropping
+═══════════════════════════════════════════════════════════
 
-COMPOSITION CHECKLIST:
-✓ Top: white space visible above character
-✓ Bottom: white space visible below character
-✓ Left: white space visible on left side
-✓ Right: white space visible on right side
+Now, create a t-shirt design illustration with these additional requirements:
 
-Style requirements:
-- Follow the character description faithfully
-- Vibrant colors suitable for t-shirts
-- Cute, appealing Japanese aesthetic (anime/manga style or traditional Japanese art)
-- Appeal to foreign tourists who love Japanese culture
-- SOLID PURE WHITE BACKGROUND (#FFFFFF) - no gradients, no shadows
-- High contrast and clear edges
-- Professional print-on-demand quality
+1. ACCURACY (HIGHEST PRIORITY):
+   - Include ALL elements from the character description
+   - Use the EXACT colors mentioned
+   - Include ALL accessories/decorations mentioned
+   - Match the EXACT character/motif type described
+   - If description says "jack-o'-lantern" → draw a jack-o'-lantern
+   - If description says "has a torii gate on head" → must have torii gate on head
+   - DO NOT substitute or change any elements
 
-REMEMBER:
-- This is for an international audience
-- Simple, iconic illustration that represents Japanese culture
-- NO TEXT - illustration only
-- Clean, commercial t-shirt design`;
+2. Composition:
+   - Character occupies 50-60% of image (leave large white margins)
+   - Minimum 30% white space on all four sides
+   - Center the character
+   - Ensure nothing gets cropped at edges
+
+3. Style:
+   - Cute Japanese aesthetic (anime/manga or traditional art)
+   - Vibrant colors suitable for t-shirts
+   - SOLID WHITE BACKGROUND (#FFFFFF)
+   - Clean, professional quality
+
+4. NO TEXT:
+   - No Japanese characters, no English letters, no symbols
+   - Pure illustration only
+
+═══════════════════════════════════════════════════════════
+
+FINAL REMINDER: The character description above is MANDATORY. Create EXACTLY what is described, with 100% accuracy. Do not deviate or substitute elements.`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
