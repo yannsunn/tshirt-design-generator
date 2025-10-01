@@ -138,19 +138,36 @@ export default async function handler(req, res) {
 
         console.log('Available color groups:', sortedColors.map(c => `${c.name} (${c.variants.length} variants)`));
 
-        // 最大7色、各色で全サイズを選択
+        // 最大7色、各色で最大5サイズを選択（合計最大35 variants）
         const maxColors = 7;
+        const maxSizesPerColor = 5;
+        const maxTotalVariants = 35; // Printify制限は100だが、安全のため35に制限
+
         for (let i = 0; i < Math.min(maxColors, sortedColors.length); i++) {
             const colorGroup = sortedColors[i];
-            console.log(`Selecting color group: ${colorGroup.name}`);
+            console.log(`Selecting color group: ${colorGroup.name} (${colorGroup.variants.length} variants available)`);
 
-            for (const variant of colorGroup.variants) {
+            // 各色グループから最大5つのvariantを選択
+            const variantsToSelect = colorGroup.variants.slice(0, maxSizesPerColor);
+
+            for (const variant of variantsToSelect) {
+                // 最大variant数に達したら停止
+                if (selectedVariants.length >= maxTotalVariants) {
+                    console.log(`Reached maximum variants limit (${maxTotalVariants}), stopping selection`);
+                    break;
+                }
+
                 selectedVariants.push({
                     id: variant.id,
                     price: 2500, // 基本価格2500円
                     is_enabled: true
                 });
                 variantIds.push(variant.id);
+            }
+
+            // 最大variant数に達したら全体のループも停止
+            if (selectedVariants.length >= maxTotalVariants) {
+                break;
             }
         }
 
@@ -163,7 +180,8 @@ export default async function handler(req, res) {
         // variantが見つからない場合は最初の35個を使用（7色×5サイズ）
         if (selectedVariants.length === 0) {
             console.warn('No variants matched criteria, using first 35 variants');
-            for (let i = 0; i < Math.min(35, availableVariants.length); i++) {
+            const fallbackLimit = Math.min(35, availableVariants.length);
+            for (let i = 0; i < fallbackLimit; i++) {
                 selectedVariants.push({
                     id: availableVariants[i].id,
                     price: 2500,
@@ -171,6 +189,14 @@ export default async function handler(req, res) {
                 });
                 variantIds.push(availableVariants[i].id);
             }
+            console.log(`Fallback: selected ${selectedVariants.length} variants`);
+        }
+
+        // 最終安全チェック：100個制限
+        if (selectedVariants.length > 100) {
+            console.warn(`Too many variants selected (${selectedVariants.length}), trimming to 100`);
+            selectedVariants = selectedVariants.slice(0, 100);
+            variantIds = variantIds.slice(0, 100);
         }
 
         const printifyApiUrl = `https://api.printify.com/v1/shops/${shopId}/products.json`;
