@@ -41,6 +41,32 @@ export default async function handler(req, res) {
 
         const variantsData = await variantsResponse.json();
 
+        // 2. 利用可能なモックアップを取得
+        const mockupsResponse = await fetch(
+            `https://api.printify.com/v1/catalog/blueprints/${blueprintId}/print_providers/${printProviderId}.json`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        if (!mockupsResponse.ok) {
+            console.warn('Failed to fetch mockups, will use defaults');
+        }
+
+        const mockupsData = await mockupsResponse.json();
+        const availableMockups = mockupsData.images || [];
+
+        // 最大15個のモックアップIDを選択（バリエーションを持たせる）
+        const selectedMockupIds = availableMockups
+            .slice(0, 15)
+            .map(mockup => mockup.id);
+
+        console.log(`Selected ${selectedMockupIds.length} mockups for product`);
+
         // 利用可能なvariantから基本サイズ（S, M, L, XL, 2XL）を抽出
         const availableVariants = variantsData.variants || [];
         const selectedVariants = [];
@@ -78,8 +104,8 @@ export default async function handler(req, res) {
         const printifyApiUrl = `https://api.printify.com/v1/shops/${shopId}/products.json`;
 
         const payload = {
-            title: title || 'カスタムTシャツデザイン',
-            description: description || 'AI生成デザインのオリジナルTシャツ',
+            title: title || 'Custom Japanese Culture T-Shirt',
+            description: description || 'AI-generated unique Japanese-themed t-shirt design. Perfect souvenir for tourists visiting Japan.',
             blueprint_id: blueprintId,
             print_provider_id: printProviderId,
             variants: selectedVariants,
@@ -92,9 +118,9 @@ export default async function handler(req, res) {
                             images: [
                                 {
                                     id: imageId,
-                                    x: 0.5, // 中央配置
-                                    y: 0.45, // 少し上に配置（見栄えが良い）
-                                    scale: 0.95, // 95%サイズ（余裕を持たせる）
+                                    x: 0.5, // Center horizontal
+                                    y: 0.45, // Slightly above center for better appearance
+                                    scale: 0.95, // 95% size to prevent cropping
                                     angle: 0
                                 }
                             ]
@@ -102,7 +128,11 @@ export default async function handler(req, res) {
                     ]
                 }
             ],
-            tags: tags || ['カスタム', 'AI生成', 'オリジナル'],
+            // 自動選択されたモックアップを追加
+            print_details: selectedMockupIds.length > 0 ? {
+                mockup_ids: selectedMockupIds
+            } : undefined,
+            tags: tags || ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir'],
             // デフォルトでドラフトとして作成（後で確認してから公開）
             is_locked: false
         };
@@ -125,16 +155,21 @@ export default async function handler(req, res) {
         res.status(200).json({
             productId: result.id,
             productUrl: `https://printify.com/app/products/${result.id}`,
-            message: `✅ 商品の作成に成功しました！
+            message: `✅ Product created successfully!
 
-次のステップ：
-1. Printifyダッシュボードで商品を確認
-2. 「Edit design」をクリック
-3. 「View all mockups」で追加のモックアップを選択（50+種類）
-4. デザインの位置・サイズを微調整（推奨: y=0.45, scale=0.95）
-5. 背景が白い場合、Printifyが自動で透明化します（80-90%精度）
+📦 Product Details:
+• ${selectedMockupIds.length} mockups automatically selected
+• All sizes (S/M/L/XL/2XL) configured
+• Design positioned at center (y=0.45, scale=0.95)
+• English title & description for international reach
 
-商品URL: https://printify.com/app/products/${result.id}`
+🎯 Next Steps (Optional):
+1. Visit Printify dashboard to review product
+2. Add more mockups if needed (50+ available)
+3. Fine-tune design position if necessary
+4. Publish to your store when ready
+
+Product URL: https://printify.com/app/products/${result.id}`
         });
 
     } catch (error) {

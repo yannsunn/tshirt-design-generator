@@ -871,8 +871,13 @@
 
                 // 2. 商品を作成
                 progressText.textContent = 'Printifyで商品を作成中...';
-                const title = currentDesignIdea ? `${currentDesignIdea.phrase} - オリジナルTシャツ` : 'カスタムTシャツデザイン';
-                const description = currentDesignIdea ? `AIが生成した「${currentDesignIdea.character}」をモチーフにしたユニークなデザインTシャツです。` : 'AI生成デザインのオリジナルTシャツ';
+                // 英語のtitle/descriptionを生成（インバウンド観光客向け）
+                const title = currentDesignIdea
+                    ? `Japanese T-Shirt: ${currentDesignIdea.phrase}`
+                    : 'Custom Japanese Culture T-Shirt';
+                const description = currentDesignIdea
+                    ? `Unique AI-generated Japanese-themed t-shirt design featuring "${currentDesignIdea.character}". Perfect souvenir for tourists visiting Japan. Authentic Japanese aesthetic with modern design.`
+                    : 'AI-generated unique Japanese-themed t-shirt design. Perfect souvenir for tourists visiting Japan.';
 
                 const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
                     method: 'POST',

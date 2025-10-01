@@ -12,20 +12,27 @@ export default async function handler(req, res) {
         }
 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
-        const prompt = `以下のTシャツデザインについて、InstagramやX（旧Twitter）で使える魅力的な投稿文を日本語で作成してください。
+        const prompt = `Create an engaging social media post in ENGLISH for this Japanese-themed t-shirt design for Instagram or X (Twitter).
 
-デザイン情報:
-- モチーフ: ${idea.character}
-- フレーズ: ${idea.phrase}
-- スタイル: ${idea.fontStyle}
+Design Information:
+- Motif: ${idea.character}
+- Phrase: ${idea.phrase}
+- Style: ${idea.fontStyle}
 
-要件:
-1. 2-3文の簡潔な説明
-2. 3-5個の関連ハッシュタグ
-3. 商品の魅力が伝わる内容
-4. 絵文字を適度に使用
+Requirements:
+1. Write in English (target audience: international tourists)
+2. 2-3 concise sentences describing the design
+3. Highlight the Japanese cultural elements
+4. Include 5-7 relevant hashtags
+5. Use emojis appropriately (🇯🇵 🎨 👕 etc.)
+6. Make it appealing to tourists visiting Japan
 
-投稿文のみを出力してください。`;
+Format:
+[Main text with emojis]
+
+[Hashtags]
+
+Output only the social media post.`;
 
         const payload = {
             contents: [{ parts: [{ text: prompt }] }],
