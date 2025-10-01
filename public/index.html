@@ -106,13 +106,11 @@
             <div class="config-section">
                 <h2 class="text-lg font-semibold mb-3 text-gray-300">画像生成API選択</h2>
                 <div class="api-selector">
-                    <div class="api-option selected" data-api="fal">
-                        <h3 class="font-bold text-pink-300">FAL AI FLUX Dev</h3>
-                        <p class="text-sm text-gray-400 mt-1">メイン - 高品質・高速生成</p>
-                    </div>
-                    <div class="api-option" data-api="gemini">
+                    <div class="api-option selected" data-api="gemini">
                         <h3 class="font-bold text-purple-300">Gemini 2.5 Flash Image</h3>
-                        <p class="text-sm text-gray-400 mt-1">代替 - $0.039/画像</p>
+                    </div>
+                    <div class="api-option" data-api="seedream">
+                        <h3 class="font-bold text-pink-300">Seedream 4.0</h3>
                     </div>
                 </div>
 
@@ -303,7 +301,7 @@
 
     <script type="module">
         // --- Configuration State ---
-        let selectedAPI = 'fal'; // FAL AIをデフォルトに変更
+        let selectedAPI = 'gemini'; // Geminiをデフォルトに変更
         let currentDesignIdea = null;
         let serverReady = false;
         let selectedTheme = null; // 選択されたテーマ
@@ -372,7 +370,7 @@
 
                 if (data.status === 'ok') {
                     serverReady = true;
-                    apiStatusText.textContent = `✓ サーバー接続成功 | Gemini: ${data.geminiConfigured ? '✓' : '✗'} | FAL: ${data.falConfigured ? '✓' : '✗'} | Printify: ${data.printifyConfigured ? '✓' : '✗'}`;
+                    apiStatusText.textContent = `✓ サーバー接続成功 | Gemini: ${data.geminiConfigured ? '✓' : '✗'} | Seedream: ${data.seedreamConfigured ? '✓' : '✗'} | Printify: ${data.printifyConfigured ? '✓' : '✗'}`;
                     apiStatusText.classList.remove('text-red-400');
                     apiStatusText.classList.add('text-green-400');
                     generateIdeasBtn.disabled = true; // テーマが選択されるまで無効

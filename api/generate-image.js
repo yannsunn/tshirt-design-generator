@@ -13,13 +13,13 @@ export default async function handler(req, res) {
         if (character.length > 1000) {
             return res.status(400).json({ error: 'キャラクター情報が長すぎます' });
         }
-        if (!api || !['fal', 'gemini'].includes(api)) {
+        if (!api || !['seedream', 'gemini'].includes(api)) {
             return res.status(400).json({ error: '無効なAPI選択です' });
         }
 
-        // FAL AIをメインに、Geminiを代替として使用
-        if (api === 'fal') {
-            return await generateWithFAL(character, res);
+        // Geminiをメインに、Seedream 4.0を代替として使用
+        if (api === 'seedream') {
+            return await generateWithSeedream(character, res);
         } else if (api === 'gemini') {
             return await generateWithGemini(character, res);
         } else {
@@ -32,14 +32,14 @@ export default async function handler(req, res) {
     }
 }
 
-async function generateWithFAL(character, res) {
+async function generateWithSeedream(character, res) {
     const apiKey = process.env.FAL_API_KEY;
     if (!apiKey) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    // 🔥 CRITICAL FIX v2: Extreme simplicity + negative prompt
-    // Problem: AI STILL ignoring descriptions and creating random cute girls
+    // 🔥 Seedream 4.0: Extreme simplicity + negative prompt
+    // Seedream 4.0 is optimized for character accuracy
     // Solution: ONLY character description + strong negative prompt
 
     const prompt = `${character}
@@ -49,7 +49,7 @@ Japanese anime style illustration, white background, centered, full body visible
     // Strong negative prompt to prevent wrong generations
     const negativePrompt = "cute anime girl with food, cooking, restaurant, plate, dish, modern clothing, school uniform, cheerful smile, question mark, chef, waitress, different character";
 
-    const response = await fetch('https://fal.run/fal-ai/flux/dev', {
+    const response = await fetch('https://fal.run/fal-ai/seedream', {
         method: 'POST',
         headers: {
             'Authorization': `Key ${apiKey}`,
@@ -68,7 +68,7 @@ Japanese anime style illustration, white background, centered, full body visible
 
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`FAL AI API error: ${response.status} - ${errorText}`);
+        throw new Error(`Seedream API error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
