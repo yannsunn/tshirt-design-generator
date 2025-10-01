@@ -6,6 +6,17 @@ export default async function handler(req, res) {
     try {
         const { character, api } = req.body;
 
+        // 入力バリデーション
+        if (!character || typeof character !== 'string') {
+            return res.status(400).json({ error: 'キャラクター情報が指定されていません' });
+        }
+        if (character.length > 1000) {
+            return res.status(400).json({ error: 'キャラクター情報が長すぎます' });
+        }
+        if (!api || !['fal', 'gemini'].includes(api)) {
+            return res.status(400).json({ error: '無効なAPI選択です' });
+        }
+
         // FAL AIをメインに、Geminiを代替として使用
         if (api === 'fal') {
             return await generateWithFAL(character, res);

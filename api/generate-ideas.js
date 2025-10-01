@@ -5,6 +5,18 @@ export default async function handler(req, res) {
 
     try {
         const { theme } = req.body;
+
+        // 入力バリデーション
+        if (!theme || typeof theme !== 'string') {
+            return res.status(400).json({ error: 'テーマが指定されていません' });
+        }
+        if (theme.length > 200) {
+            return res.status(400).json({ error: 'テーマが長すぎます（最大200文字）' });
+        }
+        if (theme.trim().length === 0) {
+            return res.status(400).json({ error: 'テーマを入力してください' });
+        }
+
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
