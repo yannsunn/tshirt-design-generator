@@ -356,22 +356,29 @@
 
         let printifyShopId = null;
 
-        // --- Theme Selection ---
-        document.querySelectorAll('.theme-button').forEach(button => {
-            button.addEventListener('click', () => {
-                // 全てのボタンから選択状態を解除
-                document.querySelectorAll('.theme-button').forEach(btn => btn.classList.remove('selected'));
-                // クリックされたボタンを選択状態に
-                button.classList.add('selected');
-                // テーマを保存
-                selectedTheme = button.dataset.theme;
-                // 生成ボタンを有効化
-                if (serverReady) {
-                    generateIdeasBtn.disabled = false;
-                    generateIdeasBtn.querySelector('.btn-text').textContent = 'アイディアを生成';
-                }
+        // --- Initialize Theme Selection ---
+        const initializeThemeButtons = () => {
+            const themeButtons = document.querySelectorAll('.theme-button');
+            console.log('🎨 Theme buttons found:', themeButtons.length);
+
+            themeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    console.log('Theme clicked:', button.dataset.theme);
+                    // 全てのボタンから選択状態を解除
+                    document.querySelectorAll('.theme-button').forEach(btn => btn.classList.remove('selected'));
+                    // クリックされたボタンを選択状態に
+                    button.classList.add('selected');
+                    // テーマを保存
+                    selectedTheme = button.dataset.theme;
+                    console.log('Selected theme:', selectedTheme);
+                    // 生成ボタンを有効化
+                    if (serverReady) {
+                        generateIdeasBtn.disabled = false;
+                        generateIdeasBtn.querySelector('.btn-text').textContent = 'アイディアを生成';
+                    }
+                });
             });
-        });
+        };
 
         // --- Server Health Check ---
         const checkServerHealth = async () => {
@@ -1247,6 +1254,11 @@
 
         // --- App Initialization ---
         console.log('🚀 Tシャツデザインジェネレーター起動');
+
+        // Initialize theme buttons
+        initializeThemeButtons();
+
+        // Check server health
         checkServerHealth();
     </script>
 </body>
