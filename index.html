@@ -202,7 +202,8 @@
     </div>
 
     <script type="module">
-        import removeBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.2/dist/browser.js';
+        // 背景除去機能は一時的に無効化（CDNの問題のため）
+        const removeBackground = null;
 
         // --- Configuration State ---
         let selectedAPI = 'fal'; // FAL AIをデフォルトに変更
@@ -355,8 +356,17 @@
 
             try {
                 const generatedImgBlob = await generateCharacterImage(idea.character);
-                updateImageUI('loading', 'ステップ2/3: 背景を確実に除去中...');
-                const transparentImgBlob = await removeBackground(generatedImgBlob);
+
+                // 背景除去（利用可能な場合のみ）
+                let transparentImgBlob;
+                if (removeBackground) {
+                    updateImageUI('loading', 'ステップ2/3: 背景を確実に除去中...');
+                    transparentImgBlob = await removeBackground(generatedImgBlob);
+                } else {
+                    // 背景除去が利用できない場合は元の画像を使用
+                    transparentImgBlob = generatedImgBlob;
+                }
+
                 updateImageUI('loading', 'ステップ3/3: テキストを合成中...');
 
                 // 白Tシャツ用のデザインを生成
