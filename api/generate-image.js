@@ -38,12 +38,19 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    const prompt = `Create a detailed Japanese-themed t-shirt design illustration of: "${character}".
+    const prompt = `Create a detailed Japanese-themed t-shirt design illustration based EXACTLY on this description: "${character}".
+
+CRITICAL COMPOSITION RULES:
+- Show the COMPLETE character/motif - NO cropping, NO cutting off any parts
+- Ensure ALL elements described in the character description are fully visible within the frame
+- Leave 10-15% margin around the character so nothing gets cut off at edges
+- Center the character perfectly in the frame
+- The ENTIRE character must fit within the image boundaries
 
 Style requirements:
+- Follow the character description FAITHFULLY - include all colors, features, and details mentioned
 - Vibrant, eye-catching colors suitable for t-shirts
 - Japanese cultural aesthetic (anime/manga inspired or traditional art style)
-- Character should fill most of the frame and be centered
 - SOLID PURE WHITE BACKGROUND (#FFFFFF) - completely uniform white, no gradients, no shadows on background
 - High contrast and bold details for the character itself
 - Professional quality suitable for print-on-demand
@@ -52,7 +59,8 @@ Style requirements:
 CRITICAL:
 - Do NOT include ANY text, words, letters, or phrases in the image
 - Generate ONLY the character/motif illustration on pure white background
-- Background must be solid white (#FFFFFF) for automatic removal by print service`;
+- Background must be solid white (#FFFFFF) for automatic removal by print service
+- Every detail from the character description MUST be accurately represented in the image`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -95,22 +103,29 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    const prompt = `Create a detailed Japanese-themed t-shirt design illustration of: "${character}".
+    const prompt = `Create a detailed Japanese-themed t-shirt design illustration based EXACTLY on this description: "${character}".
+
+CRITICAL COMPOSITION RULES:
+- Show the COMPLETE character/motif - NO cropping, NO cutting off any parts
+- Ensure ALL elements described in the character description are fully visible within the frame
+- Leave 10-15% margin around the character so nothing gets cut off at edges
+- Center the character perfectly in the frame
+- The ENTIRE character must fit within the image boundaries
 
 Style requirements:
+- Follow the character description FAITHFULLY - include all colors, features, and details mentioned
 - Vibrant, eye-catching colors suitable for t-shirts
 - Japanese cultural aesthetic (anime/manga inspired or traditional art style)
-- Character should fill most of the frame and be centered
 - SOLID PURE WHITE BACKGROUND (#FFFFFF) - completely uniform white, no gradients, no shadows on background
 - High contrast and bold details for the character itself
 - Professional quality suitable for print-on-demand
 - Clear, well-defined edges separating character from white background
-- Centered composition
 
 CRITICAL:
 - Do NOT include ANY text, words, letters, or phrases in the image
 - Generate ONLY the character/motif illustration on pure white background
-- Background must be solid white (#FFFFFF) for automatic removal by print service`;
+- Background must be solid white (#FFFFFF) for automatic removal by print service
+- Every detail from the character description MUST be accurately represented in the image`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
