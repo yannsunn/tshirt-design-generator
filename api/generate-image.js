@@ -40,12 +40,22 @@ async function generateWithFAL(character, res) {
 
     const prompt = `Create a detailed Japanese-themed t-shirt design illustration based EXACTLY on this description: "${character}".
 
-CRITICAL COMPOSITION RULES:
-- Show the COMPLETE character/motif - NO cropping, NO cutting off any parts
-- Ensure ALL elements described in the character description are fully visible within the frame
-- Leave 10-15% margin around the character so nothing gets cut off at edges
-- Center the character perfectly in the frame
-- The ENTIRE character must fit within the image boundaries
+🚨 CRITICAL FRAMING RULES - MUST FOLLOW:
+- The character MUST be SMALLER than the frame - it should occupy only 60-70% of the image area
+- Leave LARGE EMPTY WHITE SPACE (20-25% minimum) on ALL FOUR SIDES (top, bottom, left, right)
+- Position the character in the DEAD CENTER of the frame
+- Make sure you can see white background space completely surrounding the character
+- Think of it like a picture frame: the character is the subject, the white space is the frame
+- ZOOM OUT so the entire character fits comfortably with room to spare
+- NO parts of the character should touch or go near the edges of the image
+- If the character has long parts (ears, tail, hair, etc.), make the character even SMALLER to fit everything
+
+COMPOSITION CHECKLIST:
+✓ Top edge: Can see white space above the character's highest point
+✓ Bottom edge: Can see white space below the character's lowest point
+✓ Left edge: Can see white space to the left of the character's leftmost point
+✓ Right edge: Can see white space to the right of the character's rightmost point
+✓ The character looks like it's "floating" in the center with space all around
 
 Style requirements:
 - Follow the character description FAITHFULLY - include all colors, features, and details mentioned
@@ -60,7 +70,8 @@ CRITICAL:
 - Do NOT include ANY text, words, letters, or phrases in the image
 - Generate ONLY the character/motif illustration on pure white background
 - Background must be solid white (#FFFFFF) for automatic removal by print service
-- Every detail from the character description MUST be accurately represented in the image`;
+- Every detail from the character description MUST be accurately represented in the image
+- REMEMBER: Character should be SMALL enough that it fits with plenty of white space around it`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -105,12 +116,22 @@ async function generateWithGemini(character, res) {
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
     const prompt = `Create a detailed Japanese-themed t-shirt design illustration based EXACTLY on this description: "${character}".
 
-CRITICAL COMPOSITION RULES:
-- Show the COMPLETE character/motif - NO cropping, NO cutting off any parts
-- Ensure ALL elements described in the character description are fully visible within the frame
-- Leave 10-15% margin around the character so nothing gets cut off at edges
-- Center the character perfectly in the frame
-- The ENTIRE character must fit within the image boundaries
+🚨 CRITICAL FRAMING RULES - MUST FOLLOW:
+- The character MUST be SMALLER than the frame - it should occupy only 60-70% of the image area
+- Leave LARGE EMPTY WHITE SPACE (20-25% minimum) on ALL FOUR SIDES (top, bottom, left, right)
+- Position the character in the DEAD CENTER of the frame
+- Make sure you can see white background space completely surrounding the character
+- Think of it like a picture frame: the character is the subject, the white space is the frame
+- ZOOM OUT so the entire character fits comfortably with room to spare
+- NO parts of the character should touch or go near the edges of the image
+- If the character has long parts (ears, tail, hair, etc.), make the character even SMALLER to fit everything
+
+COMPOSITION CHECKLIST:
+✓ Top edge: Can see white space above the character's highest point
+✓ Bottom edge: Can see white space below the character's lowest point
+✓ Left edge: Can see white space to the left of the character's leftmost point
+✓ Right edge: Can see white space to the right of the character's rightmost point
+✓ The character looks like it's "floating" in the center with space all around
 
 Style requirements:
 - Follow the character description FAITHFULLY - include all colors, features, and details mentioned
@@ -125,7 +146,8 @@ CRITICAL:
 - Do NOT include ANY text, words, letters, or phrases in the image
 - Generate ONLY the character/motif illustration on pure white background
 - Background must be solid white (#FFFFFF) for automatic removal by print service
-- Every detail from the character description MUST be accurately represented in the image`;
+- Every detail from the character description MUST be accurately represented in the image
+- REMEMBER: Character should be SMALL enough that it fits with plenty of white space around it`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
