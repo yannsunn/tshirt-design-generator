@@ -112,10 +112,25 @@ export default async function handler(req, res) {
 
         if (!response.ok) {
             const errorText = await response.text();
+            console.error('Gemini API error response:', errorText);
             throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
         }
 
-        const result = await response.json();
+        const responseText = await response.text();
+        let result;
+
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse Gemini API response:', responseText);
+            throw new Error(`Gemini APIから無効なレスポンスが返されました。レスポンス内容: ${responseText.substring(0, 200)}...`);
+        }
+
+        if (!result.candidates || !result.candidates[0]?.content?.parts?.[0]?.text) {
+            console.error('Unexpected Gemini API response structure:', JSON.stringify(result, null, 2));
+            throw new Error(`Gemini APIから予期しないレスポンス構造が返されました: ${JSON.stringify(result)}`);
+        }
+
         const ideas = JSON.parse(result.candidates[0].content.parts[0].text);
         res.status(200).json({ ideas });
 

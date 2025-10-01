@@ -244,8 +244,13 @@
             <!-- Error Messages -->
             <div id="error-section" class="hidden my-4">
                 <div class="bg-red-900/50 border border-red-500 rounded-lg p-4">
-                    <p class="text-red-300 font-semibold">エラーが発生しました</p>
-                    <p id="error-message" class="text-red-200 text-sm mt-1"></p>
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-red-300 font-semibold">エラーが発生しました</p>
+                        <button id="copy-error-btn" class="text-red-300 hover:text-red-100 transition-colors text-sm px-2 py-1 border border-red-400 rounded">
+                            📋 コピー
+                        </button>
+                    </div>
+                    <p id="error-message" class="text-red-200 text-sm mt-1 select-text break-all"></p>
                 </div>
             </div>
 
@@ -342,6 +347,7 @@
         const downloadBtn = document.getElementById('download-btn');
         const errorSection = document.getElementById('error-section');
         const errorMessage = document.getElementById('error-message');
+        const copyErrorBtn = document.getElementById('copy-error-btn');
         const apiStatusText = document.getElementById('api-status-text');
         const generateSnsBtn = document.getElementById('generate-sns-btn');
         const snsSection = document.getElementById('sns-section');
@@ -734,6 +740,20 @@
                 }, 2000);
             } catch (error) {
                 showError('コピーに失敗しました。手動でコピーしてください。');
+            }
+        });
+
+        // エラーメッセージのコピー
+        copyErrorBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(errorMessage.textContent);
+                const originalText = copyErrorBtn.textContent;
+                copyErrorBtn.textContent = '✅ コピーしました！';
+                setTimeout(() => {
+                    copyErrorBtn.textContent = originalText;
+                }, 2000);
+            } catch (error) {
+                console.error('エラーメッセージのコピーに失敗:', error);
             }
         });
 
