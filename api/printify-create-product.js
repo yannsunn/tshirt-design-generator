@@ -272,16 +272,27 @@ export default async function handler(req, res) {
 • Price: ¥2,500 per item
 • English title & description for international reach
 
-⚠️ Mockups:
-Printify automatically generates mockups after product creation.
-Visit the product page to view and customize mockups.
+🎨 IMPORTANT: Mockup Selection Required (API Limitation)
+⚠️ Printify API does not auto-select mockups. You MUST manually select them:
+
+📋 Step-by-Step Mockup Selection:
+1. Click the Product URL below to open Printify dashboard
+2. Scroll down to "Selected mockups" section
+3. Click "View all mockups" button on the right
+4. In the Mockup Library popup, click "Select all" checkbox
+   → This selects ALL 90 mockups (6 colors × 15 mockups each)
+5. Click "Save" or close the popup
+6. Verify "Selected mockups" shows 90 mockups (not 24)
+7. Click "Publish" to make product live
+
+Current Status: Only 24 mockups selected (4 per color)
+Target: 90 mockups (15 per color) ← SELECT ALL for best results!
 
 🎯 Next Steps:
-1. Visit Printify dashboard to review product
-2. Check mockups in "Edit design" section (auto-generated)
-3. Verify all color/size combinations are correct
-4. Customize mockups if needed ("View all mockups" shows 50+ options)
-5. Publish to your store when ready
+1. Visit Printify dashboard → Select ALL mockups (90 total)
+2. Verify all color/size combinations are correct
+3. Check product description (English only, no Japanese)
+4. Publish to your store when ready
 
 Product URL: https://printify.com/app/products/${productId}`
         });

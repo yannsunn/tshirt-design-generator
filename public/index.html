@@ -922,9 +922,27 @@
                 const title = currentDesignIdea
                     ? `Japanese T-Shirt: ${currentDesignIdea.phrase}`
                     : 'Custom Japanese Culture T-Shirt';
-                const description = currentDesignIdea
-                    ? `Unique AI-generated Japanese-themed t-shirt design featuring "${currentDesignIdea.character}". Perfect souvenir for tourists visiting Japan. Authentic Japanese aesthetic with modern design.`
-                    : 'AI-generated unique Japanese-themed t-shirt design. Perfect souvenir for tourists visiting Japan.';
+                // Generate English description without Japanese characters
+                const getEnglishDescription = (idea) => {
+                    if (!idea) return 'AI-generated unique Japanese-themed t-shirt design. Perfect souvenir for tourists visiting Japan.';
+
+                    // Extract theme from phrase (usually in Japanese)
+                    const phrase = idea.phrase || '';
+                    const fontStyle = idea.fontStyle || 'modern';
+
+                    // Generic descriptions based on font style (horror, pop, retro, modern)
+                    const styleDescriptions = {
+                        'horror': 'Featuring a spooky Japanese ghost design with traditional elements. Dark and mysterious aesthetic perfect for those who love Japanese horror culture.',
+                        'pop': 'Featuring a cute and colorful Japanese pop art design. Vibrant and playful aesthetic inspired by Japanese kawaii culture.',
+                        'retro': 'Featuring a vintage Japanese retro design with nostalgic elements. Classic aesthetic inspired by traditional Japanese art.',
+                        'modern': 'Featuring a contemporary Japanese design with clean lines. Modern aesthetic blending traditional and contemporary elements.'
+                    };
+
+                    const styleDesc = styleDescriptions[fontStyle] || styleDescriptions['modern'];
+                    return `Unique AI-generated Japanese-themed t-shirt design. ${styleDesc} Perfect souvenir for tourists visiting Japan.`;
+                };
+
+                const description = getEnglishDescription(currentDesignIdea);
 
                 const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
                     method: 'POST',
