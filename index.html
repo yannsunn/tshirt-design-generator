@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- デザインバリエーション用のフォントを読み込み -->
-    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@700&family=Noto+Sans+JP:wght@700&family=Yuji+Syuku&display=swap" rel="stylesheet">
+    <!-- 日本文化Tシャツデザイン用フォント -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&family=Shippori+Mincho+B1:wght@800&family=Rampart+One&family=Zen+Kaku+Gothic+New:wght@900&family=Kosugi+Maru&family=Reggae+One&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
@@ -612,10 +612,11 @@
 
         const getFontFamily = (style) => {
             switch(style) {
-                case 'pop': return "'M PLUS Rounded 1c', sans-serif";
-                case 'horror': return "'DotGothic16', sans-serif";
-                case 'retro': return "'Yuji Syuku', serif";
-                default: return "'Noto Sans JP', sans-serif";
+                case 'pop': return "'Zen Maru Gothic', 'Kosugi Maru', sans-serif";  // 可愛い丸ゴシック、太字
+                case 'horror': return "'Shippori Mincho B1', 'Reggae One', serif";  // 重厚な明朝体、インパクト大
+                case 'retro': return "'Rampart One', cursive";  // 昭和レトロ風、太くて目立つ
+                case 'modern': return "'Zen Kaku Gothic New', sans-serif";  // モダンでクールなゴシック
+                default: return "'Zen Kaku Gothic New', sans-serif";
             }
         };
 
