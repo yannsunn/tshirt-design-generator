@@ -38,40 +38,46 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    const prompt = `Create a detailed Japanese-themed t-shirt design illustration based EXACTLY on this description: "${character}".
+    const prompt = `Create a t-shirt design illustration for international tourists based on this description: "${character}".
 
-🚨 CRITICAL FRAMING RULES - MUST FOLLOW:
-- The character MUST be SMALLER than the frame - it should occupy only 60-70% of the image area
-- Leave LARGE EMPTY WHITE SPACE (20-25% minimum) on ALL FOUR SIDES (top, bottom, left, right)
-- Position the character in the DEAD CENTER of the frame
-- Make sure you can see white background space completely surrounding the character
-- Think of it like a picture frame: the character is the subject, the white space is the frame
-- ZOOM OUT so the entire character fits comfortably with room to spare
-- NO parts of the character should touch or go near the edges of the image
-- If the character has long parts (ears, tail, hair, etc.), make the character even SMALLER to fit everything
+This is for a T-SHIRT PRINT - simple, clean illustration only.
+
+🚨 ABSOLUTELY NO TEXT ALLOWED:
+- NO Japanese characters (kanji, hiragana, katakana)
+- NO English letters or words
+- NO numbers or symbols
+- NO text of any kind anywhere in the image
+- This is a PURE ILLUSTRATION ONLY - like a logo or icon
+- If you see any text forming, STOP and remove it
+- The illustration should speak for itself without any words
+
+🚨 FRAMING RULES:
+- Character occupies 60-70% of image area (leave 30-40% as white space)
+- Minimum 20-25% white space on ALL FOUR SIDES
+- Center the character perfectly
+- ZOOM OUT to fit everything with room to spare
+- Character should look like it's "floating" with white space all around
 
 COMPOSITION CHECKLIST:
-✓ Top edge: Can see white space above the character's highest point
-✓ Bottom edge: Can see white space below the character's lowest point
-✓ Left edge: Can see white space to the left of the character's leftmost point
-✓ Right edge: Can see white space to the right of the character's rightmost point
-✓ The character looks like it's "floating" in the center with space all around
+✓ Top: white space visible above character
+✓ Bottom: white space visible below character
+✓ Left: white space visible on left side
+✓ Right: white space visible on right side
 
 Style requirements:
-- Follow the character description FAITHFULLY - include all colors, features, and details mentioned
-- Vibrant, eye-catching colors suitable for t-shirts
-- Japanese cultural aesthetic (anime/manga inspired or traditional art style)
-- SOLID PURE WHITE BACKGROUND (#FFFFFF) - completely uniform white, no gradients, no shadows on background
-- High contrast and bold details for the character itself
-- Professional quality suitable for print-on-demand
-- Clear, well-defined edges separating character from white background
+- Follow the character description faithfully
+- Vibrant colors suitable for t-shirts
+- Cute, appealing Japanese aesthetic (anime/manga style or traditional Japanese art)
+- Appeal to foreign tourists who love Japanese culture
+- SOLID PURE WHITE BACKGROUND (#FFFFFF) - no gradients, no shadows
+- High contrast and clear edges
+- Professional print-on-demand quality
 
-CRITICAL:
-- Do NOT include ANY text, words, letters, or phrases in the image
-- Generate ONLY the character/motif illustration on pure white background
-- Background must be solid white (#FFFFFF) for automatic removal by print service
-- Every detail from the character description MUST be accurately represented in the image
-- REMEMBER: Character should be SMALL enough that it fits with plenty of white space around it`;
+REMEMBER:
+- This is for an international audience
+- Simple, iconic illustration that represents Japanese culture
+- NO TEXT - illustration only
+- Clean, commercial t-shirt design`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -114,40 +120,46 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    const prompt = `Create a detailed Japanese-themed t-shirt design illustration based EXACTLY on this description: "${character}".
+    const prompt = `Create a t-shirt design illustration for international tourists based on this description: "${character}".
 
-🚨 CRITICAL FRAMING RULES - MUST FOLLOW:
-- The character MUST be SMALLER than the frame - it should occupy only 60-70% of the image area
-- Leave LARGE EMPTY WHITE SPACE (20-25% minimum) on ALL FOUR SIDES (top, bottom, left, right)
-- Position the character in the DEAD CENTER of the frame
-- Make sure you can see white background space completely surrounding the character
-- Think of it like a picture frame: the character is the subject, the white space is the frame
-- ZOOM OUT so the entire character fits comfortably with room to spare
-- NO parts of the character should touch or go near the edges of the image
-- If the character has long parts (ears, tail, hair, etc.), make the character even SMALLER to fit everything
+This is for a T-SHIRT PRINT - simple, clean illustration only.
+
+🚨 ABSOLUTELY NO TEXT ALLOWED:
+- NO Japanese characters (kanji, hiragana, katakana)
+- NO English letters or words
+- NO numbers or symbols
+- NO text of any kind anywhere in the image
+- This is a PURE ILLUSTRATION ONLY - like a logo or icon
+- If you see any text forming, STOP and remove it
+- The illustration should speak for itself without any words
+
+🚨 FRAMING RULES:
+- Character occupies 60-70% of image area (leave 30-40% as white space)
+- Minimum 20-25% white space on ALL FOUR SIDES
+- Center the character perfectly
+- ZOOM OUT to fit everything with room to spare
+- Character should look like it's "floating" with white space all around
 
 COMPOSITION CHECKLIST:
-✓ Top edge: Can see white space above the character's highest point
-✓ Bottom edge: Can see white space below the character's lowest point
-✓ Left edge: Can see white space to the left of the character's leftmost point
-✓ Right edge: Can see white space to the right of the character's rightmost point
-✓ The character looks like it's "floating" in the center with space all around
+✓ Top: white space visible above character
+✓ Bottom: white space visible below character
+✓ Left: white space visible on left side
+✓ Right: white space visible on right side
 
 Style requirements:
-- Follow the character description FAITHFULLY - include all colors, features, and details mentioned
-- Vibrant, eye-catching colors suitable for t-shirts
-- Japanese cultural aesthetic (anime/manga inspired or traditional art style)
-- SOLID PURE WHITE BACKGROUND (#FFFFFF) - completely uniform white, no gradients, no shadows on background
-- High contrast and bold details for the character itself
-- Professional quality suitable for print-on-demand
-- Clear, well-defined edges separating character from white background
+- Follow the character description faithfully
+- Vibrant colors suitable for t-shirts
+- Cute, appealing Japanese aesthetic (anime/manga style or traditional Japanese art)
+- Appeal to foreign tourists who love Japanese culture
+- SOLID PURE WHITE BACKGROUND (#FFFFFF) - no gradients, no shadows
+- High contrast and clear edges
+- Professional print-on-demand quality
 
-CRITICAL:
-- Do NOT include ANY text, words, letters, or phrases in the image
-- Generate ONLY the character/motif illustration on pure white background
-- Background must be solid white (#FFFFFF) for automatic removal by print service
-- Every detail from the character description MUST be accurately represented in the image
-- REMEMBER: Character should be SMALL enough that it fits with plenty of white space around it`;
+REMEMBER:
+- This is for an international audience
+- Simple, iconic illustration that represents Japanese culture
+- NO TEXT - illustration only
+- Clean, commercial t-shirt design`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
