@@ -63,6 +63,27 @@
             border-radius: 10px;
             margin-bottom: 20px;
         }
+        .theme-category {
+            margin-bottom: 24px;
+        }
+        .theme-button {
+            padding: 12px 20px;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            background-color: #374151;
+        }
+        .theme-button:hover {
+            border-color: #9333ea;
+            background-color: #4c1d95;
+            transform: translateY(-2px);
+        }
+        .theme-button.selected {
+            border-color: #9333ea;
+            background-color: rgba(147, 51, 234, 0.2);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4 sm:p-6 lg:p-8">
@@ -70,10 +91,10 @@
         <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                Tシャツデザインジェネレーター
+                Japan Souvenir T-Shirt Generator
             </h1>
             <p class="text-gray-400 mt-2">
-                テーマを入力して、Printifyで使えるユニークなTシャツデザインのアイディアと画像を生成しましょう。
+                外国人観光客向け：日本の文化・風景をテーマにしたTシャツデザインを生成
             </p>
         </header>
 
@@ -100,24 +121,122 @@
                 </div>
             </div>
 
-            <!-- Step 1: Theme Input -->
+            <!-- Step 1: Theme Selection -->
             <div class="mb-6">
-                <label for="theme-input" class="block text-lg font-semibold mb-2 text-gray-300">
-                    ステップ1：デザインのテーマを入力
-                </label>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <input
-                        type="text"
-                        id="theme-input"
-                        class="flex-grow bg-gray-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition"
-                        placeholder="例：ハロウィン、クリスマス、日本の和柄、サイバーパンク">
+                <div class="flex justify-between items-center mb-4">
+                    <label class="block text-lg font-semibold text-gray-300">
+                        ステップ1：デザインテーマを選択
+                    </label>
                     <button
                         id="generate-ideas-btn"
-                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300 text-sm"
                         disabled>
-                        <span class="btn-text">サーバー接続確認中...</span>
-                        <div class="loader hidden" style="width:24px; height:24px; border-width:3px; margin:auto;"></div>
+                        <span class="btn-text">テーマを選択してください</span>
+                        <div class="loader hidden" style="width:20px; height:20px; border-width:3px; margin:auto;"></div>
                     </button>
+                </div>
+
+                <!-- 日本の伝統文化 -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-purple-300 mb-2">🏯 日本の伝統文化 (Traditional Culture)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="富士山と桜 (Mt. Fuji & Cherry Blossoms)">🗻 富士山と桜</div>
+                        <div class="theme-button" data-theme="侍 (Samurai Warrior)">⚔️ 侍</div>
+                        <div class="theme-button" data-theme="忍者 (Ninja)">🥷 忍者</div>
+                        <div class="theme-button" data-theme="芸者 (Geisha)">👘 芸者</div>
+                        <div class="theme-button" data-theme="相撲 (Sumo Wrestling)">🤼 相撲</div>
+                        <div class="theme-button" data-theme="茶道 (Tea Ceremony)">🍵 茶道</div>
+                        <div class="theme-button" data-theme="書道 (Calligraphy)">✍️ 書道</div>
+                        <div class="theme-button" data-theme="着物と和傘 (Kimono & Umbrella)">🌸 着物</div>
+                    </div>
+                </div>
+
+                <!-- 日本の動物 -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-pink-300 mb-2">🐾 日本の動物 (Japanese Animals)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="柴犬 (Shiba Inu Dog)">🐕 柴犬</div>
+                        <div class="theme-button" data-theme="招き猫 (Maneki-neko Lucky Cat)">😸 招き猫</div>
+                        <div class="theme-button" data-theme="鯉 (Koi Fish)">🐟 鯉</div>
+                        <div class="theme-button" data-theme="鶴 (Japanese Crane)">🦢 鶴</div>
+                        <div class="theme-button" data-theme="狐 (Fox Spirit)">🦊 狐</div>
+                        <div class="theme-button" data-theme="鹿 (Deer in Nara)">🦌 奈良の鹿</div>
+                    </div>
+                </div>
+
+                <!-- 日本料理 -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-yellow-300 mb-2">🍱 日本料理 (Japanese Food)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="寿司 (Sushi)">🍣 寿司</div>
+                        <div class="theme-button" data-theme="ラーメン (Ramen)">🍜 ラーメン</div>
+                        <div class="theme-button" data-theme="たこ焼き (Takoyaki)">🐙 たこ焼き</div>
+                        <div class="theme-button" data-theme="抹茶 (Matcha Green Tea)">🍵 抹茶</div>
+                        <div class="theme-button" data-theme="おにぎり (Onigiri Rice Ball)">🍙 おにぎり</div>
+                        <div class="theme-button" data-theme="天ぷら (Tempura)">🍤 天ぷら</div>
+                    </div>
+                </div>
+
+                <!-- 日本の風景 -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-green-300 mb-2">⛩️ 日本の風景 (Japanese Scenery)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="鳥居 (Torii Gate at Shrine)">⛩️ 鳥居</div>
+                        <div class="theme-button" data-theme="竹林 (Bamboo Forest)">🎋 竹林</div>
+                        <div class="theme-button" data-theme="紅葉 (Autumn Leaves)">🍂 紅葉</div>
+                        <div class="theme-button" data-theme="日本庭園 (Japanese Garden)">🌿 日本庭園</div>
+                        <div class="theme-button" data-theme="温泉 (Hot Spring Onsen)">♨️ 温泉</div>
+                        <div class="theme-button" data-theme="桜並木 (Cherry Blossom Path)">🌸 桜並木</div>
+                    </div>
+                </div>
+
+                <!-- 季節のイベント -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-blue-300 mb-2">🎉 季節のイベント (Seasonal Events)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="花見 (Cherry Blossom Viewing)">🌸 花見</div>
+                        <div class="theme-button" data-theme="夏祭り (Summer Festival)">🎆 夏祭り</div>
+                        <div class="theme-button" data-theme="花火大会 (Fireworks Festival)">🎇 花火大会</div>
+                        <div class="theme-button" data-theme="七夕 (Tanabata Star Festival)">🎋 七夕</div>
+                        <div class="theme-button" data-theme="紅葉狩り (Autumn Leaf Viewing)">🍁 紅葉狩り</div>
+                        <div class="theme-button" data-theme="初詣 (New Year Shrine Visit)">⛩️ 初詣</div>
+                    </div>
+                </div>
+
+                <!-- 現代日本 -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-cyan-300 mb-2">🚄 現代日本 (Modern Japan)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="新幹線 (Bullet Train)">🚅 新幹線</div>
+                        <div class="theme-button" data-theme="渋谷交差点 (Shibuya Crossing)">🚶 渋谷</div>
+                        <div class="theme-button" data-theme="東京タワー (Tokyo Tower)">🗼 東京タワー</div>
+                        <div class="theme-button" data-theme="ネオン街 (Neon Streets)">🌃 ネオン街</div>
+                        <div class="theme-button" data-theme="自動販売機 (Vending Machines)">🥤 自販機</div>
+                        <div class="theme-button" data-theme="ロボット (Japanese Robots)">🤖 ロボット</div>
+                    </div>
+                </div>
+
+                <!-- 日本の象徴 -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-red-300 mb-2">🎎 日本の象徴 (Japanese Symbols)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="だるま (Daruma Doll)">🪆 だるま</div>
+                        <div class="theme-button" data-theme="折り紙 (Origami)">📄 折り紙</div>
+                        <div class="theme-button" data-theme="扇子 (Japanese Fan)">🪭 扇子</div>
+                        <div class="theme-button" data-theme="提灯 (Paper Lantern)">🏮 提灯</div>
+                        <div class="theme-button" data-theme="こけし (Kokeshi Doll)">🎎 こけし</div>
+                        <div class="theme-button" data-theme="日の丸 (Rising Sun Flag)">🇯🇵 日の丸</div>
+                    </div>
+                </div>
+
+                <!-- 国際イベント（日本風） -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-orange-300 mb-2">🎃 国際イベント（日本風） (International Events)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="和風ハロウィン (Japanese Halloween with Yokai)">🎃 和風ハロウィン</div>
+                        <div class="theme-button" data-theme="和風クリスマス (Japanese Christmas)">🎄 和風クリスマス</div>
+                        <div class="theme-button" data-theme="バレンタインデー日本風 (Japanese Valentine's Day)">💝 バレンタイン</div>
+                    </div>
                 </div>
             </div>
 
@@ -209,10 +328,10 @@
         let selectedAPI = 'fal'; // FAL AIをデフォルトに変更
         let currentDesignIdea = null;
         let serverReady = false;
+        let selectedTheme = null; // 選択されたテーマ
         const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
 
         // --- DOM Elements ---
-        const themeInput = document.getElementById('theme-input');
         const generateIdeasBtn = document.getElementById('generate-ideas-btn');
         const ideasSection = document.getElementById('ideas-section');
         const ideasContainer = document.getElementById('ideas-container');
@@ -243,6 +362,23 @@
             });
         });
 
+        // --- Theme Selection ---
+        document.querySelectorAll('.theme-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // 全てのボタンから選択状態を解除
+                document.querySelectorAll('.theme-button').forEach(btn => btn.classList.remove('selected'));
+                // クリックされたボタンを選択状態に
+                button.classList.add('selected');
+                // テーマを保存
+                selectedTheme = button.dataset.theme;
+                // 生成ボタンを有効化
+                if (serverReady) {
+                    generateIdeasBtn.disabled = false;
+                    generateIdeasBtn.querySelector('.btn-text').textContent = 'アイディアを生成';
+                }
+            });
+        });
+
         // --- Server Health Check ---
         const checkServerHealth = async () => {
             try {
@@ -254,8 +390,8 @@
                     apiStatusText.textContent = `✓ サーバー接続成功 | Gemini: ${data.geminiConfigured ? '✓' : '✗'} | FAL: ${data.falConfigured ? '✓' : '✗'} | Printify: ${data.printifyConfigured ? '✓' : '✗'}`;
                     apiStatusText.classList.remove('text-red-400');
                     apiStatusText.classList.add('text-green-400');
-                    generateIdeasBtn.disabled = false;
-                    generateIdeasBtn.querySelector('.btn-text').textContent = 'アイディアを生成';
+                    generateIdeasBtn.disabled = true; // テーマが選択されるまで無効
+                    generateIdeasBtn.querySelector('.btn-text').textContent = 'テーマを選択してください';
 
                     // Printifyショップ情報を取得
                     if (data.printifyConfigured) {
@@ -291,9 +427,9 @@
 
         // --- Core Functions ---
         const handleGenerateIdeas = async () => {
-            const theme = themeInput.value.trim();
-            if (!theme) return showError('テーマを入力してください。');
+            if (!selectedTheme) return showError('テーマを選択してください。');
             if (!serverReady) return showError('サーバーに接続されていません。');
+            const theme = selectedTheme;
 
             setButtonLoading(generateIdeasBtn, true);
             resetUIForNewIdeas();
@@ -639,10 +775,6 @@
         generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
         generateSnsBtn.addEventListener('click', handleGenerateSNS);
         createPrintifyBtn.addEventListener('click', handleCreatePrintifyProduct);
-
-        themeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !generateIdeasBtn.disabled) handleGenerateIdeas();
-        });
 
         // --- App Initialization ---
         console.log('🚀 Tシャツデザインジェネレーター起動');
