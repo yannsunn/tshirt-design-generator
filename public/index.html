@@ -554,7 +554,9 @@
 
                 // APIキーが設定されていない、またはエラーの場合は元の画像を返す
                 if (result.skipped) {
-                    console.log('Background removal skipped:', result.message);
+                    console.warn('⚠️ 背景除去がスキップされました:', result.message);
+                    console.warn('remove.bg APIキーが設定されていないか、エラーが発生しています');
+                    alert('注意: 背景除去がスキップされました。Printifyが自動で背景を除去します（精度80-90%）。\n高精度な背景除去が必要な場合は、remove.bg APIキーを設定してください。');
                     return imageBlob;
                 }
 

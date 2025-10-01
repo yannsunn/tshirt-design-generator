@@ -92,9 +92,9 @@ export default async function handler(req, res) {
                             images: [
                                 {
                                     id: imageId,
-                                    x: 0.5,
-                                    y: 0.5,
-                                    scale: 1,
+                                    x: 0.5, // 中央配置
+                                    y: 0.45, // 少し上に配置（見栄えが良い）
+                                    scale: 0.95, // 95%サイズ（余裕を持たせる）
                                     angle: 0
                                 }
                             ]
@@ -102,7 +102,9 @@ export default async function handler(req, res) {
                     ]
                 }
             ],
-            tags: tags || ['カスタム', 'AI生成', 'オリジナル']
+            tags: tags || ['カスタム', 'AI生成', 'オリジナル'],
+            // デフォルトでドラフトとして作成（後で確認してから公開）
+            is_locked: false
         };
 
         const response = await fetch(printifyApiUrl, {
@@ -123,7 +125,16 @@ export default async function handler(req, res) {
         res.status(200).json({
             productId: result.id,
             productUrl: `https://printify.com/app/products/${result.id}`,
-            message: '商品の作成に成功しました！Printifyダッシュボードで確認できます。'
+            message: `✅ 商品の作成に成功しました！
+
+次のステップ：
+1. Printifyダッシュボードで商品を確認
+2. 「Edit design」をクリック
+3. 「View all mockups」で追加のモックアップを選択（50+種類）
+4. デザインの位置・サイズを微調整（推奨: y=0.45, scale=0.95）
+5. 背景が白い場合、Printifyが自動で透明化します（80-90%精度）
+
+商品URL: https://printify.com/app/products/${result.id}`
         });
 
     } catch (error) {

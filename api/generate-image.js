@@ -51,13 +51,15 @@ This is for a T-SHIRT PRINT - simple, clean illustration only.
 - If you see any text forming, STOP and remove it
 - The illustration should speak for itself without any words
 
-🚨 FRAMING RULES:
-- Character occupies only 55-65% of image area (leave 35-45% as white space)
-- Minimum 25-30% white space on ALL FOUR SIDES
-- Center the character perfectly
-- ZOOM OUT MORE to ensure nothing gets cut off
-- Character should look like it's "floating" with generous white space all around
-- Better to have too much space than not enough
+🚨 CRITICAL FRAMING RULES - MUST PREVENT CROPPING:
+- Character occupies MAXIMUM 50-60% of image area (leave 40-50% as white space)
+- MINIMUM 30-35% white space on ALL FOUR SIDES (top, bottom, left, right)
+- Center the character perfectly in the middle
+- ZOOM WAY OUT - pretend you're taking a photo from far away
+- The character should look SMALL and centered with LOTS of white space around it
+- Think "postage stamp in the middle of a white page"
+- If ANY part might touch the edge, make it EVEN SMALLER
+- Better to have TOO MUCH white space than risk any cropping
 
 COMPOSITION CHECKLIST:
 ✓ Top: white space visible above character
@@ -134,13 +136,15 @@ This is for a T-SHIRT PRINT - simple, clean illustration only.
 - If you see any text forming, STOP and remove it
 - The illustration should speak for itself without any words
 
-🚨 FRAMING RULES:
-- Character occupies only 55-65% of image area (leave 35-45% as white space)
-- Minimum 25-30% white space on ALL FOUR SIDES
-- Center the character perfectly
-- ZOOM OUT MORE to ensure nothing gets cut off
-- Character should look like it's "floating" with generous white space all around
-- Better to have too much space than not enough
+🚨 CRITICAL FRAMING RULES - MUST PREVENT CROPPING:
+- Character occupies MAXIMUM 50-60% of image area (leave 40-50% as white space)
+- MINIMUM 30-35% white space on ALL FOUR SIDES (top, bottom, left, right)
+- Center the character perfectly in the middle
+- ZOOM WAY OUT - pretend you're taking a photo from far away
+- The character should look SMALL and centered with LOTS of white space around it
+- Think "postage stamp in the middle of a white page"
+- If ANY part might touch the edge, make it EVEN SMALLER
+- Better to have TOO MUCH white space than risk any cropping
 
 COMPOSITION CHECKLIST:
 ✓ Top: white space visible above character
