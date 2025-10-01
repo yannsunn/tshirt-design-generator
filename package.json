@@ -1,20 +1,8 @@
 {
   "name": "tshirt-design-generator",
   "version": "1.0.0",
-  "description": "Tシャツデザインジェネレーター with secure API key management",
-  "main": "server.js",
-  "type": "module",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5",
-    "node-fetch": "^3.3.2"
-  },
-  "keywords": ["tshirt", "design", "generator", "printify"],
+  "description": "Tシャツデザインジェネレーター with Vercel Serverless Functions",
+  "keywords": ["tshirt", "design", "generator", "printify", "vercel"],
   "author": "",
   "license": "MIT"
 }

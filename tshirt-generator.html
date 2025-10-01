@@ -63,24 +63,6 @@
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        .color-var-btn {
-            padding: 10px 20px;
-            border: 2px solid #4a5568;
-            border-radius: 8px;
-            background-color: #374151;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-        .color-var-btn:hover {
-            border-color: #7c3aed;
-            transform: translateY(-2px);
-        }
-        .color-var-btn.active {
-            border-color: #ec4899;
-            background-color: rgba(236, 72, 153, 0.2);
-        }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4 sm:p-6 lg:p-8">
@@ -225,7 +207,6 @@
         // --- Configuration State ---
         let selectedAPI = 'fal'; // FAL AIをデフォルトに変更
         let currentDesignIdea = null;
-        let colorVariations = {};
         let serverReady = false;
         const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
 
@@ -284,7 +265,7 @@
                 }
             } catch (error) {
                 serverReady = false;
-                apiStatusText.textContent = '✗ サーバーに接続できません。server.jsを起動してください。';
+                apiStatusText.textContent = '✗ サーバーに接続できません。';
                 apiStatusText.classList.remove('text-green-400');
                 apiStatusText.classList.add('text-red-400');
                 generateIdeasBtn.disabled = true;
@@ -305,67 +286,6 @@
             } catch (error) {
                 console.error('Printify shops取得エラー:', error);
             }
-        };
-
-        // --- Error utilities ---
-        const readResponseBodySafely = async (response) => {
-            try {
-                const text = await response.text();
-                try {
-                    return { raw: text, json: JSON.parse(text) };
-                } catch (_) {
-                    return { raw: text };
-                }
-            } catch (_) {
-                return { raw: '' };
-            }
-        };
-
-        const buildApiError = async (response, providerLabel = 'API') => {
-            const { raw, json } = await readResponseBodySafely(response);
-            const rid = response.headers?.get('x-request-id') || response.headers?.get('x-fal-request-id') || null;
-            const messageFromJson = json?.error?.message || json?.message || json?.error || '';
-            const baseMsg = messageFromJson || raw || response.statusText || 'Unknown error';
-            const detail = `${providerLabel}失敗 (${response.status})${rid ? ` [request_id: ${rid}]` : ''}`;
-            const hint = response.status >= 500 ? '提供元側の障害の可能性があります。数分待って再試行してください。' : '';
-            const err = new Error(`${detail}: ${baseMsg}${hint ? `\n\nヒント: ${hint}` : ''}`);
-            err.requestId = rid;
-            err.status = response.status;
-            err.body = raw;
-            return err;
-        };
-
-        // --- Fetch with Retry & Timeout ---
-        const fetchWithRetry = async (input, init = {}, options = { retries: 2, timeoutMs: 30000, providerLabel: 'API' }) => {
-            const { retries, timeoutMs, providerLabel } = options;
-            let attempt = 0;
-            let lastError;
-            while (attempt <= retries) {
-                const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), timeoutMs);
-                try {
-                    const res = await fetch(input, { ...init, signal: controller.signal });
-                    clearTimeout(timer);
-                    if (!res.ok) {
-                        // Retry on 429 or 5xx
-                        if (res.status === 429 || (res.status >= 500 && res.status <= 599)) {
-                            lastError = await buildApiError(res, providerLabel);
-                        } else {
-                            throw await buildApiError(res, providerLabel);
-                        }
-                    } else {
-                        return res;
-                    }
-                } catch (err) {
-                    clearTimeout(timer);
-                    lastError = err;
-                }
-                // exponential backoff: 500ms, 1500ms, 3500ms...
-                const backoff = 500 * Math.pow(2, attempt) + Math.floor(Math.random() * 200);
-                await new Promise(r => setTimeout(r, backoff));
-                attempt++;
-            }
-            throw lastError || new Error('ネットワークエラー');
         };
 
         // --- Core Functions ---
@@ -437,16 +357,12 @@
                 const generatedImgBlob = await generateCharacterImage(idea.character);
                 updateImageUI('loading', 'ステップ2/3: 背景を確実に除去中...');
                 const transparentImgBlob = await removeBackground(generatedImgBlob);
-                updateImageUI('loading', 'ステップ3/3: カラーバリエーションを生成中...');
+                updateImageUI('loading', 'ステップ3/3: テキストを合成中...');
 
-                // Generate all 3 color variations
-                colorVariations = {
-                    light: await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle, 'light'),
-                    dark: await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle, 'dark'),
-                    color: await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle, 'color')
-                };
+                // 白Tシャツ用のデザインを生成
+                const finalImage = await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle);
 
-                updateImageUI('success', null, colorVariations.light);
+                updateImageUI('success', null, finalImage);
             } catch (error) {
                 console.error('Error during image generation process:', error);
                 showError(`画像生成エラー: ${error.message}`);
@@ -473,7 +389,7 @@
             return await fetchRes.blob();
         };
 
-        const compositeTextOntoImage = (imageBlob, text, fontStyle, colorVariant = 'light') => {
+        const compositeTextOntoImage = (imageBlob, text, fontStyle) => {
             return new Promise((resolve, reject) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -494,17 +410,10 @@
 
                     ctx.drawImage(img, imgX, imgY, finalImgWidth, finalImgHeight);
 
-                    // Color variation settings
-                    const colorSchemes = {
-                        light: { fill: 'black', stroke: 'white', lineWidth: 20 },  // 白Tシャツ用
-                        dark: { fill: 'white', stroke: 'black', lineWidth: 20 },   // 黒Tシャツ用
-                        color: { fill: 'white', stroke: 'black', lineWidth: 25 }   // カラーT用（縁を太く）
-                    };
-
-                    const scheme = colorSchemes[colorVariant];
-                    ctx.fillStyle = scheme.fill;
-                    ctx.strokeStyle = scheme.stroke;
-                    ctx.lineWidth = scheme.lineWidth;
+                    // 白Tシャツ用の設定（黒文字、白縁取り）
+                    ctx.fillStyle = 'black';
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 20;
 
                     const fontSize = Math.min(canvas.width / (text.length * 1.1), textHeightArea * 0.8);
 
