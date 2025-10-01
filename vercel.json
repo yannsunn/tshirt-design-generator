@@ -1,8 +1,3 @@
 {
-  "version": 2,
-  "env": {
-    "GEMINI_API_KEY": "@gemini_api_key",
-    "FAL_API_KEY": "@fal_api_key",
-    "PRINTIFY_API_KEY": "@printify_api_key"
-  }
+  "version": 2
 }
