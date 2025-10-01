@@ -58,11 +58,13 @@ Now, create a t-shirt design illustration with these additional requirements:
    - If description says "has a torii gate on head" → must have torii gate on head
    - DO NOT substitute or change any elements
 
-2. Composition:
-   - Character occupies 50-60% of image (leave large white margins)
-   - Minimum 30% white space on all four sides
-   - Center the character
-   - Ensure nothing gets cropped at edges
+2. Composition (CRITICAL - NEVER CROP):
+   - Character occupies ONLY 40-45% of image center
+   - MINIMUM 40% white space on all four sides
+   - Character must be FULLY VISIBLE - head to toe/bottom
+   - ZOOM OUT significantly to prevent any cropping
+   - Center the character perfectly
+   - ⚠️ CRITICAL: NEVER crop any part of the character at edges
 
 3. Style:
    - Cute Japanese aesthetic (anime/manga or traditional art)
@@ -86,7 +88,7 @@ FINAL REMINDER: The character description above is MANDATORY. Create EXACTLY wha
         },
         body: JSON.stringify({
             prompt: prompt,
-            image_size: "portrait_16_9",  // 縦長のTシャツデザインに適したサイズ
+            image_size: "square_hd",  // 正方形で余裕のある構図
             num_inference_steps: 28,
             guidance_scale: 3.5,
             num_images: 1,
@@ -139,11 +141,13 @@ Now, create a t-shirt design illustration with these additional requirements:
    - If description says "has a torii gate on head" → must have torii gate on head
    - DO NOT substitute or change any elements
 
-2. Composition:
-   - Character occupies 50-60% of image (leave large white margins)
-   - Minimum 30% white space on all four sides
-   - Center the character
-   - Ensure nothing gets cropped at edges
+2. Composition (CRITICAL - NEVER CROP):
+   - Character occupies ONLY 40-45% of image center
+   - MINIMUM 40% white space on all four sides
+   - Character must be FULLY VISIBLE - head to toe/bottom
+   - ZOOM OUT significantly to prevent any cropping
+   - Center the character perfectly
+   - ⚠️ CRITICAL: NEVER crop any part of the character at edges
 
 3. Style:
    - Cute Japanese aesthetic (anime/manga or traditional art)
