@@ -49,7 +49,7 @@ Japanese anime style illustration, white background, centered, full body visible
     // Strong negative prompt to prevent wrong generations
     const negativePrompt = "cute anime girl with food, cooking, restaurant, plate, dish, modern clothing, school uniform, cheerful smile, question mark, chef, waitress, different character";
 
-    const response = await fetch('https://fal.run/fal-ai/seedream', {
+    const response = await fetch('https://fal.run/fal-ai/bytedance/seedream/v4/text-to-image', {
         method: 'POST',
         headers: {
             'Authorization': `Key ${apiKey}`,

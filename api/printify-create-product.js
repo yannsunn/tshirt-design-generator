@@ -292,7 +292,28 @@ Target: 90 mockups (15 per color) ← SELECT ALL for best results!
 1. Visit Printify dashboard → Select ALL mockups (90 total)
 2. Verify all color/size combinations are correct
 3. Check product description (English only, no Japanese)
-4. Publish to your store when ready
+4. **ADD EU GPSR Information (Required for EU sales)**:
+   a. Scroll to "General product safety regulation (GPSR)" section
+   b. Check the box "Required for EU"
+   c. Fill in the following information:
+
+   EU representative:
+   HONSON VENTURES LIMITED
+   gpsr@honsonventures.com
+   3, Gnaftis House flat 102, Limassol, Mesa Geitonia, 4003, CY
+
+   Product information:
+   Gildan 5000, 2 year warranty in EU and Northern Ireland as per Directive 1999/44/EC
+
+   Warnings, Hazard:
+   For adults, Made in Nicaragua
+
+   Care instructions:
+   Machine wash: cold (max 30C or 90F), Non-chlorine: bleach as needed, Tumble dry: low heat, Do not iron, Do not dryclean
+
+5. Publish to your store when ready
+
+⚠️ Note: GPSR information must be added manually for each product (API limitation)
 
 Product URL: https://printify.com/app/products/${productId}`
         });
