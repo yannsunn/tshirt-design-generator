@@ -321,9 +321,6 @@
     </div>
 
     <script type="module">
-        // 背景除去機能は一時的に無効化（CDNの問題のため）
-        const removeBackground = null;
-
         // --- Configuration State ---
         let selectedAPI = 'fal'; // FAL AIをデフォルトに変更
         let currentDesignIdea = null;
@@ -493,15 +490,9 @@
             try {
                 const generatedImgBlob = await generateCharacterImage(idea.character);
 
-                // 背景除去（利用可能な場合のみ）
-                let transparentImgBlob;
-                if (removeBackground) {
-                    updateImageUI('loading', 'ステップ2/3: 背景を確実に除去中...');
-                    transparentImgBlob = await removeBackground(generatedImgBlob);
-                } else {
-                    // 背景除去が利用できない場合は元の画像を使用
-                    transparentImgBlob = generatedImgBlob;
-                }
+                // 背景除去（remove.bg API使用）
+                updateImageUI('loading', 'ステップ2/3: 背景を除去中...');
+                const transparentImgBlob = await removeBackgroundWithAPI(generatedImgBlob);
 
                 updateImageUI('loading', 'ステップ3/3: テキストを合成中...');
 
@@ -533,6 +524,48 @@
             const result = await response.json();
             const fetchRes = await fetch(result.image);
             return await fetchRes.blob();
+        };
+
+        const removeBackgroundWithAPI = async (imageBlob) => {
+            try {
+                // BlobをBase64に変換
+                const reader = new FileReader();
+                const base64Promise = new Promise((resolve, reject) => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(imageBlob);
+                });
+                const imageData = await base64Promise;
+
+                // remove.bg APIを呼び出し
+                const response = await fetch(`${API_BASE_URL}/remove-background`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageData })
+                });
+
+                if (!response.ok) {
+                    console.warn('Background removal failed, using original image');
+                    return imageBlob;
+                }
+
+                const result = await response.json();
+
+                // APIキーが設定されていない、またはエラーの場合は元の画像を返す
+                if (result.skipped) {
+                    console.log('Background removal skipped:', result.message);
+                    return imageBlob;
+                }
+
+                // 背景除去済み画像をBlobに変換
+                const fetchRes = await fetch(result.image);
+                return await fetchRes.blob();
+
+            } catch (error) {
+                console.error('Background removal error:', error);
+                // エラーの場合は元の画像を返す
+                return imageBlob;
+            }
         };
 
         const compositeTextOntoImage = (imageBlob, text, fontStyle) => {
