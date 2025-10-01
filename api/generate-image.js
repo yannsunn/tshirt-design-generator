@@ -32,12 +32,16 @@ async function generateWithFAL(character, res) {
 Style requirements:
 - Vibrant, eye-catching colors suitable for t-shirts
 - Japanese cultural aesthetic (anime/manga inspired or traditional art style)
-- Character should fill most of the frame
-- Use a simple, solid-color background that complements the character
-- High contrast and bold details
+- Character should fill most of the frame and be centered
+- TRANSPARENT BACKGROUND (no background, PNG with alpha channel)
+- High contrast and bold details for the character itself
 - Professional quality suitable for print-on-demand
+- Clear edges and well-defined silhouette
 
-CRITICAL: Do NOT include ANY text, words, letters, or phrases in the image. Generate ONLY the character/motif illustration.`;
+CRITICAL:
+- Do NOT include ANY text, words, letters, or phrases in the image
+- Generate ONLY the character/motif illustration
+- Background must be completely transparent`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -85,13 +89,17 @@ async function generateWithGemini(character, res) {
 Style requirements:
 - Vibrant, eye-catching colors suitable for t-shirts
 - Japanese cultural aesthetic (anime/manga inspired or traditional art style)
-- Character should fill most of the frame
-- Use a simple, solid-color background that complements the character
-- High contrast and bold details
+- Character should fill most of the frame and be centered
+- TRANSPARENT BACKGROUND (no background, PNG with alpha channel)
+- High contrast and bold details for the character itself
 - Professional quality suitable for print-on-demand
+- Clear edges and well-defined silhouette
 - Centered composition
 
-CRITICAL: Do NOT include ANY text, words, letters, or phrases in the image. Generate ONLY the character/motif illustration.`;
+CRITICAL:
+- Do NOT include ANY text, words, letters, or phrases in the image
+- Generate ONLY the character/motif illustration
+- Background must be completely transparent`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
