@@ -38,75 +38,35 @@ async function generateWithFAL(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    const prompt = `⚠️⚠️⚠️ ABSOLUTELY CRITICAL - HIGHEST PRIORITY ⚠️⚠️⚠️
+    // 🔥 CRITICAL FIX: Simplified, direct prompt for maximum accuracy
+    // Problem: Long prompts with warnings dilute the important information
+    // Solution: Short, focused prompt with character description at top and bottom
+    const prompt = `CREATE THIS EXACT CHARACTER (READ 3 TIMES):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${character}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-READ THIS CHARACTER DESCRIPTION 3 TIMES BEFORE STARTING:
+MANDATORY RULES:
+1. Character type from description is SACRED - NEVER substitute
+   • Lantern ghost → MUST be lantern ghost (NOT frog, NOT girl)
+   • Frog → MUST be frog (NOT human, NOT cat)
+   • Maiko → MUST be human female (NOT animal)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 MANDATORY CHARACTER DESCRIPTION (MUST FOLLOW 100%):
-"${character}"
+2. Match EVERY detail:
+   • ALL colors exactly as described
+   • ALL accessories exactly as described
+   • ALL facial features exactly as described
 
-THIS IS THE ONLY CHARACTER YOU ARE ALLOWED TO CREATE.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. Composition:
+   • Character: 40-45% size, perfectly centered
+   • Background: solid white (#FFFFFF)
+   • Full character visible (not cropped)
 
-⚠️ IF THE DESCRIPTION SAYS:
-- "Maiko" or "舞妓" → CREATE A HUMAN FEMALE, NOT an animal
-- "Frog" or "カエル" → CREATE A FROG, NOT a human
-- "Cat" or "猫" → CREATE A CAT, NOT anything else
+4. Style: Cute Japanese anime/manga, vibrant colors, NO text
 
-THE CHARACTER TYPE IS SACRED - NEVER CHANGE IT.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🚨 ABSOLUTE REQUIREMENTS (SCORE: 99/100 PRIORITY):
-
-1. CHARACTER IDENTITY - MOST CRITICAL:
-   ✓ Read the description 3 times before starting
-   ✓ Create the EXACT character/animal/object mentioned
-   ✓ If it says "frog" → MUST be a frog, NOT a girl, NOT a cat, NOT anything else
-   ✓ If it says "wearing kimono" → MUST wear kimono
-   ✓ If it says "holding umbrella" → MUST hold umbrella
-
-   ❌ FORBIDDEN:
-   - Substituting character type (e.g., frog → human)
-   - Ignoring any part of the description
-   - Adding elements not in description
-   - Creating a different character
-
-2. EVERY DETAIL MUST MATCH:
-   ✓ Body color: EXACT match to description
-   ✓ Clothing: EXACT match to description
-   ✓ Accessories: Include ALL mentioned items
-   ✓ Eyes: Match size, shape, color from description
-   ✓ Mouth: Match description
-   ✓ Background elements: Include if mentioned
-
-3. COMPOSITION (to prevent cropping):
-   ✓ Character size: 40-45% of image center
-   ✓ White space: MINIMUM 40% on all sides
-   ✓ Position: Perfectly centered
-   ✓ Visibility: FULL character visible (head to toe)
-   ✓ Zoom: ZOOM OUT to ensure no cropping
-   ✓ Background: SOLID WHITE (#FFFFFF)
-
-4. STYLE:
-   ✓ Cute Japanese anime/manga aesthetic
-   ✓ Vibrant colors for t-shirt printing
-   ✓ Clean, professional illustration
-   ✓ NO TEXT (no Japanese, English, or any letters)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ BEFORE YOU START - VERIFY:
-1. Read character description above 3 times
-2. Identify the main character type (animal/object/person)
-3. List all colors mentioned
-4. List all accessories/clothing mentioned
-5. ONLY THEN start creating the image
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-REMINDER: Create ONLY the character described above.
-Character description: "${character}"
-
-DO NOT create anything different. ACCURACY IS EVERYTHING.`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFY: Creating "${character}"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -149,75 +109,35 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    const prompt = `⚠️⚠️⚠️ ABSOLUTELY CRITICAL - HIGHEST PRIORITY ⚠️⚠️⚠️
+    // 🔥 CRITICAL FIX: Simplified, direct prompt for maximum accuracy
+    // Problem: Long prompts with warnings dilute the important information
+    // Solution: Short, focused prompt with character description at top and bottom
+    const prompt = `CREATE THIS EXACT CHARACTER (READ 3 TIMES):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${character}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-READ THIS CHARACTER DESCRIPTION 3 TIMES BEFORE STARTING:
+MANDATORY RULES:
+1. Character type from description is SACRED - NEVER substitute
+   • Lantern ghost → MUST be lantern ghost (NOT frog, NOT girl)
+   • Frog → MUST be frog (NOT human, NOT cat)
+   • Maiko → MUST be human female (NOT animal)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 MANDATORY CHARACTER DESCRIPTION (MUST FOLLOW 100%):
-"${character}"
+2. Match EVERY detail:
+   • ALL colors exactly as described
+   • ALL accessories exactly as described
+   • ALL facial features exactly as described
 
-THIS IS THE ONLY CHARACTER YOU ARE ALLOWED TO CREATE.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. Composition:
+   • Character: 40-45% size, perfectly centered
+   • Background: solid white (#FFFFFF)
+   • Full character visible (not cropped)
 
-⚠️ IF THE DESCRIPTION SAYS:
-- "Maiko" or "舞妓" → CREATE A HUMAN FEMALE, NOT an animal
-- "Frog" or "カエル" → CREATE A FROG, NOT a human
-- "Cat" or "猫" → CREATE A CAT, NOT anything else
+4. Style: Cute Japanese anime/manga, vibrant colors, NO text
 
-THE CHARACTER TYPE IS SACRED - NEVER CHANGE IT.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🚨 ABSOLUTE REQUIREMENTS (SCORE: 99/100 PRIORITY):
-
-1. CHARACTER IDENTITY - MOST CRITICAL:
-   ✓ Read the description 3 times before starting
-   ✓ Create the EXACT character/animal/object mentioned
-   ✓ If it says "frog" → MUST be a frog, NOT a girl, NOT a cat, NOT anything else
-   ✓ If it says "wearing kimono" → MUST wear kimono
-   ✓ If it says "holding umbrella" → MUST hold umbrella
-
-   ❌ FORBIDDEN:
-   - Substituting character type (e.g., frog → human)
-   - Ignoring any part of the description
-   - Adding elements not in description
-   - Creating a different character
-
-2. EVERY DETAIL MUST MATCH:
-   ✓ Body color: EXACT match to description
-   ✓ Clothing: EXACT match to description
-   ✓ Accessories: Include ALL mentioned items
-   ✓ Eyes: Match size, shape, color from description
-   ✓ Mouth: Match description
-   ✓ Background elements: Include if mentioned
-
-3. COMPOSITION (to prevent cropping):
-   ✓ Character size: 40-45% of image center
-   ✓ White space: MINIMUM 40% on all sides
-   ✓ Position: Perfectly centered
-   ✓ Visibility: FULL character visible (head to toe)
-   ✓ Zoom: ZOOM OUT to ensure no cropping
-   ✓ Background: SOLID WHITE (#FFFFFF)
-
-4. STYLE:
-   ✓ Cute Japanese anime/manga aesthetic
-   ✓ Vibrant colors for t-shirt printing
-   ✓ Clean, professional illustration
-   ✓ NO TEXT (no Japanese, English, or any letters)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ BEFORE YOU START - VERIFY:
-1. Read character description above 3 times
-2. Identify the main character type (animal/object/person)
-3. List all colors mentioned
-4. List all accessories/clothing mentioned
-5. ONLY THEN start creating the image
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-REMINDER: Create ONLY the character described above.
-Character description: "${character}"
-
-DO NOT create anything different. ACCURACY IS EVERYTHING.`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFY: Creating "${character}"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
