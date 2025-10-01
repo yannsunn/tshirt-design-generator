@@ -547,6 +547,10 @@
                     canvas.width = 4500;
                     canvas.height = 5400;
 
+                    // キャンバス全体を白で塗りつぶし（Printify自動背景除去用）
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
                     // 画像をキャンバス全体に拡大（アスペクト比を維持しながらカバー）
                     const canvasRatio = canvas.width / canvas.height;
                     const imgRatio = img.width / img.height;

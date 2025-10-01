@@ -33,15 +33,15 @@ Style requirements:
 - Vibrant, eye-catching colors suitable for t-shirts
 - Japanese cultural aesthetic (anime/manga inspired or traditional art style)
 - Character should fill most of the frame and be centered
-- TRANSPARENT BACKGROUND (no background, PNG with alpha channel)
+- SOLID PURE WHITE BACKGROUND (#FFFFFF) - completely uniform white, no gradients, no shadows on background
 - High contrast and bold details for the character itself
 - Professional quality suitable for print-on-demand
-- Clear edges and well-defined silhouette
+- Clear, well-defined edges separating character from white background
 
 CRITICAL:
 - Do NOT include ANY text, words, letters, or phrases in the image
-- Generate ONLY the character/motif illustration
-- Background must be completely transparent`;
+- Generate ONLY the character/motif illustration on pure white background
+- Background must be solid white (#FFFFFF) for automatic removal by print service`;
 
     const response = await fetch('https://fal.run/fal-ai/flux/dev', {
         method: 'POST',
@@ -90,16 +90,16 @@ Style requirements:
 - Vibrant, eye-catching colors suitable for t-shirts
 - Japanese cultural aesthetic (anime/manga inspired or traditional art style)
 - Character should fill most of the frame and be centered
-- TRANSPARENT BACKGROUND (no background, PNG with alpha channel)
+- SOLID PURE WHITE BACKGROUND (#FFFFFF) - completely uniform white, no gradients, no shadows on background
 - High contrast and bold details for the character itself
 - Professional quality suitable for print-on-demand
-- Clear edges and well-defined silhouette
+- Clear, well-defined edges separating character from white background
 - Centered composition
 
 CRITICAL:
 - Do NOT include ANY text, words, letters, or phrases in the image
-- Generate ONLY the character/motif illustration
-- Background must be completely transparent`;
+- Generate ONLY the character/motif illustration on pure white background
+- Background must be solid white (#FFFFFF) for automatic removal by print service`;
 
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
