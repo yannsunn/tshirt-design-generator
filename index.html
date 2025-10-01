@@ -613,13 +613,40 @@
                     ctx.strokeStyle = 'white';
                     ctx.lineWidth = 30; // 縁取りを太く
 
-                    // フォントサイズの計算（文字数に応じて調整）
-                    const baseFontSize = canvas.width / (text.length * 0.8);
-                    const maxFontSize = canvas.height * 0.15; // 最大サイズをキャンバス高さの15%に
-                    const fontSize = Math.min(baseFontSize, maxFontSize);
-
                     const fontFamily = getFontFamily(fontStyle);
+
+                    // フォントサイズを自動調整して必ず画像内に収める
+                    const maxWidth = canvas.width * 0.9; // 左右に5%ずつマージン
+                    const maxHeight = canvas.height * 0.15; // 最大高さ
+
+                    // 初期フォントサイズを計算
+                    let fontSize = Math.min(
+                        canvas.width / (text.length * 0.7),
+                        maxHeight
+                    );
+
+                    // 実際の幅を測定してフォントサイズを調整
                     ctx.font = `bold ${fontSize}px ${fontFamily}`;
+                    let metrics = ctx.measureText(text);
+                    let textWidth = metrics.width;
+
+                    // 縁取りの太さも考慮した実際の幅
+                    const totalWidth = textWidth + (ctx.lineWidth * 2);
+
+                    // はみ出る場合はフォントサイズを縮小
+                    if (totalWidth > maxWidth) {
+                        fontSize = fontSize * (maxWidth / totalWidth);
+                        ctx.font = `bold ${fontSize}px ${fontFamily}`;
+                        metrics = ctx.measureText(text);
+                        textWidth = metrics.width;
+                    }
+
+                    // 最小フォントサイズの制限（小さくなりすぎないように）
+                    const minFontSize = canvas.height * 0.03;
+                    if (fontSize < minFontSize) {
+                        fontSize = minFontSize;
+                        ctx.font = `bold ${fontSize}px ${fontFamily}`;
+                    }
 
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
