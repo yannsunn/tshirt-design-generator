@@ -1106,24 +1106,42 @@
             }
         };
 
-        // Generate single image
+        // Generate single image (with background removal and text overlay)
         const generateSingleImage = async (idea, api) => {
-            const response = await fetch(`${API_BASE_URL}/generate-image`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    character: idea.character,
-                    api: api
-                })
-            });
+            try {
+                // Step 1: Generate character image
+                const response = await fetch(`${API_BASE_URL}/generate-image`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        character: idea.character,
+                        api: api
+                    })
+                });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || '画像生成に失敗しました');
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '画像生成に失敗しました');
+                }
+
+                const result = await response.json();
+                const imageDataUrl = result.image;
+
+                // Convert data URL to blob
+                const fetchRes = await fetch(imageDataUrl);
+                const imageBlob = await fetchRes.blob();
+
+                // Step 2: Remove background (optional - will be skipped if API key not set)
+                const transparentImgBlob = await removeBackgroundWithAPI(imageBlob);
+
+                // Step 3: Composite text onto image
+                const finalImage = await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle);
+
+                return finalImage;
+            } catch (error) {
+                console.error(`Failed to generate image for ${idea.phrase} with ${api}:`, error);
+                throw error;
             }
-
-            const result = await response.json();
-            return result.image;
         };
 
         // Display images in grid
@@ -1176,7 +1194,7 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            imageDataUrl: imgData.imageData,
+                            imageData: imgData.imageData,
                             fileName: `design-${Date.now()}-${i}.png`
                         })
                     });
