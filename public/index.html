@@ -390,6 +390,11 @@
                                 class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
                                 🤖 バッチ自動出品（全自動）
                             </button>
+                            <button
+                                id="check-stores-btn"
+                                class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
+                                🔌 販売チャネル連携確認
+                            </button>
                         </div>
                         <!-- SNS Post Section -->
                         <div id="sns-section" class="hidden mt-6 bg-gray-800 rounded-lg p-4">
@@ -725,11 +730,9 @@
             try {
                 const generatedImgBlob = await generateCharacterImage(idea.character);
 
-                // 背景除去（remove.bg API使用）
-                updateImageUI('loading', 'ステップ2/3: 背景を除去中...');
+                // 背景除去は停止中（元の画像を使用）
+                updateImageUI('loading', 'ステップ2/2: テキストを合成中...');
                 const transparentImgBlob = await removeBackgroundWithAPI(generatedImgBlob);
-
-                updateImageUI('loading', 'ステップ3/3: テキストを合成中...');
 
                 // 白Tシャツ用のデザインを生成
                 const finalImage = await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle);
@@ -879,6 +882,12 @@
         };
 
         const removeBackgroundWithAPI = async (imageBlob) => {
+            // 背景除去機能は停止中（402エラーのため）
+            // 画像をそのまま返す
+            console.log('ℹ️ 背景除去機能は停止中です。元の画像を使用します。');
+            return imageBlob;
+
+            /* 背景除去機能（停止中）
             try {
                 // BlobをBase64に変換
                 const reader = new FileReader();
@@ -925,6 +934,7 @@
                     return imageBlob;
                 }
             }
+            */
         };
 
         const compositeTextOntoImage = (imageBlob, text, fontStyle) => {
@@ -1524,7 +1534,7 @@
                 const fetchRes = await fetch(imageDataUrl);
                 const imageBlob = await fetchRes.blob();
 
-                // Step 2: Remove background (optional - will be skipped if API key not set)
+                // Step 2: Background removal (disabled - returns original image)
                 const transparentImgBlob = await removeBackgroundWithAPI(imageBlob);
 
                 // Step 3: Composite text onto image
@@ -1857,6 +1867,73 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
         };
 
+        // Check Printify connected stores (Etsy, eBay, etc.)
+        const handleCheckStores = async () => {
+            console.log('🔌 販売チャネル連携確認開始');
+            const checkStoresBtn = document.getElementById('check-stores-btn');
+            checkStoresBtn.disabled = true;
+            checkStoresBtn.textContent = '確認中...';
+            hideError();
+
+            try {
+                progressText.textContent = 'Printify接続ストアを確認中...';
+
+                const response = await fetch(`${API_BASE_URL}/printify-check-stores`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '販売チャネル確認に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 販売チャネル確認完了:', result);
+
+                progressText.textContent = '✅ 販売チャネル確認完了';
+
+                // 結果をアラートで表示
+                const etsyStatus = result.integrations.etsy.message;
+                const ebayStatus = result.integrations.ebay.message;
+
+                let message = `🔌 販売チャネル連携状況\n\n`;
+                message += `${etsyStatus}\n`;
+                message += `${ebayStatus}\n\n`;
+
+                message += `📊 接続ショップ: ${result.summary.connectedShops}/${result.summary.totalShops}\n\n`;
+
+                if (result.summary.channelBreakdown.length > 0) {
+                    message += `📋 チャネル内訳:\n`;
+                    result.summary.channelBreakdown.forEach(channel => {
+                        message += `  • ${channel.channel}: ${channel.count}ショップ\n`;
+                    });
+                }
+
+                if (result.recommendations && result.recommendations.length > 0) {
+                    message += `\n💡 推奨アクション:\n`;
+                    result.recommendations.forEach(rec => {
+                        message += `${rec}\n`;
+                    });
+                }
+
+                alert(message);
+
+                // コンソールに詳細を出力
+                console.log('📋 詳細結果:');
+                console.log('  ショップ一覧:', result.shops);
+                console.log('  サマリー:', result.summary);
+
+            } catch (error) {
+                console.error('販売チャネル確認エラー:', error);
+                showError(`販売チャネル確認エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                checkStoresBtn.disabled = false;
+                checkStoresBtn.textContent = '🔌 販売チャネル連携確認';
+            }
+        };
+
         // Batch auto-generate: Full automation (ideas → images → products)
         const handleBatchAutoGenerate = async () => {
             if (!printifyShopId) {
@@ -1974,6 +2051,7 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
         enableExpressBtn.addEventListener('click', handleEnableExpress);
         document.getElementById('update-prices-btn').addEventListener('click', handleUpdatePrices);
         document.getElementById('batch-auto-generate-btn').addEventListener('click', handleBatchAutoGenerate);
+        document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
 
         // --- App Initialization ---
