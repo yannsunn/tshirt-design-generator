@@ -456,12 +456,6 @@
                         <span>⚡</span>
                         <span>既存商品のExpress一括設定</span>
                     </button>
-                    <button
-                        id="test-gelato-btn"
-                        class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
-                        <span>🍦</span>
-                        <span>Gelato API接続テスト</span>
-                    </button>
                 </div>
             </div>
 
@@ -472,7 +466,7 @@
                     <span>グローバルPOD連携</span>
                 </h2>
                 <p class="text-sm text-gray-400 mb-4">
-                    Printify・SUZURI・Gelatoに商品を出品します（現在のデザインを使用）
+                    Printify・SUZURIに商品を出品します（現在のデザインを使用）
                 </p>
                 <!-- 一括出品ボタン -->
                 <button
@@ -480,7 +474,7 @@
                     class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-2 mb-3"
                     disabled>
                     <span>🌐</span>
-                    <span>Printify + SUZURI + Gelatoに一括出品</span>
+                    <span>Printify + SUZURIに一括出品</span>
                 </button>
 
                 <!-- 個別出品ボタン -->
@@ -552,7 +546,6 @@
         const suzuriCreateBtn = document.getElementById('suzuri-create-btn');
         const baseCreateBtn = document.getElementById('base-create-btn');
         const publishAllBtn = document.getElementById('publish-all-btn');
-        const testGelatoBtn = document.getElementById('test-gelato-btn');
 
         // Helper function: Get selected product types from checkboxes
         function getSelectedProductTypes() {
@@ -2080,49 +2073,6 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
         };
 
-        // Gelato API connection test
-        const handleTestGelato = async () => {
-            console.log('🍦 Gelato API接続テスト開始');
-            testGelatoBtn.disabled = true;
-            testGelatoBtn.innerHTML = '<span>⏳</span><span>テスト中...</span>';
-            hideError();
-
-            try {
-                progressText.textContent = 'Gelato API接続確認中...';
-
-                const response = await fetch(`${API_BASE_URL}/gelato-test-connection`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Gelato API接続に失敗しました');
-                }
-
-                const result = await response.json();
-                console.log('✅ Gelato API接続成功:', result);
-
-                progressText.textContent = '✅ Gelato API接続成功';
-
-                let message = `🍦 Gelato API接続テスト結果\n\n`;
-                message += `✅ 接続: 成功\n`;
-                message += `📦 カタログ数: ${result.catalogsCount}\n`;
-                message += `🔧 APIバージョン: ${result.apiVersion}\n\n`;
-                message += `Gelatoとの連携準備が完了しています！`;
-
-                alert(message);
-
-            } catch (error) {
-                console.error('Gelato API接続エラー:', error);
-                showError(`Gelato API接続エラー: ${error.message}\n\n環境変数GELATO_API_KEYが正しく設定されているか確認してください。`);
-                progressText.textContent = 'エラーが発生しました';
-            } finally {
-                testGelatoBtn.disabled = false;
-                testGelatoBtn.innerHTML = '<span>🍦</span><span>Gelato API接続テスト</span>';
-            }
-        };
-
         // Batch auto-generate: Full automation (ideas → images → products)
         const handleBatchAutoGenerate = async () => {
             if (!printifyShopId) {
@@ -2351,11 +2301,11 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                 return showError('先にデザインを生成してください');
             }
 
-            if (!confirm('Printify + SUZURI + Gelatoに一括出品しますか？\n\n出品先:\n• Printify (Etsy/eBay/Storefront)\n• SUZURI (Tシャツ/パーカー/スウェット)\n• Gelato (ドラフト注文作成)')) {
+            if (!confirm('Printify + SUZURIに一括出品しますか？\n\n出品先:\n• Printify (Etsy/eBay/Storefront)\n• SUZURI (Tシャツ/パーカー/スウェット)')) {
                 return;
             }
 
-            console.log('🌐 Printify + SUZURI + Gelato一括出品開始');
+            console.log('🌐 Printify + SUZURI一括出品開始');
             publishAllBtn.disabled = true;
             publishAllBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
             hideError();
@@ -2365,13 +2315,12 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                 const title = imgData.idea.phrase || 'オリジナルデザイン';
                 const description = `オリジナルデザインの商品です。\n\nデザイン: ${title}`;
 
-                progressText.textContent = 'Printify + SUZURI + Gelatoに並列出品中...';
+                progressText.textContent = 'Printify + SUZURIに並列出品中...';
 
                 // 各APIを並列に直接呼び出し（中間APIを経由しない）
                 const results = {
                     printify: { success: false, error: null },
-                    suzuri: { success: false, error: null },
-                    gelato: { success: false, error: null }
+                    suzuri: { success: false, error: null }
                 };
 
                 // Printifyへの出品
@@ -2421,32 +2370,8 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                     console.error('❌ SUZURI出品エラー:', error);
                 });
 
-                // Gelatoへの出品（ドラフト注文）
-                const gelatoPromise = fetch(`${API_BASE_URL}/gelato-create-order`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageUrl: imgData.imageData,
-                        title: title,
-                        description: description,
-                        isDryRun: true // Test order (draft)
-                    })
-                }).then(async response => {
-                    if (response.ok) {
-                        results.gelato.success = true;
-                        console.log('✅ Gelato出品成功');
-                    } else {
-                        const error = await response.json();
-                        results.gelato.error = error.error || 'Gelato出品失敗';
-                        console.log('❌ Gelato出品失敗:', results.gelato.error);
-                    }
-                }).catch(error => {
-                    results.gelato.error = error.message;
-                    console.error('❌ Gelato出品エラー:', error);
-                });
-
                 // 全ての完了を待つ
-                await Promise.all([printifyPromise, suzuriPromise, gelatoPromise]);
+                await Promise.all([printifyPromise, suzuriPromise]);
 
                 // 結果表示
                 const successCount = Object.values(results).filter(r => r.success).length;
@@ -2467,12 +2392,6 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                     successMessage += `❌ SUZURI: ${results.suzuri.error}\n`;
                 }
 
-                if (results.gelato.success) {
-                    successMessage += `✅ Gelato: ドラフト注文作成成功\n`;
-                } else {
-                    successMessage += `❌ Gelato: ${results.gelato.error}\n`;
-                }
-
                 alert(successMessage);
                 progressText.textContent = `✅ ${successCount}/${totalCount}プラットフォームに出品完了`;
 
@@ -2482,7 +2401,7 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                 progressText.textContent = 'エラーが発生しました';
             } finally {
                 publishAllBtn.disabled = false;
-                publishAllBtn.innerHTML = '<span>🌐</span><span>Printify + SUZURI + Gelatoに一括出品</span>';
+                publishAllBtn.innerHTML = '<span>🌐</span><span>Printify + SUZURIに一括出品</span>';
             }
         };
 
@@ -2506,7 +2425,6 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
         document.getElementById('update-prices-btn').addEventListener('click', handleUpdatePrices);
         document.getElementById('batch-auto-generate-btn').addEventListener('click', handleBatchAutoGenerate);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
-        testGelatoBtn.addEventListener('click', handleTestGelato);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
         baseCreateBtn.addEventListener('click', handleBASECreate);
