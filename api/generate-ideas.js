@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { theme } = req.body;
+        const { theme, productTypes = ['tshirt'] } = req.body;
 
         // 入力バリデーション
         if (!theme || typeof theme !== 'string') {
@@ -20,6 +20,7 @@ export default async function handler(req, res) {
         }
 
         // 過去のアイデア履歴を取得（重複防止）
+        // 選択された商品タイプのみで重複チェック
         const supabase = getSupabaseClient();
         let previousIdeas = [];
         let duplicateAvoidanceText = '';
@@ -29,10 +30,12 @@ export default async function handler(req, res) {
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+                // 選択された商品タイプのアイデアのみ取得
                 const { data, error } = await supabase
                     .from('design_ideas')
-                    .select('character, phrase')
+                    .select('character, phrase, product_type')
                     .gte('created_at', thirtyDaysAgo.toISOString())
+                    .in('product_type', productTypes)  // 選択されたタイプのみ
                     .order('created_at', { ascending: false })
                     .limit(100);
 

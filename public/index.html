@@ -157,16 +157,26 @@
 
             <!-- Product Type Selection -->
             <div class="config-section mb-6">
-                <h2 class="text-lg font-semibold mb-3 text-gray-300">商品タイプ選択</h2>
+                <h2 class="text-lg font-semibold mb-3 text-gray-300">商品タイプ選択（複数選択可）</h2>
                 <div class="bg-gray-900 rounded-lg p-4">
-                    <label class="block text-sm text-gray-400 mb-2">Printifyで作成する商品タイプ:</label>
-                    <select id="product-type-select" class="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500">
-                        <option value="tshirt" selected>👕 Tシャツ (Gildan 5000)</option>
-                        <option value="sweatshirt">🧥 スウェットシャツ (Gildan 18000)</option>
-                        <option value="hoodie">🧥 フーディ・パーカー (Gildan 18500)</option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-2">
-                        💡 画像生成には影響しません。Printify商品作成時のみ使用されます。
+                    <label class="block text-sm text-gray-400 mb-3">Printifyで作成する商品タイプ（複数選択可）:</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <input type="checkbox" id="product-type-tshirt" value="tshirt" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                            <span>👕 Tシャツ (Gildan 5000)</span>
+                        </label>
+                        <label class="flex items-center text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <input type="checkbox" id="product-type-sweatshirt" value="sweatshirt" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                            <span>🧥 スウェットシャツ (Gildan 18000)</span>
+                        </label>
+                        <label class="flex items-center text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <input type="checkbox" id="product-type-hoodie" value="hoodie" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                            <span>🧥 フーディ・パーカー (Gildan 18500)</span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">
+                        💡 画像生成には影響しません。Printify商品作成時のみ使用されます。<br>
+                        複数選択で同じデザインを複数商品タイプで一括作成できます（例：8デザイン × 3タイプ = 24商品）
                     </p>
                 </div>
             </div>
@@ -364,7 +374,19 @@
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
         const testSupabaseBtn = document.getElementById('test-supabase-btn');
         const supabaseStatusText = document.getElementById('supabase-status-text');
-        const productTypeSelect = document.getElementById('product-type-select');
+
+        // Helper function: Get selected product types from checkboxes
+        function getSelectedProductTypes() {
+            const checkboxes = [
+                document.getElementById('product-type-tshirt'),
+                document.getElementById('product-type-sweatshirt'),
+                document.getElementById('product-type-hoodie')
+            ];
+            const selected = checkboxes
+                .filter(cb => cb && cb.checked)
+                .map(cb => cb.value);
+            return selected.length > 0 ? selected : ['tshirt']; // デフォルトはTシャツ
+        }
 
         let printifyShopId = null;
 
@@ -507,10 +529,11 @@
         };
 
         const fetchDesignIdeas = async (theme) => {
+            const productTypes = getSelectedProductTypes();
             const response = await fetch(`${API_BASE_URL}/generate-ideas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ theme })
+                body: JSON.stringify({ theme, productTypes })
             });
 
             if (!response.ok) {
@@ -524,10 +547,11 @@
 
         const saveIdeasToHistory = async (theme, ideas) => {
             try {
+                const productTypes = getSelectedProductTypes();
                 const response = await fetch(`${API_BASE_URL}/save-ideas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ theme, ideas })
+                    body: JSON.stringify({ theme, ideas, productTypes })
                 });
 
                 if (response.ok) {
@@ -1119,38 +1143,48 @@
                 const uploadResult = await uploadResponse.json();
                 console.log('画像アップロード成功:', uploadResult);
 
-                // 2. 商品を作成
-                progressText.textContent = 'Printifyで商品を作成中...';
-
+                // 2. 選択された各商品タイプごとに商品を作成
+                const selectedProductTypes = getSelectedProductTypes();
                 const title = generateSEOTitle(currentDesignIdea);
                 const description = getEnglishDescription(currentDesignIdea);
+                const productResults = [];
 
-                const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        shopId: printifyShopId,
-                        imageId: uploadResult.imageId,
-                        title: title,
-                        description: description,
-                        tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
-                        productType: productTypeSelect.value  // 商品タイプを追加
-                    })
-                });
+                for (let i = 0; i < selectedProductTypes.length; i++) {
+                    const productType = selectedProductTypes[i];
+                    const typeNames = { tshirt: 'Tシャツ', sweatshirt: 'スウェット', hoodie: 'フーディ' };
+                    progressText.textContent = `Printifyで商品を作成中... (${i + 1}/${selectedProductTypes.length}: ${typeNames[productType]})`;
 
-                if (!productResponse.ok) {
-                    const contentType = productResponse.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        const error = await productResponse.json();
-                        throw new Error(error.error || '商品の作成に失敗しました');
-                    } else {
-                        const errorText = await productResponse.text();
-                        throw new Error(`商品の作成に失敗しました: ${productResponse.status} - ${errorText.substring(0, 200)}`);
+                    const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            shopId: printifyShopId,
+                            imageId: uploadResult.imageId,
+                            title: title,
+                            description: description,
+                            tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
+                            productType: productType
+                        })
+                    });
+
+                    if (!productResponse.ok) {
+                        const contentType = productResponse.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const error = await productResponse.json();
+                            throw new Error(error.error || `商品の作成に失敗しました (${typeNames[productType]})`);
+                        } else {
+                            const errorText = await productResponse.text();
+                            throw new Error(`商品の作成に失敗しました (${typeNames[productType]}): ${productResponse.status} - ${errorText.substring(0, 200)}`);
+                        }
                     }
+
+                    const productResult = await productResponse.json();
+                    productResults.push(productResult);
+                    console.log(`商品作成成功 (${typeNames[productType]}):`, productResult);
                 }
 
-                const productResult = await productResponse.json();
-                console.log('商品作成成功:', productResult);
+                // 最後の商品結果を表示（すべて同じメッセージ形式なので）
+                const productResult = productResults[productResults.length - 1];
 
             } catch (error) {
                 console.error('Printify商品作成エラー:', error);
@@ -1421,11 +1455,17 @@
                 return showError('Printify Shop IDが設定されていません');
             }
 
-            console.log(`🚀 Printify商品作成開始: ${generatedImages.length}件の画像を処理します`);
+            const selectedProductTypes = getSelectedProductTypes();
+            const totalProducts = generatedImages.length * selectedProductTypes.length;
+            const typeNames = { tshirt: 'Tシャツ', sweatshirt: 'スウェット', hoodie: 'フーディ' };
+            const typesText = selectedProductTypes.map(t => typeNames[t]).join(', ');
+
+            console.log(`🚀 Printify商品作成開始: ${generatedImages.length}件の画像 × ${selectedProductTypes.length}商品タイプ = ${totalProducts}商品を処理します`);
+            console.log(`商品タイプ: ${typesText}`);
             console.log('Shop ID:', printifyShopId);
 
             createAllPrintifyBtn.disabled = true;
-            createAllPrintifyBtn.textContent = `処理中... (0/${generatedImages.length})`;
+            createAllPrintifyBtn.textContent = `処理中... (0/${totalProducts}商品)`;
             hideError();
 
             const results = [];
@@ -1435,7 +1475,7 @@
             // Process sequentially to avoid API rate limits
             for (let i = 0; i < generatedImages.length; i++) {
                 const imgData = generatedImages[i];
-                createAllPrintifyBtn.textContent = `処理中... (${i + 1}/${generatedImages.length})`;
+                createAllPrintifyBtn.textContent = `処理中... (${successCount}/${totalProducts}商品)`;
 
                 try {
                     console.log(`\n📤 [${i + 1}/${generatedImages.length}] 処理開始: ${imgData.idea.phrase}`);
@@ -1465,36 +1505,47 @@
                     const uploadResult = await uploadResponse.json();
                     console.log(`  ✅ 画像アップロード成功 (Image ID: ${uploadResult.imageId})`);
 
-                    // Create product
-                    progressText.textContent = `商品 ${i + 1}/${generatedImages.length} を作成中...`;
+                    // Create products for all selected product types
+                    const selectedProductTypes = getSelectedProductTypes();
                     const title = generateSEOTitle(imgData.designIdea);
                     const description = getEnglishDescription(imgData.designIdea);
-                    console.log(`  → 商品作成中... (Title: ${title})`);
+                    const typeNames = { tshirt: 'Tシャツ', sweatshirt: 'スウェット', hoodie: 'フーディ' };
 
-                    const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            shopId: printifyShopId,
-                            imageId: uploadResult.imageId,
-                            title: title,
-                            description: description,
-                            tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
-                            productType: productTypeSelect.value  // 商品タイプを追加
-                        })
-                    });
+                    for (let typeIdx = 0; typeIdx < selectedProductTypes.length; typeIdx++) {
+                        const productType = selectedProductTypes[typeIdx];
+                        progressText.textContent = `商品 ${i + 1}/${generatedImages.length} を作成中 (${typeNames[productType]}: ${typeIdx + 1}/${selectedProductTypes.length})`;
+                        console.log(`  → 商品作成中... (Title: ${title}, Type: ${typeNames[productType]})`);
 
-                    if (!productResponse.ok) {
-                        const errorData = await productResponse.json().catch(() => ({ error: 'Unknown error' }));
-                        throw new Error(`商品作成失敗: ${errorData.error || productResponse.statusText}`);
+                        const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                shopId: printifyShopId,
+                                imageId: uploadResult.imageId,
+                                title: title,
+                                description: description,
+                                tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
+                                productType: productType
+                            })
+                        });
+
+                        if (!productResponse.ok) {
+                            const errorData = await productResponse.json().catch(() => ({ error: 'Unknown error' }));
+                            throw new Error(`商品作成失敗 (${typeNames[productType]}): ${errorData.error || productResponse.statusText}`);
+                        }
+
+                        const productResult = await productResponse.json();
+                        console.log(`  ✅ 商品作成成功! (${typeNames[productType]})`);
+                        console.log(`     Product ID: ${productResult.productId}`);
+                        console.log(`     Product URL: ${productResult.productUrl}`);
+                        results.push({ success: true, url: productResult.productUrl, phrase: imgData.idea.phrase, productType: typeNames[productType] });
+                        successCount++;
+
+                        // Wait 1 second between product type creations
+                        if (typeIdx < selectedProductTypes.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
                     }
-
-                    const productResult = await productResponse.json();
-                    console.log(`  ✅ 商品作成成功!`);
-                    console.log(`     Product ID: ${productResult.productId}`);
-                    console.log(`     Product URL: ${productResult.productUrl}`);
-                    results.push({ success: true, url: productResult.productUrl, phrase: imgData.idea.phrase });
-                    successCount++;
 
                     // Wait 2 seconds between requests to avoid rate limits
                     if (i < generatedImages.length - 1) {
@@ -1509,13 +1560,13 @@
                 }
             }
 
-            console.log(`\n🏁 処理完了: 成功${successCount}件、失敗${failCount}件`);
+            console.log(`\n🏁 処理完了: 成功${successCount}商品、失敗${failCount}商品 (${generatedImages.length}デザイン × ${selectedProductTypes.length}タイプ)`);
 
             // Log results to console
-            console.log(`✅ 成功: ${successCount}件 | ❌ 失敗: ${failCount}件`);
+            console.log(`✅ 成功: ${successCount}商品 | ❌ 失敗: ${failCount}商品`);
             results.forEach((result, index) => {
                 if (result.success) {
-                    console.log(`${index + 1}. ✅ ${result.phrase} - ${result.url}`);
+                    console.log(`${index + 1}. ✅ ${result.phrase} (${result.productType || 'N/A'}) - ${result.url}`);
                 } else {
                     console.log(`${index + 1}. ❌ ${result.phrase} - ${result.error}`);
                 }
@@ -1523,10 +1574,10 @@
 
             // Show completion message or error summary
             if (failCount > 0) {
-                progressText.textContent = `⚠️ 完了: 成功${successCount}件、失敗${failCount}件（詳細はコンソールを確認）`;
-                showError(`${failCount}件の商品作成に失敗しました。ブラウザのコンソール（F12）で詳細を確認してください。`);
+                progressText.textContent = `⚠️ 完了: 成功${successCount}商品、失敗${failCount}商品（詳細はコンソールを確認）`;
+                showError(`${failCount}商品の作成に失敗しました。ブラウザのコンソール（F12）で詳細を確認してください。`);
             } else {
-                progressText.textContent = `✅ 完了: ${successCount}件の商品を作成しました`;
+                progressText.textContent = `✅ 完了: ${successCount}商品を作成しました (${generatedImages.length}デザイン × ${selectedProductTypes.length}タイプ)`;
             }
 
             createAllPrintifyBtn.disabled = false;

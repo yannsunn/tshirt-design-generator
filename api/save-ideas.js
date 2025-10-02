@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { theme, ideas } = req.body;
+        const { theme, ideas, productTypes = ['tshirt'] } = req.body;
 
         if (!theme || !ideas || !Array.isArray(ideas)) {
             return res.status(400).json({ error: 'テーマとアイデアが必要です' });
@@ -22,13 +22,19 @@ export default async function handler(req, res) {
             });
         }
 
-        // 各アイデアを保存
-        const records = ideas.map(idea => ({
-            theme,
-            character: idea.character,
-            phrase: idea.phrase,
-            font_style: idea.fontStyle
-        }));
+        // 各商品タイプごとにアイデアを保存
+        const records = [];
+        for (const productType of productTypes) {
+            for (const idea of ideas) {
+                records.push({
+                    theme,
+                    character: idea.character,
+                    phrase: idea.phrase,
+                    font_style: idea.fontStyle,
+                    product_type: productType
+                });
+            }
+        }
 
         const { data, error } = await supabase
             .from('design_ideas')
@@ -40,11 +46,13 @@ export default async function handler(req, res) {
             throw new Error(`データベース保存エラー: ${error.message}`);
         }
 
-        console.log(`✅ ${data.length}件のアイデアを保存しました`);
+        const typesText = productTypes.join(', ');
+        console.log(`✅ ${data.length}件のアイデアを保存しました (${ideas.length}アイデア × ${productTypes.length}タイプ: ${typesText})`);
         res.status(200).json({
             saved: true,
             count: data.length,
-            message: `${data.length}件のアイデアを保存しました`
+            productTypes: productTypes,
+            message: `${data.length}件のアイデアを保存しました (${productTypes.length}商品タイプ)`
         });
 
     } catch (error) {
