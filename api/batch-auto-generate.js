@@ -36,17 +36,28 @@ async function handler(req, res) {
     try {
         // 1. テーマ選択（ランダムまたは指定）
         const themes = [
+            // 伝統文化
             { value: 'samurai', label: '侍 (Samurai)' },
             { value: 'sumo', label: '相撲 (Sumo)' },
             { value: 'ninja', label: '忍者 (Ninja)' },
-            { value: 'ramen', label: 'ラーメン (Ramen)' },
-            { value: 'sushi', label: '寿司 (Sushi)' },
             { value: 'geisha', label: '芸者 (Geisha)' },
             { value: 'sakura', label: '桜 (Cherry Blossom)' },
             { value: 'fuji', label: '富士山 (Mt. Fuji)' },
+            // 食文化
+            { value: 'ramen', label: 'ラーメン (Ramen)' },
+            { value: 'sushi', label: '寿司 (Sushi)' },
+            // 動物
             { value: 'cat', label: '猫 (Maneki-neko)' },
-            { value: 'anime', label: 'アニメ (Anime)' },
-            { value: 'deer', label: '鹿 (Deer in Nara)' }
+            { value: 'deer', label: '鹿 (Deer in Nara)' },
+            // アニメ風（著作権フリー）
+            { value: 'kawaii-animal', label: 'かわいい動物アニメ (Kawaii Animal Anime)' },
+            { value: 'chibi-warrior', label: 'ちび戦士 (Chibi Warrior)' },
+            { value: 'yokai-anime', label: '妖怪アニメ (Yokai Anime Style)' },
+            { value: 'shrine-maiden', label: '巫女さん (Shrine Maiden Anime)' },
+            { value: 'samurai-anime', label: '侍アニメ (Samurai Anime Style)' },
+            { value: 'magical-pet', label: '魔法のペット (Magical Pet)' },
+            { value: 'school-anime', label: '学園もの (School Life Anime)' },
+            { value: 'robot-anime', label: 'ロボットアニメ (Robot Anime Generic)' }
         ];
 
         const selectedTheme = theme || themes[Math.floor(Math.random() * themes.length)].value;

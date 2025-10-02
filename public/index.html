@@ -295,6 +295,21 @@
                         <div class="theme-button" data-theme="バレンタインデー日本風 (Japanese Valentine's Day)">💝 バレンタイン</div>
                     </div>
                 </div>
+
+                <!-- アニメ風デザイン（著作権フリー） -->
+                <div class="theme-category">
+                    <h3 class="text-md font-semibold text-cyan-300 mb-2">🎨 アニメ風デザイン (Anime-Style - Copyright-Free)</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div class="theme-button" data-theme="かわいい動物アニメ (Kawaii Animal Anime)">🐱 かわいい動物</div>
+                        <div class="theme-button" data-theme="ちび戦士 (Chibi Warrior)">⚔️ ちび戦士</div>
+                        <div class="theme-button" data-theme="妖怪アニメ (Yokai Anime Style)">👹 妖怪アニメ</div>
+                        <div class="theme-button" data-theme="巫女さん (Shrine Maiden Anime)">⛩️ 巫女さん</div>
+                        <div class="theme-button" data-theme="侍アニメ (Samurai Anime Style)">🗡️ 侍アニメ</div>
+                        <div class="theme-button" data-theme="魔法のペット (Magical Pet)">✨ 魔法のペット</div>
+                        <div class="theme-button" data-theme="学園もの (School Life Anime)">🏫 学園もの</div>
+                        <div class="theme-button" data-theme="ロボットアニメ (Robot Anime Generic)">🤖 ロボット</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Error Messages -->
@@ -375,26 +390,6 @@
                                 class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
                                 🛒 全画像でPrintify商品作成（順次実行）
                             </button>
-                            <button
-                                id="enable-express-btn"
-                                class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                ⚡ 既存商品のExpress一括設定
-                            </button>
-                            <button
-                                id="update-prices-btn"
-                                class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                💰 既存商品の価格一括更新
-                            </button>
-                            <button
-                                id="batch-auto-generate-btn"
-                                class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                🤖 バッチ自動出品（全自動）
-                            </button>
-                            <button
-                                id="check-stores-btn"
-                                class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                🔌 販売チャネル連携確認
-                            </button>
                         </div>
                         <!-- SNS Post Section -->
                         <div id="sns-section" class="hidden mt-6 bg-gray-800 rounded-lg p-4">
@@ -410,6 +405,43 @@
                         </div>
                     </div>
                      <p id="image-placeholder" class="text-gray-500">ここに生成された画像が表示されます</p>
+                </div>
+            </div>
+
+            <!-- Management & Batch Functions Section -->
+            <div class="mt-8 bg-gray-800 rounded-lg p-6 border-2 border-gray-700">
+                <h2 class="text-lg font-semibold mb-4 text-gray-300 flex items-center gap-2">
+                    <span>⚙️</span>
+                    <span>商品管理・バッチ処理</span>
+                </h2>
+                <p class="text-sm text-gray-400 mb-4">
+                    既存商品の一括管理や、完全自動でのバッチ出品を行います
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <button
+                        id="batch-auto-generate-btn"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>🤖</span>
+                        <span>バッチ自動出品（全自動）</span>
+                    </button>
+                    <button
+                        id="check-stores-btn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>🔌</span>
+                        <span>販売チャネル連携確認</span>
+                    </button>
+                    <button
+                        id="update-prices-btn"
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>💰</span>
+                        <span>既存商品の価格一括更新</span>
+                    </button>
+                    <button
+                        id="enable-express-btn"
+                        class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>⚡</span>
+                        <span>既存商品のExpress一括設定</span>
+                    </button>
                 </div>
             </div>
         </main>
@@ -730,9 +762,11 @@
             try {
                 const generatedImgBlob = await generateCharacterImage(idea.character);
 
-                // 背景除去は停止中（元の画像を使用）
-                updateImageUI('loading', 'ステップ2/2: テキストを合成中...');
+                // 簡易背景除去（無料）
+                updateImageUI('loading', 'ステップ2/3: 背景を除去中...（無料・簡易版）');
                 const transparentImgBlob = await removeBackgroundWithAPI(generatedImgBlob);
+
+                updateImageUI('loading', 'ステップ3/3: テキストを合成中...');
 
                 // 白Tシャツ用のデザインを生成
                 const finalImage = await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle);
@@ -882,12 +916,17 @@
         };
 
         const removeBackgroundWithAPI = async (imageBlob) => {
-            // 背景除去機能は停止中（402エラーのため）
-            // 画像をそのまま返す
-            console.log('ℹ️ 背景除去機能は停止中です。元の画像を使用します。');
-            return imageBlob;
+            // 無料の簡易背景除去を使用（有料APIは使用しない）
+            console.log('ℹ️ 簡易的な白背景除去を実行します（四隅連結方式、無料）');
+            try {
+                return await removeWhiteBackgroundSimple(imageBlob);
+            } catch (error) {
+                console.error('Simple background removal failed:', error);
+                // エラー時は元の画像を返す
+                return imageBlob;
+            }
 
-            /* 背景除去機能（停止中）
+            /* 有料背景除去機能（使用しない）
             try {
                 // BlobをBase64に変換
                 const reader = new FileReader();
@@ -979,7 +1018,7 @@
                     // 白Tシャツ用の設定（黒文字、白縁取り）
                     ctx.fillStyle = 'black';
                     ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 30; // 縁取りを太く
+                    ctx.lineWidth = 45; // 縁取りをより太く（視認性向上）
 
                     const fontFamily = getFontFamily(fontStyle);
 
@@ -1019,17 +1058,29 @@
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    // テキストを下部に配置（下から15%の位置）
-                    const textY = canvas.height * 0.85;
+                    // テキストを下部に配置（下から8%の位置、より下へ移動）
+                    const textY = canvas.height * 0.92;
                     const textX = canvas.width / 2;
 
                     // 影を追加して可読性向上
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                    ctx.shadowBlur = 15;
-                    ctx.shadowOffsetX = 5;
-                    ctx.shadowOffsetY = 5;
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowOffsetX = 6;
+                    ctx.shadowOffsetY = 6;
 
+                    // 二重縁取りで視認性をさらに向上
+                    // 外側の縁取り（より太く、白）
+                    ctx.lineWidth = 45;
+                    ctx.strokeStyle = 'white';
                     ctx.strokeText(text, textX, textY);
+
+                    // 内側の縁取り（少し細く、黒）
+                    ctx.lineWidth = 8;
+                    ctx.strokeStyle = 'black';
+                    ctx.strokeText(text, textX, textY);
+
+                    // 本体のテキスト（黒）
+                    ctx.fillStyle = 'black';
                     ctx.fillText(text, textX, textY);
 
                     resolve(canvas.toDataURL('image/png'));
