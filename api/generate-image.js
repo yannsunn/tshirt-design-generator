@@ -38,19 +38,27 @@ async function generateWithSeedream(character, res) {
         return res.status(500).json({ error: 'FAL_API_KEY is not configured' });
     }
 
-    // 🔥 Seedream 4.0: Extreme simplicity + negative prompt
-    // Seedream 4.0 is optimized for character accuracy
-    // Solution: ONLY character description + strong negative prompt
+    // 🔥 Seedream 4.0: Bold dramatic style for maximum variation
+    // Add unique style variations each time
+
+    const styleVariations = [
+        'dynamic angle, dramatic lighting',
+        'close-up composition, intense expression',
+        'wide angle, full scene view',
+        'artistic perspective, unique pose',
+        'cinematic composition, vibrant colors'
+    ];
+    const randomStyle = styleVariations[Math.floor(Math.random() * styleVariations.length)];
 
     const prompt = `${character}
 
-Japanese anime style illustration, white background, centered, full body visible, no text or letters.`;
+Japanese anime style illustration, ${randomStyle}, white background, centered, full body visible, no text or letters.`;
 
     // Strong negative prompt to prevent wrong generations
     const negativePrompt = "cute anime girl with food, cooking, restaurant, plate, dish, modern clothing, school uniform, cheerful smile, question mark, chef, waitress, different character";
 
-    // Generate random seed for variation (different output each time)
-    const randomSeed = Math.floor(Math.random() * 1000000);
+    // Generate unique seed using timestamp + random for maximum variation
+    const uniqueSeed = Math.floor(Date.now() * Math.random()) % 1000000;
 
     const response = await fetch('https://fal.run/fal-ai/bytedance/seedream/v4/text-to-image', {
         method: 'POST',
@@ -63,8 +71,8 @@ Japanese anime style illustration, white background, centered, full body visible
             negative_prompt: negativePrompt,
             image_size: "square_hd",
             num_inference_steps: 50,
-            guidance_scale: 9.0,
-            seed: randomSeed,  // ← ADD random seed for variation
+            guidance_scale: 7.5,  // Lower from 9.0 to 7.5 for more variation
+            seed: uniqueSeed,
             num_images: 1,
             enable_safety_checker: false
         })
@@ -95,13 +103,22 @@ async function generateWithGemini(character, res) {
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-    // 🔥 CRITICAL FIX v2: Extreme simplicity + explicit negative examples
-    // Problem: AI STILL ignoring descriptions and creating random cute girls
-    // Solution: ONLY character description + explicit DO NOT instructions
+
+    // 🔥 Gemini: Detailed artistic style for maximum variation
+    // Add unique style variations each time
+
+    const styleVariations = [
+        'highly detailed, soft lighting, elegant composition',
+        'bold colors, dramatic shadows, artistic angle',
+        'painterly style, rich textures, unique perspective',
+        'clean linework, vibrant palette, dynamic pose',
+        'atmospheric lighting, detailed background elements, expressive'
+    ];
+    const randomStyle = styleVariations[Math.floor(Math.random() * styleVariations.length)];
 
     const prompt = `${character}
 
-Japanese anime style illustration, white background, centered, full body visible, no text or letters.
+Japanese anime style illustration, ${randomStyle}, white background, centered, full body visible, no text or letters.
 
 DO NOT create: cute anime girl with food, cooking scene, restaurant, modern clothing, school uniform, cheerful smile, or any character different from the description above.`;
 
@@ -109,9 +126,9 @@ DO NOT create: cute anime girl with food, cooking scene, restaurant, modern clot
     const payload = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature: 1.3,  // ← INCREASE from 1.0 to 1.3 for more variation
-            topK: 40,
-            topP: 0.95,
+            temperature: 1.5,  // ← INCREASE from 1.3 to 1.5 for maximum variation
+            topK: 60,  // ← INCREASE from 40 to 60 for more diversity
+            topP: 0.98,  // ← INCREASE from 0.95 to 0.98 for more randomness
             maxOutputTokens: 8192,
         }
     };
