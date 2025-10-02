@@ -1208,6 +1208,9 @@
                 }
             });
 
+            // Show completion message
+            progressText.textContent = `✅ 完了: ${successCount}件の商品を作成しました`;
+
             createAllPrintifyBtn.disabled = false;
             createAllPrintifyBtn.textContent = '🛒 全画像でPrintify商品作成（順次実行）';
         };
