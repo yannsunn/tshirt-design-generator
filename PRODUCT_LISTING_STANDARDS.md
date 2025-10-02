@@ -207,17 +207,56 @@ const calculateOptimalPrice = (costJpy, targetMargin = 38) => {
 - `batch-auto-generate.js`: バッチ処理
 - `printify-create-product.js`: 商品作成API
 
-### SUZURI
+### SUZURI（日本国内市場）
+
+**ターゲット市場**: **日本人**（国内向けマーケットプレイス）
 
 **必須設定:**
-- ✅ 商品タイトル: 英語のみ
-- ✅ Material title: 英語のみ
+- ✅ 商品タイトル: **日本語**（ひらがなフレーズ含む）
+- ✅ Material title: **日本語**
 - ✅ 自動価格設定: SUZURI推奨価格
 - ✅ 商品タイプ: Tシャツ、パーカー、スウェット
 
+**タイトル形式:**
+```
+日本文化[スタイル]デザイン「フレーズ」Tシャツ
+```
+
+**例:**
+```
+✅ 日本文化ホラー系デザイン「こわいの？」Tシャツ
+✅ 日本文化ポップ系デザイン「さくらさく」Tシャツ
+✅ 日本文化レトロ系デザイン「にんじゃだ！」Tシャツ
+```
+
+**実装:**
+```javascript
+// index.html - generateJapaneseTitle()
+const generateJapaneseTitle = (idea) => {
+    if (!idea) return 'オリジナル日本文化デザインTシャツ';
+
+    const phrase = idea.phrase || '';
+    const fontStyle = idea.fontStyle || 'modern';
+
+    const styleLabels = {
+        'horror': 'ホラー系',
+        'pop': 'ポップ系',
+        'retro': 'レトロ系',
+        'modern': 'モダン系'
+    };
+
+    const styleLabel = styleLabels[fontStyle] || '';
+
+    return `日本文化${styleLabel}デザイン「${phrase}」Tシャツ`;
+};
+```
+
 **実装箇所:**
-- `index.html`: `handleSUZURICreate()`, `handlePublishAll()`
+- `index.html`: `handleSUZURICreate()` - 日本語タイトル使用
+- `index.html`: `handlePublishAll()` - SUZURI部分のみ日本語タイトル
 - `suzuri-batch-create.js`: バッチ作成API
+
+**重要**: SUZURIは日本語サイトで、主な購入者は日本人です。英語タイトルより日本語タイトルの方がSEO効果が高く、購入率も向上します。
 
 ---
 

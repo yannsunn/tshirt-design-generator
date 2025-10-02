@@ -1454,7 +1454,28 @@
             return `Unique AI-generated Japanese-themed t-shirt design. ${styleDesc} Perfect souvenir for tourists visiting Japan.`;
         };
 
+        // Generate Japanese title for SUZURI (domestic Japanese market)
+        const generateJapaneseTitle = (idea) => {
+            if (!idea) return 'オリジナル日本文化デザインTシャツ';
+
+            const phrase = idea.phrase || '';
+            const fontStyle = idea.fontStyle || 'modern';
+
+            const styleLabels = {
+                'horror': 'ホラー系',
+                'pop': 'ポップ系',
+                'retro': 'レトロ系',
+                'modern': 'モダン系'
+            };
+
+            const styleLabel = styleLabels[fontStyle] || '';
+
+            // Format: 日本文化デザイン「フレーズ」Tシャツ
+            return `日本文化${styleLabel}デザイン「${phrase}」Tシャツ`;
+        };
+
         // Generate SEO-optimized title (English only - NO Japanese/Hiragana)
+        // For Printify (international market: Etsy/eBay)
         const generateSEOTitle = (idea) => {
             if (!idea) return 'Japanese Culture T-Shirt - Unique AI-Generated Design';
 
@@ -2200,8 +2221,8 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
             try {
                 // Use first generated image
                 const imgData = generatedImages[0];
-                // IMPORTANT: Title MUST be in English only (no Japanese/Hiragana)
-                const title = generateSEOTitle(imgData.idea);
+                // IMPORTANT: SUZURI uses Japanese title (domestic market)
+                const title = generateJapaneseTitle(imgData.idea);
 
                 progressText.textContent = 'SUZURIに商品を作成中...';
 
@@ -2313,9 +2334,14 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
 
             try {
                 const imgData = generatedImages[0];
-                // IMPORTANT: Title and description MUST be in English only (no Japanese/Hiragana)
-                const title = generateSEOTitle(imgData.idea);
-                const description = getEnglishDescription(imgData.idea);
+
+                // IMPORTANT: Different titles for different markets
+                // Printify (international): English only
+                const printifyTitle = generateSEOTitle(imgData.idea);
+                const printifyDescription = getEnglishDescription(imgData.idea);
+
+                // SUZURI (domestic Japan): Japanese
+                const suzuriTitle = generateJapaneseTitle(imgData.idea);
 
                 progressText.textContent = 'Printify + SUZURIに並列出品中...';
 
@@ -2325,14 +2351,14 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                     suzuri: { success: false, error: null }
                 };
 
-                // Printifyへの出品
+                // Printifyへの出品 (English title/description)
                 const printifyPromise = fetch(`${API_BASE_URL}/printify-batch-auto-generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         imageData: imgData.imageData,
-                        title: title,
-                        description: description,
+                        title: printifyTitle,
+                        description: printifyDescription,
                         theme: selectedTheme
                     })
                 }).then(async response => {
@@ -2349,14 +2375,13 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                     console.error('❌ Printify出品エラー:', error);
                 });
 
-                // SUZURIへの出品
+                // SUZURIへの出品 (Japanese title)
                 const suzuriPromise = fetch(`${API_BASE_URL}/suzuri-batch-create`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         imageUrl: imgData.imageData,
-                        title: title,
-                        description: description
+                        title: suzuriTitle
                     })
                 }).then(async response => {
                     if (response.ok) {
