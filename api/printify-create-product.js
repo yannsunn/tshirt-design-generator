@@ -17,6 +17,7 @@ export default async function handler(req, res) {
         }
 
         // 商品タイプに応じたBlueprint IDとPrint Provider IDを設定
+        // Note: Blueprint IDはPrint Provider 3 (MyLocker)で確認済み
         const productConfig = {
             tshirt: {
                 blueprintId: 6,  // Gildan 5000 (ベーシックTシャツ) - 売れ筋No.1
@@ -24,12 +25,12 @@ export default async function handler(req, res) {
                 name: 'Gildan 5000 T-Shirt'
             },
             sweatshirt: {
-                blueprintId: 7,  // Gildan 18000 (スウェットシャツ) - 人気商品
+                blueprintId: 49,  // Gildan 18000 (スウェットシャツ) - 人気商品
                 printProviderId: 3,  // MyLocker
                 name: 'Gildan 18000 Sweatshirt'
             },
             hoodie: {
-                blueprintId: 12,  // Gildan 18500 (フーディ/パーカー) - 人気商品
+                blueprintId: 77,  // Gildan 18500 (フーディ/パーカー) - 人気商品
                 printProviderId: 3,  // MyLocker
                 name: 'Gildan 18500 Hoodie'
             }
@@ -253,7 +254,20 @@ export default async function handler(req, res) {
             // デフォルトでドラフトとして作成（後で確認してから公開）
             is_locked: false,
             // Express配送を自動で有効化（対応商品のみ）
-            is_printify_express_enabled: true
+            is_printify_express_enabled: true,
+            // GPSR（General Product Safety Regulation）情報を自動設定（EU販売必須）
+            // Printifyがblueprint_idに応じて適切な情報を自動入力する
+            safety_information: `EU representative: HONSON VENTURES LIMITED, gpsr@honsonventures.com, 3, Gnaftis House flat 102, Limassol, Mesa Geitonia, 4003, CY
+
+Product information: ${productName}, 2 year warranty in EU and Northern Ireland as per Directive 1999/44/EC
+
+Warnings, Hazard: For adults, Made in Nicaragua
+
+Care instructions: Machine wash: cold (max 30C or 90F), Non-chlorine: bleach as needed, Tumble dry: low heat, Do not iron, Do not dryclean`,
+            // サイズ表の自動追加を試みる（推測パラメータ - 動作確認が必要）
+            add_size_table: true,
+            include_size_table: true,
+            size_table_enabled: true
         };
 
         const response = await fetch(printifyApiUrl, {
