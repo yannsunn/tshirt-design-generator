@@ -44,25 +44,43 @@ async function handler(req, res) {
             console.log('⚠️ DRY RUNモード: 実際の更新は行いません');
         }
 
-        // 全商品を取得
-        const productsResponse = await fetch(
-            `https://api.printify.com/v1/shops/${shopId}/products.json`,
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        // 全商品を取得（ページネーション対応）
+        let allProducts = [];
+        let currentPage = 1;
+        let hasMorePages = true;
 
-        if (!productsResponse.ok) {
-            const errorText = await productsResponse.text();
-            throw new ExternalAPIError('Printify', `Failed to fetch products (${productsResponse.status})`, errorText);
+        while (hasMorePages) {
+            const productsResponse = await fetch(
+                `https://api.printify.com/v1/shops/${shopId}/products.json?limit=50&page=${currentPage}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (!productsResponse.ok) {
+                const errorText = await productsResponse.text();
+                throw new ExternalAPIError('Printify', `Failed to fetch products (${productsResponse.status})`, errorText);
+            }
+
+            const productsData = await productsResponse.json();
+            const pageProducts = productsData.data || [];
+            allProducts = allProducts.concat(pageProducts);
+
+            console.log(`📄 ページ${currentPage}: ${pageProducts.length}件取得`);
+
+            hasMorePages = pageProducts.length === 50;
+            currentPage++;
+
+            if (hasMorePages) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
         }
 
-        const productsData = await productsResponse.json();
-        const products = productsData.data || [];
+        const products = allProducts;
         console.log(`📋 ${products.length}商品を取得`);
 
         let updatedCount = 0;

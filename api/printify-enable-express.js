@@ -18,26 +18,46 @@ export default async function handler(req, res) {
 
         console.log(`🚀 Express設定一括有効化開始 (Shop ID: ${shopId})`);
 
-        // 1. 全商品を取得
-        const productsResponse = await fetch(
-            `https://api.printify.com/v1/shops/${shopId}/products.json`,
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        // 1. 全商品を取得（ページネーション対応）
+        let allProducts = [];
+        let currentPage = 1;
+        let hasMorePages = true;
 
-        if (!productsResponse.ok) {
-            const errorText = await productsResponse.text();
-            throw new Error(`商品一覧取得エラー: ${productsResponse.status} - ${errorText}`);
+        while (hasMorePages) {
+            const productsResponse = await fetch(
+                `https://api.printify.com/v1/shops/${shopId}/products.json?limit=50&page=${currentPage}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (!productsResponse.ok) {
+                const errorText = await productsResponse.text();
+                throw new Error(`商品一覧取得エラー: ${productsResponse.status} - ${errorText}`);
+            }
+
+            const productsData = await productsResponse.json();
+            const pageProducts = productsData.data || [];
+            allProducts = allProducts.concat(pageProducts);
+
+            console.log(`📄 ページ${currentPage}: ${pageProducts.length}件取得`);
+
+            // 次のページがあるかチェック
+            hasMorePages = pageProducts.length === 50; // 50件=最大数なので次ページがある可能性
+            currentPage++;
+
+            // レート制限対策
+            if (hasMorePages) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
         }
 
-        const productsData = await productsResponse.json();
-        const products = productsData.data || [];
-        console.log(`📦 商品数: ${products.length}件`);
+        const products = allProducts;
+        console.log(`📦 商品総数: ${products.length}件`);
 
         // 2. Express対象商品を特定し、設定を有効化
         const results = [];

@@ -31,57 +31,28 @@ async function handler(req, res) {
         const shops = await shopsResponse.json();
         console.log(`✅ ${shops.length}個のショップが見つかりました`);
 
-        // 2. 各ショップの詳細を取得
+        // 2. ショップ情報を解析（APIレスポンスに既にsales_channelが含まれる）
         const shopDetails = [];
 
         for (const shop of shops) {
             try {
-                const shopDetailResponse = await fetch(
-                    `https://api.printify.com/v1/shops/${shop.id}.json`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-
-                if (!shopDetailResponse.ok) {
-                    console.error(`Failed to fetch shop ${shop.id} details`);
-                    continue;
-                }
-
-                const detail = await shopDetailResponse.json();
-
-                // 販売チャネルの種類を判定
-                let salesChannel = 'Unknown';
-                let channelStatus = 'disconnected';
-
-                if (detail.sales_channel) {
-                    salesChannel = detail.sales_channel;
-                }
-
-                // 接続状態を確認（shop.sales_channelが存在すれば接続済み）
-                if (detail.sales_channel && detail.sales_channel !== 'disconnected') {
-                    channelStatus = 'connected';
-                }
+                // Printify APIはGET /v1/shops.jsonで既にsales_channelを返す
+                // sales_channel: "disconnected" = 未接続
+                // sales_channel: "etsy", "ebay"など = 接続済み
+                const salesChannel = shop.sales_channel || 'Unknown';
+                const channelStatus = (salesChannel && salesChannel !== 'disconnected') ? 'connected' : 'disconnected';
 
                 shopDetails.push({
                     shopId: shop.id,
                     shopTitle: shop.title || 'Untitled Shop',
                     salesChannel: salesChannel,
-                    status: channelStatus,
-                    createdAt: detail.created_at || null
+                    status: channelStatus
                 });
 
                 console.log(`  ✅ ${shop.title}: ${salesChannel} (${channelStatus})`);
 
-                // レート制限対策
-                await new Promise(resolve => setTimeout(resolve, 200));
-
             } catch (error) {
-                console.error(`Error fetching shop ${shop.id}:`, error.message);
+                console.error(`Error processing shop ${shop.id}:`, error.message);
             }
         }
 
