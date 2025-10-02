@@ -1245,6 +1245,9 @@
             try {
                 // Generate images in parallel for all combinations
                 const generatePromises = [];
+                const totalExpected = designIdeas.length * selectedAPIs.length;
+                let failedCount = 0;
+
                 for (const idea of designIdeas) {
                     for (const api of selectedAPIs) {
                         generatePromises.push(
@@ -1255,7 +1258,8 @@
                                     }
                                 })
                                 .catch(err => {
-                                    console.error(`Failed to generate image for ${idea.phrase} with ${api}:`, err);
+                                    failedCount++;
+                                    console.error(`❌ 最終的に失敗 [${idea.phrase}/${api}]:`, err);
                                 })
                         );
                     }
@@ -1269,6 +1273,14 @@
 
                 // Display all images in grid
                 displayImagesGrid();
+
+                // 結果サマリーを表示
+                const successCount = generatedImages.length;
+                console.log(`\n🏁 画像生成完了: ✅ 成功 ${successCount}/${totalExpected} | ❌ 失敗 ${failedCount}/${totalExpected}`);
+
+                if (failedCount > 0) {
+                    showWarning(`画像生成完了: ${successCount}/${totalExpected}枚成功しました。\n${failedCount}枚は複数回リトライしましたが失敗しました。`);
+                }
 
                 imageLoader.classList.add('hidden');
                 imageDisplay.classList.remove('hidden');
@@ -1284,7 +1296,9 @@
         };
 
         // Generate single image (with background removal and text overlay)
-        const generateSingleImage = async (idea, api) => {
+        const generateSingleImage = async (idea, api, retryCount = 0) => {
+            const maxRetries = 2; // 最大2回リトライ（合計3回試行）
+
             try {
                 // Step 1: Generate character image
                 const response = await fetch(`${API_BASE_URL}/generate-image`, {
@@ -1316,7 +1330,15 @@
 
                 return finalImage;
             } catch (error) {
-                console.error(`Failed to generate image for ${idea.phrase} with ${api}:`, error);
+                // リトライロジック
+                if (retryCount < maxRetries) {
+                    console.warn(`⚠️ [${idea.phrase}/${api}] 失敗 (${retryCount + 1}/${maxRetries + 1}). リトライします... エラー: ${error.message}`);
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒待機
+                    return generateSingleImage(idea, api, retryCount + 1);
+                }
+
+                // 最大リトライ回数に達した場合
+                console.error(`❌ [${idea.phrase}/${api}] ${maxRetries + 1}回試行しましたが失敗しました:`, error);
                 throw error;
             }
         };
