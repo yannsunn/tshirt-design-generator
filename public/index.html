@@ -141,6 +141,17 @@
                 <div id="api-status" class="mt-4 bg-gray-900 rounded-lg p-3">
                     <p class="text-sm text-gray-400">🔒 APIキーはサーバー側で安全に管理されています</p>
                     <p id="api-status-text" class="text-xs text-gray-500 mt-1">サーバー接続確認中...</p>
+                    <div class="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-400">📊 Supabase（重複防止）</p>
+                            <p id="supabase-status-text" class="text-xs text-gray-500 mt-1">未確認</p>
+                        </div>
+                        <button
+                            id="test-supabase-btn"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs transition duration-300">
+                            接続テスト
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -335,6 +346,8 @@
         const generateAllBtn = document.getElementById('generate-all-btn');
         const imagesGrid = document.getElementById('images-grid');
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
+        const testSupabaseBtn = document.getElementById('test-supabase-btn');
+        const supabaseStatusText = document.getElementById('supabase-status-text');
 
         let printifyShopId = null;
 
@@ -405,6 +418,49 @@
                 }
             } catch (error) {
                 console.error('Printify shops取得エラー:', error);
+            }
+        };
+
+        // --- Supabase接続テスト ---
+        const testSupabaseConnection = async () => {
+            try {
+                testSupabaseBtn.disabled = true;
+                testSupabaseBtn.textContent = '確認中...';
+                supabaseStatusText.textContent = '接続確認中...';
+                supabaseStatusText.className = 'text-xs text-yellow-400 mt-1';
+
+                const response = await fetch(`${API_BASE_URL}/test-supabase`);
+                const result = await response.json();
+
+                console.log('Supabase接続テスト結果:', result);
+
+                if (result.configured && result.connected) {
+                    supabaseStatusText.textContent = `✅ 接続成功！ (履歴: ${result.stats.totalIdeas}件)`;
+                    supabaseStatusText.className = 'text-xs text-green-400 mt-1';
+
+                    if (result.stats.totalIdeas > 0) {
+                        console.log('📊 最新のアイデア履歴:');
+                        result.stats.recentIdeas.forEach((idea, i) => {
+                            console.log(`  ${i + 1}. [${idea.theme}] "${idea.phrase}" (${new Date(idea.created_at).toLocaleDateString()})`);
+                        });
+                    }
+                } else if (result.configured && !result.connected) {
+                    supabaseStatusText.textContent = `❌ 接続エラー: ${result.error}`;
+                    supabaseStatusText.className = 'text-xs text-red-400 mt-1';
+                    showWarning(`Supabase接続エラー: ${result.message}\n\nヒント: ${result.hint || 'テーブルが正しく作成されているか確認してください'}`);
+                } else {
+                    supabaseStatusText.textContent = '⚠️ 未設定（重複チェックなし）';
+                    supabaseStatusText.className = 'text-xs text-yellow-400 mt-1';
+                    console.log('ℹ️ Supabase未設定: 重複チェック機能は無効です');
+                }
+
+            } catch (error) {
+                console.error('Supabaseテストエラー:', error);
+                supabaseStatusText.textContent = `❌ エラー: ${error.message}`;
+                supabaseStatusText.className = 'text-xs text-red-400 mt-1';
+            } finally {
+                testSupabaseBtn.disabled = false;
+                testSupabaseBtn.textContent = '接続テスト';
             }
         };
 
@@ -1413,6 +1469,7 @@
         generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
         generateAllBtn.addEventListener('click', handleGenerateAllImages);
         createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
+        testSupabaseBtn.addEventListener('click', testSupabaseConnection);
 
         // --- App Initialization ---
         console.log('🚀 Tシャツデザインジェネレーター起動');
