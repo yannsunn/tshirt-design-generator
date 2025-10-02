@@ -1876,9 +1876,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             };
             const typesText = selectedProductTypes.map(t => typeNames[t] || t).join(', ');
 
-            // デザイン数を計算（24件制限を考慮）
-            const maxDesigns = Math.floor(24 / selectedProductTypes.length);
-            const designCount = Math.min(3, maxDesigns); // デフォルト3、最大24件まで
+            const designCount = 3;  // デフォルト3デザイン
             const totalProducts = designCount * selectedProductTypes.length;
 
             const confirmMessage = `🤖 バッチ自動出品を開始しますか？
@@ -1889,12 +1887,12 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 • 商品タイプ: ${typesText}
 • 合計: ${totalProducts}商品
 
-💡 24件制限対策: ${selectedProductTypes.length}タイプ選択時は${maxDesigns}デザインまで
 ⏰ 所要時間: 約${Math.ceil(totalProducts / 3)}-${Math.ceil(totalProducts / 2)}分
 ⚠️ 処理中は他の操作をしないでください
 
 注: 商品は下書きとして作成されます。
-販売チャネルへの公開は手動で行ってください。`;
+販売チャネル（Shopify/Etsy/eBay等）への公開は
+Printifyダッシュボードから手動で行ってください（24件ずつ）。`;
 
             if (!confirm(confirmMessage)) {
                 return;
