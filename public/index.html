@@ -461,41 +461,59 @@
 
             <!-- Global POD Integration Section -->
             <div class="mt-8 bg-gray-800 rounded-lg p-6 border-2 border-purple-700">
-                <h2 class="text-lg font-semibold mb-4 text-purple-300 flex items-center gap-2">
+                <h2 class="text-xl font-bold mb-2 text-purple-300 flex items-center gap-2">
                     <span>🌐</span>
                     <span>グローバルPOD連携</span>
                 </h2>
-                <p class="text-sm text-gray-400 mb-4">
+                <p class="text-sm text-gray-400 mb-6">
                     Printify・SUZURIに商品を出品します（現在のデザインを使用）
                 </p>
-                <!-- 一括出品ボタン -->
-                <button
-                    id="publish-all-btn"
-                    class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-2 mb-3"
-                    disabled>
-                    <span>🌐</span>
-                    <span>Printify + SUZURIに一括出品</span>
-                </button>
 
-                <!-- 個別出品ボタン -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- メイン機能：一括出品ボタン -->
+                <div class="bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-xl p-5 mb-6 border border-purple-500/50">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-2xl">⭐</span>
+                        <h3 class="text-lg font-bold text-purple-200">メイン機能</h3>
+                        <span class="text-xs bg-purple-600 px-2 py-1 rounded-full">推奨</span>
+                    </div>
                     <button
-                        id="suzuri-create-btn"
-                        class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2"
+                        id="publish-all-btn"
+                        class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-5 px-8 rounded-xl transition duration-300 flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         disabled>
-                        <span>🎨</span>
-                        <span>SUZURIに個別出品</span>
+                        <span class="text-2xl">🌐</span>
+                        <span>Printify + SUZURIに一括出品</span>
                     </button>
-                    <button
-                        id="base-create-btn"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2 opacity-50"
-                        disabled
-                        style="display: none;">
-                        <span>🛒</span>
-                        <span>BASEに出品（手動設定必要）</span>
-                    </button>
+                    <p class="text-xs text-gray-400 mt-3 text-center">
+                        ✨ 両プラットフォームに同時出品（最も効率的）
+                    </p>
                 </div>
-                <p class="text-xs text-gray-500 mt-3">
+
+                <!-- 個別出品ボタン（上級者向け） -->
+                <details class="mt-6">
+                    <summary class="cursor-pointer text-sm text-gray-400 hover:text-gray-300 select-none flex items-center gap-2 mb-3">
+                        <span>▶</span>
+                        <span>個別出品オプション（上級者向け）</span>
+                    </summary>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pl-4">
+                        <button
+                            id="suzuri-create-btn"
+                            class="bg-pink-600/80 hover:bg-pink-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm"
+                            disabled>
+                            <span>🎨</span>
+                            <span>SUZURIのみ出品</span>
+                        </button>
+                        <button
+                            id="base-create-btn"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2 opacity-50"
+                            disabled
+                            style="display: none;">
+                            <span>🛒</span>
+                            <span>BASEに出品（手動設定必要）</span>
+                        </button>
+                    </div>
+                </details>
+
+                <p class="text-xs text-gray-500 mt-4 border-t border-gray-700 pt-3">
                     ⚠️ 初回利用前にSUZURI OAuth認証が必要です。<a href="/SETUP_JP_POD.md" class="text-purple-400 hover:underline">セットアップガイド</a>を参照してください。
                 </p>
             </div>
@@ -2345,60 +2363,95 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
 
                 progressText.textContent = 'Printify + SUZURIに並列出品中...';
 
-                // 各APIを並列に直接呼び出し（中間APIを経由しない）
+                // 各APIを並列に直接呼び出し
                 const results = {
-                    printify: { success: false, error: null },
+                    printify: { success: false, error: null, count: 0 },
                     suzuri: { success: false, error: null }
                 };
 
                 // Printifyへの出品 (English title/description)
-                const printifyPromise = fetch(`${API_BASE_URL}/printify-batch-auto-generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageData: imgData.imageData,
-                        title: printifyTitle,
-                        description: printifyDescription,
-                        theme: selectedTheme
-                    })
-                }).then(async response => {
-                    if (response.ok) {
-                        results.printify.success = true;
-                        console.log('✅ Printify出品成功');
-                    } else {
-                        const error = await response.json();
-                        results.printify.error = error.error || 'Printify出品失敗';
-                        console.log('❌ Printify出品失敗:', results.printify.error);
+                // Step 1: Compress image
+                const compressedImage = await compressImage(imgData.imageData, 4000);
+
+                // Step 2: Upload to Printify
+                let printifyImageId = null;
+                try {
+                    progressText.textContent = 'Printify: 画像アップロード中...';
+                    const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            imageData: compressedImage,
+                            fileName: `design-${Date.now()}.png`
+                        })
+                    });
+
+                    if (!uploadResponse.ok) {
+                        throw new Error(`画像アップロード失敗: ${uploadResponse.status}`);
                     }
-                }).catch(error => {
+
+                    const uploadResult = await uploadResponse.json();
+                    printifyImageId = uploadResult.imageId;
+                    console.log('✅ Printify画像アップロード成功:', printifyImageId);
+
+                    // Step 3: Create products for selected types
+                    progressText.textContent = 'Printify: 商品作成中...';
+                    const selectedProductTypes = getSelectedProductTypes();
+
+                    for (const productType of selectedProductTypes) {
+                        try {
+                            const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    shopId: printifyShopId,
+                                    imageId: printifyImageId,
+                                    title: printifyTitle,
+                                    description: printifyDescription,
+                                    tags: ['Japanese Culture', 'AI Generated', 'Tourist Souvenir'],
+                                    productType: productType
+                                })
+                            });
+
+                            if (productResponse.ok) {
+                                results.printify.count++;
+                            }
+                        } catch (error) {
+                            console.error(`商品作成エラー (${productType}):`, error);
+                        }
+                    }
+
+                    results.printify.success = results.printify.count > 0;
+                    console.log(`✅ Printify出品完了: ${results.printify.count}商品`);
+                } catch (error) {
                     results.printify.error = error.message;
                     console.error('❌ Printify出品エラー:', error);
-                });
+                }
 
                 // SUZURIへの出品 (Japanese title)
-                const suzuriPromise = fetch(`${API_BASE_URL}/suzuri-batch-create`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageUrl: imgData.imageData,
-                        title: suzuriTitle
-                    })
-                }).then(async response => {
-                    if (response.ok) {
+                try {
+                    progressText.textContent = 'SUZURI: 商品作成中...';
+                    const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            imageUrl: imgData.imageData,
+                            title: suzuriTitle
+                        })
+                    });
+
+                    if (suzuriResponse.ok) {
                         results.suzuri.success = true;
                         console.log('✅ SUZURI出品成功');
                     } else {
-                        const error = await response.json();
+                        const error = await suzuriResponse.json();
                         results.suzuri.error = error.error || 'SUZURI出品失敗';
                         console.log('❌ SUZURI出品失敗:', results.suzuri.error);
                     }
-                }).catch(error => {
+                } catch (error) {
                     results.suzuri.error = error.message;
                     console.error('❌ SUZURI出品エラー:', error);
-                });
-
-                // 全ての完了を待つ
-                await Promise.all([printifyPromise, suzuriPromise]);
+                }
 
                 // 結果表示
                 const successCount = Object.values(results).filter(r => r.success).length;
