@@ -161,6 +161,7 @@
                 <div class="bg-gray-900 rounded-lg p-4">
                     <label class="block text-sm text-gray-400 mb-3">Printifyで作成する商品タイプ（複数選択可）:</label>
                     <div class="space-y-2">
+                        <!-- Tシャツ系 -->
                         <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
                             <div class="flex items-center">
                                 <input type="checkbox" id="product-type-tshirt" value="tshirt" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
@@ -168,6 +169,43 @@
                             </div>
                             <span class="text-green-400 font-semibold">¥2,500</span>
                         </label>
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-lightweight_tee" value="lightweight_tee" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>👕 軽量Tシャツ (Gildan 980)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥2,700</span>
+                        </label>
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-ultra_cotton_tee" value="ultra_cotton_tee" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>👕 ウルトラコットンTシャツ (Gildan 2000)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥2,800</span>
+                        </label>
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-softstyle_tee" value="softstyle_tee" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>👕 ソフトスタイルTシャツ (Gildan 64000)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥2,700</span>
+                        </label>
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-kids_tee" value="kids_tee" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>👶 キッズTシャツ (Gildan 5000B)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥2,200</span>
+                        </label>
+                        <!-- 長袖 -->
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-longsleeve" value="longsleeve" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>👔 長袖Tシャツ (Gildan 2400)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥3,200</span>
+                        </label>
+                        <!-- スウェット・フーディ -->
                         <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
                             <div class="flex items-center">
                                 <input type="checkbox" id="product-type-sweatshirt" value="sweatshirt" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
@@ -185,7 +223,8 @@
                     </div>
                     <p class="text-xs text-gray-500 mt-3">
                         💡 画像生成には影響しません。Printify商品作成時のみ使用されます。<br>
-                        複数選択で同じデザインを複数商品タイプで一括作成できます（例：8デザイン × 3タイプ = 24商品）
+                        複数選択で同じデザインを複数商品タイプで一括作成できます（例：8デザイン × 8タイプ = 64商品）<br>
+                        🎯 おすすめ: 基本Tシャツ + スウェット + フーディの3種類で始めるのがベスト
                     </p>
                 </div>
             </div>
@@ -412,6 +451,11 @@
         function getSelectedProductTypes() {
             const checkboxes = [
                 document.getElementById('product-type-tshirt'),
+                document.getElementById('product-type-lightweight_tee'),
+                document.getElementById('product-type-ultra_cotton_tee'),
+                document.getElementById('product-type-softstyle_tee'),
+                document.getElementById('product-type-kids_tee'),
+                document.getElementById('product-type-longsleeve'),
                 document.getElementById('product-type-sweatshirt'),
                 document.getElementById('product-type-hoodie')
             ];

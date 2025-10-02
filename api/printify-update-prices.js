@@ -18,7 +18,15 @@ async function handler(req, res) {
 
         // Blueprint IDから商品タイプと価格を判定
         const blueprintToPriceMap = {
+            // Tシャツ系
             6: { type: 'tshirt', price: 2500, name: 'Gildan 5000 T-Shirt' },
+            26: { type: 'lightweight_tee', price: 2700, name: 'Gildan 980 Lightweight Fashion Tee' },
+            36: { type: 'ultra_cotton_tee', price: 2800, name: 'Gildan 2000 Ultra Cotton Tee' },
+            145: { type: 'softstyle_tee', price: 2700, name: 'Gildan 64000 Softstyle T-Shirt' },
+            157: { type: 'kids_tee', price: 2200, name: 'Gildan 5000B Kids Heavy Cotton Tee' },
+            // 長袖
+            80: { type: 'longsleeve', price: 3200, name: 'Gildan 2400 Ultra Cotton Long Sleeve Tee' },
+            // スウェット・フーディ
             49: { type: 'sweatshirt', price: 4000, name: 'Gildan 18000 Sweatshirt' },
             77: { type: 'hoodie', price: 4500, name: 'Gildan 18500 Hoodie' }
         };
@@ -184,6 +192,11 @@ async function handler(req, res) {
             details: updateDetails,
             priceConfig: {
                 'Tシャツ (Gildan 5000)': '¥2,500',
+                '軽量Tシャツ (Gildan 980)': '¥2,700',
+                'ウルトラコットンTシャツ (Gildan 2000)': '¥2,800',
+                'ソフトスタイルTシャツ (Gildan 64000)': '¥2,700',
+                'キッズTシャツ (Gildan 5000B)': '¥2,200',
+                '長袖Tシャツ (Gildan 2400)': '¥3,200',
                 'スウェット (Gildan 18000)': '¥4,000',
                 'フーディ (Gildan 18500)': '¥4,500'
             }

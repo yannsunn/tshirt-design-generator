@@ -19,29 +19,63 @@ export default async function handler(req, res) {
         // 商品タイプに応じたBlueprint ID、Print Provider ID、価格を設定
         // Note: Blueprint IDはPrint Provider 3 (MyLocker)で確認済み
         const productConfig = {
+            // --- Tシャツ系 ---
             tshirt: {
                 blueprintId: 6,  // Gildan 5000 (ベーシックTシャツ) - 売れ筋No.1
                 printProviderId: 3,  // MyLocker
                 name: 'Gildan 5000 T-Shirt',
                 price: 2500  // ¥2,500
             },
+            lightweight_tee: {
+                blueprintId: 26,  // Gildan 980 (軽量ファッションTシャツ)
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 980 Lightweight Fashion Tee',
+                price: 2700  // ¥2,700 (+8%)
+            },
+            ultra_cotton_tee: {
+                blueprintId: 36,  // Gildan 2000 (ウルトラコットンTシャツ)
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 2000 Ultra Cotton Tee',
+                price: 2800  // ¥2,800 (+12%)
+            },
+            softstyle_tee: {
+                blueprintId: 145,  // Gildan 64000 (ソフトスタイルTシャツ)
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 64000 Softstyle T-Shirt',
+                price: 2700  // ¥2,700 (+8%)
+            },
+            kids_tee: {
+                blueprintId: 157,  // Gildan 5000B (キッズTシャツ)
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 5000B Kids Heavy Cotton Tee',
+                price: 2200  // ¥2,200 (-12%)
+            },
+            // --- 長袖 ---
+            longsleeve: {
+                blueprintId: 80,  // Gildan 2400 (長袖Tシャツ)
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 2400 Ultra Cotton Long Sleeve Tee',
+                price: 3200  // ¥3,200 (+28%)
+            },
+            // --- スウェット・フーディ ---
             sweatshirt: {
                 blueprintId: 49,  // Gildan 18000 (スウェットシャツ) - 人気商品
                 printProviderId: 3,  // MyLocker
                 name: 'Gildan 18000 Sweatshirt',
-                price: 4000  // ¥4,000 (Tシャツ+60%)
+                price: 4000  // ¥4,000 (+60%)
             },
             hoodie: {
                 blueprintId: 77,  // Gildan 18500 (フーディ/パーカー) - 人気商品
                 printProviderId: 3,  // MyLocker
                 name: 'Gildan 18500 Hoodie',
-                price: 4500  // ¥4,500 (Tシャツ+80%)
+                price: 4500  // ¥4,500 (+80%)
             }
         };
 
         const config = productConfig[productType];
         if (!config) {
-            return res.status(400).json({ error: `Invalid productType: ${productType}. Valid types: tshirt, sweatshirt, hoodie` });
+            const validTypes = Object.keys(productConfig).join(', ');
+            return res.status(400).json({ error: `Invalid productType: ${productType}. Valid types: ${validTypes}` });
         }
 
         const { blueprintId, printProviderId, name: productName, price: productPrice } = config;
