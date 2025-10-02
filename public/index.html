@@ -155,6 +155,22 @@
                 </div>
             </div>
 
+            <!-- Product Type Selection -->
+            <div class="config-section mb-6">
+                <h2 class="text-lg font-semibold mb-3 text-gray-300">商品タイプ選択</h2>
+                <div class="bg-gray-900 rounded-lg p-4">
+                    <label class="block text-sm text-gray-400 mb-2">Printifyで作成する商品タイプ:</label>
+                    <select id="product-type-select" class="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500">
+                        <option value="tshirt" selected>👕 Tシャツ (Gildan 5000)</option>
+                        <option value="sweatshirt">🧥 スウェットシャツ (Gildan 18000)</option>
+                        <option value="hoodie">🧥 フーディ・パーカー (Gildan 18500)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-2">
+                        💡 画像生成には影響しません。Printify商品作成時のみ使用されます。
+                    </p>
+                </div>
+            </div>
+
             <!-- Step 1: Theme Selection -->
             <div class="mb-6">
                 <div class="flex justify-between items-center mb-4">
@@ -348,6 +364,7 @@
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
         const testSupabaseBtn = document.getElementById('test-supabase-btn');
         const supabaseStatusText = document.getElementById('supabase-status-text');
+        const productTypeSelect = document.getElementById('product-type-select');
 
         let printifyShopId = null;
 
@@ -1116,7 +1133,8 @@
                         imageId: uploadResult.imageId,
                         title: title,
                         description: description,
-                        tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art']
+                        tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
+                        productType: productTypeSelect.value  // 商品タイプを追加
                     })
                 });
 
@@ -1461,7 +1479,8 @@
                             imageId: uploadResult.imageId,
                             title: title,
                             description: description,
-                            tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art']
+                            tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
+                            productType: productTypeSelect.value  // 商品タイプを追加
                         })
                     });
 

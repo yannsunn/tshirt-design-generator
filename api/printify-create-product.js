@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { shopId, imageId, title, description, tags } = req.body;
+        const { shopId, imageId, title, description, tags, productType = 'tshirt' } = req.body;
         const apiKey = process.env.PRINTIFY_API_KEY;
 
         if (!apiKey) {
@@ -16,11 +16,32 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'shopId and imageId are required' });
         }
 
-        // Printify商品作成
-        // Blueprint ID: 6 = Gildan 5000 (ベーシックTシャツ)
-        // Print Provider: 3 = MyLocker (安定したプロバイダー)
-        const blueprintId = 6;
-        const printProviderId = 3;
+        // 商品タイプに応じたBlueprint IDとPrint Provider IDを設定
+        const productConfig = {
+            tshirt: {
+                blueprintId: 6,  // Gildan 5000 (ベーシックTシャツ) - 売れ筋No.1
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 5000 T-Shirt'
+            },
+            sweatshirt: {
+                blueprintId: 7,  // Gildan 18000 (スウェットシャツ) - 人気商品
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 18000 Sweatshirt'
+            },
+            hoodie: {
+                blueprintId: 12,  // Gildan 18500 (フーディ/パーカー) - 人気商品
+                printProviderId: 3,  // MyLocker
+                name: 'Gildan 18500 Hoodie'
+            }
+        };
+
+        const config = productConfig[productType];
+        if (!config) {
+            return res.status(400).json({ error: `Invalid productType: ${productType}. Valid types: tshirt, sweatshirt, hoodie` });
+        }
+
+        const { blueprintId, printProviderId, name: productName } = config;
+        console.log(`Creating product: ${productName} (Blueprint ${blueprintId}, Provider ${printProviderId})`);
 
         // 1. まず利用可能なvariantsを取得
         const variantsResponse = await fetch(
@@ -262,9 +283,12 @@ export default async function handler(req, res) {
         res.status(200).json({
             productId: productId,
             productUrl: `https://printify.com/app/products/${productId}`,
+            productType: productType,
+            productName: productName,
             message: `✅ Product created successfully!
 
 📦 Product Details:
+• Product Type: ${productName}
 • ${selectedVariants.length} variants created
 • Color groups: ${actualColorCount} (${selectedColorNames})
 • Approx. ${estimatedSizesPerColor} sizes per color
