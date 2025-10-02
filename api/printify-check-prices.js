@@ -12,15 +12,16 @@ export default async function handler(req, res) {
         }
 
         const printProviderId = 3; // MyLocker
+        // 一般的なPrintify MyLocker原価（¥150/$1換算）
         const blueprints = [
-            { id: 6, name: 'Gildan 5000 T-Shirt', price: 2500 },
-            { id: 26, name: 'Gildan 980 Lightweight Tee', price: 2700 },
-            { id: 36, name: 'Gildan 2000 Ultra Cotton Tee', price: 2800 },
-            { id: 145, name: 'Gildan 64000 Softstyle T-Shirt', price: 2700 },
-            { id: 157, name: 'Gildan 5000B Kids Tee', price: 2200 },
-            { id: 80, name: 'Gildan 2400 Long Sleeve Tee', price: 3200 },
-            { id: 49, name: 'Gildan 18000 Sweatshirt', price: 4000 },
-            { id: 77, name: 'Gildan 18500 Hoodie', price: 4500 }
+            { id: 6, name: 'Gildan 5000 T-Shirt', price: 2500, estimatedCost: 900 },  // $6 × 150
+            { id: 26, name: 'Gildan 980 Lightweight Tee', price: 2700, estimatedCost: 1050 },  // $7 × 150
+            { id: 36, name: 'Gildan 2000 Ultra Cotton Tee', price: 2800, estimatedCost: 1200 },  // $8 × 150
+            { id: 145, name: 'Gildan 64000 Softstyle T-Shirt', price: 2700, estimatedCost: 1050 },  // $7 × 150
+            { id: 157, name: 'Gildan 5000B Kids Tee', price: 2200, estimatedCost: 750 },  // $5 × 150
+            { id: 80, name: 'Gildan 2400 Long Sleeve Tee', price: 3200, estimatedCost: 1350 },  // $9 × 150
+            { id: 49, name: 'Gildan 18000 Sweatshirt', price: 4000, estimatedCost: 2100 },  // $14 × 150
+            { id: 77, name: 'Gildan 18500 Hoodie', price: 4500, estimatedCost: 2550 }  // $17 × 150
         ];
 
         const results = [];
@@ -58,24 +59,20 @@ export default async function handler(req, res) {
                     continue;
                 }
 
-                // Get base cost from first variant (in cents)
-                const firstVariant = variants[0];
-                const baseCostCents = firstVariant.cost || 0;
-                const baseCostYen = Math.round(baseCostCents * 1.5); // Convert cents to yen (approx $1 = ¥150)
-                const profit = blueprint.price - baseCostYen;
+                // Use estimated cost (API doesn't return cost in variants endpoint)
+                const baseCost = blueprint.estimatedCost;
+                const profit = blueprint.price - baseCost;
                 const profitMargin = ((profit / blueprint.price) * 100).toFixed(1);
 
                 results.push({
                     name: blueprint.name,
                     blueprintId: blueprint.id,
-                    sellingPrice: blueprint.price,
-                    baseCostCents: baseCostCents,
-                    baseCostYen: baseCostYen,
-                    profit: profit,
+                    sellingPrice: `¥${blueprint.price.toLocaleString()}`,
+                    baseCost: `¥${baseCost.toLocaleString()}`,
+                    profit: `¥${profit.toLocaleString()}`,
                     profitMargin: `${profitMargin}%`,
                     meetsTarget: parseFloat(profitMargin) >= 38,
-                    sampleVariant: firstVariant.title,
-                    debugVariant: firstVariant // デバッグ用
+                    note: parseFloat(profitMargin) >= 38 ? '✅ 利益率38%以上' : '⚠️ 利益率38%未満'
                 });
 
             } catch (error) {
