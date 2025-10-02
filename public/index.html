@@ -260,7 +260,7 @@
                     <button
                         id="generate-all-btn"
                         class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300 text-sm">
-                        🎨 全4つの画像を一括生成
+                        🎨 全アイデアを一括生成（最大8枚）
                     </button>
                 </div>
                 <div id="ideas-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -345,11 +345,9 @@
         const warningMessage = document.getElementById('warning-message');
         const copyWarningBtn = document.getElementById('copy-warning-btn');
         const apiStatusText = document.getElementById('api-status-text');
-        const generateSnsBtn = document.getElementById('generate-sns-btn');
         const snsSection = document.getElementById('sns-section');
         const snsText = document.getElementById('sns-text');
         const copySnsBtn = document.getElementById('copy-sns-btn');
-        const createPrintifyBtn = document.getElementById('create-printify-btn');
         const generateAllBtn = document.getElementById('generate-all-btn');
         const imagesGrid = document.getElementById('images-grid');
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
@@ -1104,7 +1102,7 @@
                 imageLoader.classList.add('hidden');
             } finally {
                 generateAllBtn.disabled = false;
-                generateAllBtn.textContent = '🎨 全4つの画像を一括生成';
+                generateAllBtn.textContent = '🎨 全アイデアを一括生成（最大8枚）';
             }
         };
 
@@ -1247,8 +1245,6 @@
 
         // --- Event Listeners ---
         generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
-        generateSnsBtn.addEventListener('click', handleGenerateSNS);
-        createPrintifyBtn.addEventListener('click', handleCreatePrintifyProduct);
         generateAllBtn.addEventListener('click', handleGenerateAllImages);
         createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
 
