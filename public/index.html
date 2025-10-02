@@ -314,6 +314,11 @@
                                 class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
                                 🛒 全画像でPrintify商品作成（順次実行）
                             </button>
+                            <button
+                                id="enable-express-btn"
+                                class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
+                                ⚡ 既存商品のExpress一括設定
+                            </button>
                         </div>
                         <!-- SNS Post Section -->
                         <div id="sns-section" class="hidden mt-6 bg-gray-800 rounded-lg p-4">
@@ -372,6 +377,7 @@
         const generateAllBtn = document.getElementById('generate-all-btn');
         const imagesGrid = document.getElementById('images-grid');
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
+        const enableExpressBtn = document.getElementById('enable-express-btn');
         const testSupabaseBtn = document.getElementById('test-supabase-btn');
         const supabaseStatusText = document.getElementById('supabase-status-text');
 
@@ -1584,6 +1590,76 @@
             createAllPrintifyBtn.textContent = '🛒 全画像でPrintify商品作成（順次実行）';
         };
 
+        // Enable Printify Express for all existing products
+        const handleEnableExpress = async () => {
+            if (!printifyShopId) {
+                return showError('Printify Shop IDが設定されていません');
+            }
+
+            if (!confirm('既存の全商品（Express対応商品のみ）でExpress配送を有効化しますか？\n\n注意: この操作は元に戻せません。')) {
+                return;
+            }
+
+            console.log('⚡ Express一括設定開始');
+            enableExpressBtn.disabled = true;
+            enableExpressBtn.textContent = '処理中...';
+            hideError();
+
+            try {
+                progressText.textContent = 'Express設定を確認中...';
+
+                const response = await fetch(`${API_BASE_URL}/printify-enable-express`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shopId: printifyShopId })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Express設定に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ Express設定完了:', result);
+
+                // Show detailed results
+                progressText.textContent = `✅ Express設定完了: ${result.enabled}件を有効化`;
+
+                const message = `
+🎉 Express設定が完了しました！
+
+📊 結果:
+• 有効化: ${result.enabled}件
+• スキップ: ${result.skipped}件 (非対応または既に有効)
+• エラー: ${result.errors}件
+
+${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+                // Log detailed results
+                console.log('📋 詳細結果:');
+                result.results.forEach((item, index) => {
+                    if (item.status === 'enabled') {
+                        console.log(`${index + 1}. ✅ ${item.title} (ID: ${item.id})`);
+                    } else if (item.status === 'skipped') {
+                        console.log(`${index + 1}. ⏭️  ${item.title} - ${item.reason}`);
+                    } else if (item.status === 'error') {
+                        console.log(`${index + 1}. ❌ ${item.title} - ${item.error}`);
+                    }
+                });
+
+            } catch (error) {
+                console.error('Express設定エラー:', error);
+                showError(`Express設定エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                enableExpressBtn.disabled = false;
+                enableExpressBtn.textContent = '⚡ 既存商品のExpress一括設定';
+            }
+        };
+
         // ========================================
         // END: Bulk Generation Functions
         // ========================================
@@ -1592,6 +1668,7 @@
         generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
         generateAllBtn.addEventListener('click', handleGenerateAllImages);
         createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
+        enableExpressBtn.addEventListener('click', handleEnableExpress);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
 
         // --- App Initialization ---

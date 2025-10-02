@@ -251,7 +251,9 @@ export default async function handler(req, res) {
             // ここでは基本的な商品構造のみを作成
             tags: tags || ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir'],
             // デフォルトでドラフトとして作成（後で確認してから公開）
-            is_locked: false
+            is_locked: false,
+            // Express配送を自動で有効化（対応商品のみ）
+            is_printify_express_enabled: true
         };
 
         const response = await fetch(printifyApiUrl, {
