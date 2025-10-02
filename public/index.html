@@ -1130,6 +1130,9 @@
                 return showError('Printify Shop IDが設定されていません');
             }
 
+            console.log(`🚀 Printify商品作成開始: ${generatedImages.length}件の画像を処理します`);
+            console.log('Shop ID:', printifyShopId);
+
             createAllPrintifyBtn.disabled = true;
             createAllPrintifyBtn.textContent = `処理中... (0/${generatedImages.length})`;
             hideError();
@@ -1144,8 +1147,11 @@
                 createAllPrintifyBtn.textContent = `処理中... (${i + 1}/${generatedImages.length})`;
 
                 try {
+                    console.log(`\n📤 [${i + 1}/${generatedImages.length}] 処理開始: ${imgData.idea.phrase}`);
+
                     // Upload image
                     progressText.textContent = `画像 ${i + 1}/${generatedImages.length} をアップロード中...`;
+                    console.log(`  → 画像アップロード中...`);
                     const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1156,15 +1162,18 @@
                     });
 
                     if (!uploadResponse.ok) {
-                        throw new Error('画像アップロード失敗');
+                        const errorData = await uploadResponse.json().catch(() => ({ error: 'Unknown error' }));
+                        throw new Error(`画像アップロード失敗: ${errorData.error || uploadResponse.statusText}`);
                     }
 
                     const uploadResult = await uploadResponse.json();
+                    console.log(`  ✅ 画像アップロード成功 (Image ID: ${uploadResult.imageId})`);
 
                     // Create product
                     progressText.textContent = `商品 ${i + 1}/${generatedImages.length} を作成中...`;
                     const title = generateSEOTitle(imgData.designIdea);
                     const description = getEnglishDescription(imgData.designIdea);
+                    console.log(`  → 商品作成中... (Title: ${title})`);
 
                     const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
                         method: 'POST',
@@ -1179,10 +1188,14 @@
                     });
 
                     if (!productResponse.ok) {
-                        throw new Error('商品作成失敗');
+                        const errorData = await productResponse.json().catch(() => ({ error: 'Unknown error' }));
+                        throw new Error(`商品作成失敗: ${errorData.error || productResponse.statusText}`);
                     }
 
                     const productResult = await productResponse.json();
+                    console.log(`  ✅ 商品作成成功!`);
+                    console.log(`     Product ID: ${productResult.productId}`);
+                    console.log(`     Product URL: ${productResult.productUrl}`);
                     results.push({ success: true, url: productResult.productUrl, phrase: imgData.idea.phrase });
                     successCount++;
 
@@ -1192,11 +1205,14 @@
                     }
 
                 } catch (error) {
-                    console.error(`Product creation failed for image ${i + 1}:`, error);
+                    console.error(`  ❌ 失敗: ${error.message}`);
+                    console.error(`     詳細:`, error);
                     results.push({ success: false, error: error.message, phrase: imgData.idea.phrase });
                     failCount++;
                 }
             }
+
+            console.log(`\n🏁 処理完了: 成功${successCount}件、失敗${failCount}件`);
 
             // Log results to console
             console.log(`✅ 成功: ${successCount}件 | ❌ 失敗: ${failCount}件`);
@@ -1208,8 +1224,13 @@
                 }
             });
 
-            // Show completion message
-            progressText.textContent = `✅ 完了: ${successCount}件の商品を作成しました`;
+            // Show completion message or error summary
+            if (failCount > 0) {
+                progressText.textContent = `⚠️ 完了: 成功${successCount}件、失敗${failCount}件（詳細はコンソールを確認）`;
+                showError(`${failCount}件の商品作成に失敗しました。ブラウザのコンソール（F12）で詳細を確認してください。`);
+            } else {
+                progressText.textContent = `✅ 完了: ${successCount}件の商品を作成しました`;
+            }
 
             createAllPrintifyBtn.disabled = false;
             createAllPrintifyBtn.textContent = '🛒 全画像でPrintify商品作成（順次実行）';
