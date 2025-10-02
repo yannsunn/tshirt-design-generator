@@ -468,6 +468,16 @@
                 <p class="text-sm text-gray-400 mb-4">
                     SUZURI・BASEに商品を出品します（現在のデザインを使用）
                 </p>
+                <!-- 一括出品ボタン -->
+                <button
+                    id="publish-all-btn"
+                    class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-2 mb-3"
+                    disabled>
+                    <span>🌐</span>
+                    <span>全プラットフォームに一括出品（Printify + SUZURI + BASE）</span>
+                </button>
+
+                <!-- 個別出品ボタン -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <button
                         id="suzuri-create-btn"
@@ -534,6 +544,7 @@
         const supabaseStatusText = document.getElementById('supabase-status-text');
         const suzuriCreateBtn = document.getElementById('suzuri-create-btn');
         const baseCreateBtn = document.getElementById('base-create-btn');
+        const publishAllBtn = document.getElementById('publish-all-btn');
 
         // Helper function: Get selected product types from checkboxes
         function getSelectedProductTypes() {
@@ -2255,11 +2266,92 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
             }
         };
 
+        // Publish to all platforms (Printify + SUZURI + BASE)
+        const handlePublishAll = async () => {
+            if (generatedImages.length === 0) {
+                return showError('先にデザインを生成してください');
+            }
+
+            if (!confirm('全プラットフォームに一括出品しますか？\n\n出品先:\n• Printify (Etsy/eBay/Storefront)\n• SUZURI (Tシャツ/パーカー/スウェット)\n• BASE\n\n※ BASEはオリジナルプリント.jpアプリで印刷設定が別途必要です')) {
+                return;
+            }
+
+            console.log('🌐 全プラットフォーム一括出品開始');
+            publishAllBtn.disabled = true;
+            publishAllBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
+            hideError();
+
+            try {
+                const imgData = generatedImages[0];
+                const title = imgData.idea.phrase || 'オリジナルデザイン';
+                const description = `オリジナルデザインの商品です。\n\nデザイン: ${title}`;
+
+                progressText.textContent = '全プラットフォームに出品中...';
+
+                const response = await fetch(`${API_BASE_URL}/publish-all-platforms`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageData: imgData.imageData,
+                        title: title,
+                        description: description,
+                        theme: selectedTheme
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '一括出品に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 一括出品結果:', result);
+
+                // Display detailed results
+                let successMessage = `🎉 一括出品完了！\n\n`;
+                successMessage += `成功: ${result.summary.successful}/${result.summary.total}プラットフォーム\n\n`;
+
+                if (result.results.printify.success) {
+                    successMessage += `✅ Printify: 出品成功\n`;
+                } else {
+                    successMessage += `❌ Printify: ${result.results.printify.error}\n`;
+                }
+
+                if (result.results.suzuri.success) {
+                    successMessage += `✅ SUZURI: 出品成功\n`;
+                } else {
+                    successMessage += `❌ SUZURI: ${result.results.suzuri.error}\n`;
+                }
+
+                if (result.results.base.success) {
+                    successMessage += `✅ BASE: 出品成功\n`;
+                } else {
+                    successMessage += `❌ BASE: ${result.results.base.error}\n`;
+                }
+
+                if (result.results.base.success) {
+                    successMessage += `\n⚠️ BASE: オリジナルプリント.jpアプリで印刷設定が必要です`;
+                }
+
+                alert(successMessage);
+                progressText.textContent = `✅ ${result.summary.successful}/${result.summary.total}プラットフォームに出品完了`;
+
+            } catch (error) {
+                console.error('一括出品エラー:', error);
+                showError(`一括出品エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                publishAllBtn.disabled = false;
+                publishAllBtn.innerHTML = '<span>🌐</span><span>全プラットフォームに一括出品（Printify + SUZURI + BASE）</span>';
+            }
+        };
+
         // Enable SUZURI/BASE buttons when images are generated
         function updateJPPODButtons() {
             const hasImages = generatedImages.length > 0;
             suzuriCreateBtn.disabled = !hasImages;
             baseCreateBtn.disabled = !hasImages;
+            publishAllBtn.disabled = !hasImages;
         }
 
         // ========================================
@@ -2277,6 +2369,7 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
         baseCreateBtn.addEventListener('click', handleBASECreate);
+        publishAllBtn.addEventListener('click', handlePublishAll);
 
         // --- App Initialization ---
         console.log('🚀 Tシャツデザインジェネレーター起動');
