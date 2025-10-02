@@ -1867,6 +1867,28 @@
                 progressText.textContent = `✅ 完了: ${successCount}商品を作成しました (${generatedImages.length}デザイン × ${selectedProductTypes.length}タイプ)`;
             }
 
+            // Auto-update prices for all created products (38% profit margin)
+            if (successCount > 0) {
+                try {
+                    console.log('💰 価格自動更新を開始...');
+                    progressText.textContent = '💰 価格を最適化中（38%利益率）...';
+                    const priceUpdateResponse = await fetch(`${API_BASE_URL}/printify-update-prices`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ shopId: printifyShopId })
+                    });
+                    if (priceUpdateResponse.ok) {
+                        const priceResult = await priceUpdateResponse.json();
+                        console.log('✅ 価格自動更新完了:', priceResult.updatedCount, '商品');
+                        progressText.textContent = `✅ 完了: ${successCount}商品作成 + 価格最適化済み（38%利益率）`;
+                    } else {
+                        console.warn('⚠️ 価格自動更新に失敗しました。手動で「💰 既存商品の価格一括更新」を実行してください。');
+                    }
+                } catch (error) {
+                    console.error('❌ 価格自動更新エラー:', error);
+                }
+            }
+
             createAllPrintifyBtn.disabled = false;
             createAllPrintifyBtn.textContent = '🛒 全画像でPrintify商品作成（順次実行）';
         };
@@ -2479,6 +2501,26 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                     successMessage += `✅ SUZURI: 出品成功\n`;
                 } else {
                     successMessage += `❌ SUZURI: ${results.suzuri.error}\n`;
+                }
+
+                // Auto-update prices if Printify succeeded (38% profit margin)
+                if (results.printify.success && results.printify.count > 0) {
+                    try {
+                        console.log('💰 Printify価格自動更新を開始...');
+                        progressText.textContent = '💰 Printify価格を最適化中（38%利益率）...';
+                        const priceUpdateResponse = await fetch(`${API_BASE_URL}/printify-update-prices`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ shopId: printifyShopId })
+                        });
+                        if (priceUpdateResponse.ok) {
+                            const priceResult = await priceUpdateResponse.json();
+                            console.log('✅ Printify価格自動更新完了:', priceResult.updatedCount, '商品');
+                            successMessage += `\n💰 Printify価格最適化完了（38%利益率）`;
+                        }
+                    } catch (error) {
+                        console.error('❌ 価格自動更新エラー:', error);
+                    }
                 }
 
                 alert(successMessage);
