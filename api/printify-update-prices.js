@@ -1,20 +1,20 @@
 // Printify API統合 - 既存商品の価格一括更新エンドポイント
-export default async function handler(req, res) {
+import { rateLimitMiddleware } from '../lib/rateLimiter.js';
+import { asyncHandler, validateRequired, validateEnv, ExternalAPIError } from '../lib/errorHandler.js';
+
+async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    try {
-        const { shopId } = req.body;
-        const apiKey = process.env.PRINTIFY_API_KEY;
+    // Validate environment variables
+    validateEnv(['PRINTIFY_API_KEY']);
 
-        if (!apiKey) {
-            return res.status(500).json({ error: 'PRINTIFY_API_KEY is not configured' });
-        }
+    // Validate required fields
+    validateRequired(req.body, ['shopId']);
 
-        if (!shopId) {
-            return res.status(400).json({ error: 'shopId is required' });
-        }
+    const { shopId } = req.body;
+    const apiKey = process.env.PRINTIFY_API_KEY;
 
         // Blueprint IDから商品タイプと価格を判定
         const blueprintToPriceMap = {
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
         if (!productsResponse.ok) {
             const errorText = await productsResponse.text();
-            throw new Error(`Failed to fetch products: ${productsResponse.status} - ${errorText}`);
+            throw new ExternalAPIError('Printify', `Failed to fetch products (${productsResponse.status})`, errorText);
         }
 
         const productsData = await productsResponse.json();
@@ -188,9 +188,10 @@ export default async function handler(req, res) {
                 'フーディ (Gildan 18500)': '¥4,500'
             }
         });
-
-    } catch (error) {
-        console.error('Error in /api/printify-update-prices:', error);
-        res.status(500).json({ error: error.message });
-    }
 }
+
+// Apply rate limiting: max 2 requests per minute (this is a heavy operation)
+export default rateLimitMiddleware(
+    asyncHandler(handler),
+    { maxRequests: 2, windowMs: 60000 }
+);

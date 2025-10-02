@@ -307,9 +307,22 @@
                     ステップ3：生成された画像を確認・保存
                 </h2>
                 <div class="bg-gray-700 rounded-lg p-4 flex flex-col items-center justify-center min-h-[300px]">
-                    <div id="image-loader" class="text-center hidden">
+                    <div id="image-loader" class="text-center hidden w-full max-w-md mx-auto">
                         <div class="loader mx-auto"></div>
-                        <p id="progress-text" class="mt-4 text-gray-400">AIが画像を生成中です...</p>
+                        <!-- Progress Bar -->
+                        <div class="mt-6 mb-3">
+                            <div class="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
+                                <div id="progress-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-4 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Progress Text -->
+                        <p id="progress-text" class="text-gray-400 text-sm">AIが画像を生成中です...</p>
+                        <p id="progress-details" class="text-gray-500 text-xs mt-1">
+                            <span id="current-step">0</span>/<span id="total-steps">0</span>
+                            <span id="eta-container" class="hidden">
+                                (残り: <span id="eta">計算中...</span>)
+                            </span>
+                        </p>
                     </div>
                     <div id="image-display" class="hidden text-center w-full">
                         <!-- Multiple images grid -->
@@ -406,6 +419,43 @@
                 .filter(cb => cb && cb.checked)
                 .map(cb => cb.value);
             return selected.length > 0 ? selected : ['tshirt']; // デフォルトはTシャツ
+        }
+
+        // Helper function: Update progress bar and ETA
+        function updateProgress(current, total, startTime = null) {
+            const progressBar = document.getElementById('progress-bar');
+            const currentStepEl = document.getElementById('current-step');
+            const totalStepsEl = document.getElementById('total-steps');
+            const etaEl = document.getElementById('eta');
+            const etaContainer = document.getElementById('eta-container');
+
+            // Update progress bar
+            const percentage = total > 0 ? Math.min((current / total) * 100, 100) : 0;
+            if (progressBar) progressBar.style.width = `${percentage}%`;
+
+            // Update step counter
+            if (currentStepEl) currentStepEl.textContent = current;
+            if (totalStepsEl) totalStepsEl.textContent = total;
+
+            // Calculate and show ETA
+            if (startTime && current > 0 && current < total) {
+                const elapsed = Date.now() - startTime;
+                const avgTimePerItem = elapsed / current;
+                const remaining = (total - current) * avgTimePerItem;
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+
+                if (etaEl) {
+                    if (minutes > 0) {
+                        etaEl.textContent = `${minutes}分${seconds}秒`;
+                    } else {
+                        etaEl.textContent = `${seconds}秒`;
+                    }
+                }
+                if (etaContainer) etaContainer.classList.remove('hidden');
+            } else {
+                if (etaContainer) etaContainer.classList.add('hidden');
+            }
         }
 
         let printifyShopId = null;
