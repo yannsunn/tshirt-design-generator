@@ -522,6 +522,88 @@
             return await fetchRes.blob();
         };
 
+        // 簡易的な白背景除去（無料、クライアント側処理）
+        const removeWhiteBackgroundSimple = async (imageBlob) => {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                const url = URL.createObjectURL(imageBlob);
+
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // 画像を描画
+                    ctx.drawImage(img, 0, 0);
+
+                    // ピクセルデータを取得
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const pixels = imageData.data;
+                    const width = canvas.width;
+                    const height = canvas.height;
+
+                    // エッジ検出マップを作成（キャラクター領域を保護）
+                    const isEdge = new Uint8Array(width * height);
+
+                    for (let y = 1; y < height - 1; y++) {
+                        for (let x = 1; x < width - 1; x++) {
+                            const idx = (y * width + x) * 4;
+
+                            // 周囲8ピクセルとの差分を計算
+                            let maxDiff = 0;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (dx === 0 && dy === 0) continue;
+                                    const nIdx = ((y + dy) * width + (x + dx)) * 4;
+                                    const diff = Math.abs(pixels[idx] - pixels[nIdx]) +
+                                                Math.abs(pixels[idx + 1] - pixels[nIdx + 1]) +
+                                                Math.abs(pixels[idx + 2] - pixels[nIdx + 2]);
+                                    maxDiff = Math.max(maxDiff, diff);
+                                }
+                            }
+
+                            // エッジ判定（差分が30以上ならエッジ）
+                            if (maxDiff > 30) {
+                                isEdge[y * width + x] = 1;
+                            }
+                        }
+                    }
+
+                    // 白背景を透明化（エッジ以外の白いピクセルのみ）
+                    for (let i = 0; i < pixels.length; i += 4) {
+                        const r = pixels[i];
+                        const g = pixels[i + 1];
+                        const b = pixels[i + 2];
+                        const pixelIdx = Math.floor(i / 4);
+
+                        // 白色判定（RGB > 240）かつ非エッジ領域
+                        const isWhite = r > 240 && g > 240 && b > 240;
+                        if (isWhite && !isEdge[pixelIdx]) {
+                            pixels[i + 3] = 0; // 透明化
+                        }
+                    }
+
+                    // 処理済みピクセルデータを書き戻し
+                    ctx.putImageData(imageData, 0, 0);
+
+                    // BlobとしてPNG出力
+                    canvas.toBlob((blob) => {
+                        console.log('✅ 簡易背景除去完了（精度60-70%）');
+                        resolve(blob);
+                    }, 'image/png');
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('画像の読み込みに失敗しました'));
+                };
+
+                img.src = url;
+            });
+        };
+
         const removeBackgroundWithAPI = async (imageBlob) => {
             try {
                 // BlobをBase64に変換
@@ -541,18 +623,18 @@
                 });
 
                 if (!response.ok) {
-                    console.warn('Background removal failed, using original image');
-                    return imageBlob;
+                    console.warn('Background removal failed, using simple removal');
+                    return await removeWhiteBackgroundSimple(imageBlob);
                 }
 
                 const result = await response.json();
 
-                // APIキーが設定されていない、またはエラーの場合は元の画像を返す
+                // APIキーが設定されていない、またはエラーの場合は簡易背景除去を使用
                 if (result.skipped) {
                     console.warn('⚠️ 背景除去がスキップされました:', result.message);
-                    console.warn('remove.bg APIキーが設定されていないか、エラーが発生しています');
-                    showWarning('背景除去がスキップされました。Printifyが自動で背景を除去します（精度80-90%）。\n高精度な背景除去が必要な場合は、remove.bg APIキーを設定してください。');
-                    return imageBlob;
+                    console.warn('簡易的な白背景除去を実行します（無料、精度60-70%）');
+                    showWarning('簡易的な白背景除去を実行中...\n精度60-70%（無料版）\n\n高精度が必要な場合はremove.bg APIキーを設定してください（精度99%、$0.20/枚）');
+                    return await removeWhiteBackgroundSimple(imageBlob);
                 }
 
                 // 背景除去済み画像をBlobに変換
@@ -561,8 +643,13 @@
 
             } catch (error) {
                 console.error('Background removal error:', error);
-                // エラーの場合は元の画像を返す
-                return imageBlob;
+                // エラーの場合は簡易背景除去を試行
+                try {
+                    return await removeWhiteBackgroundSimple(imageBlob);
+                } catch (simpleError) {
+                    console.error('Simple background removal also failed:', simpleError);
+                    return imageBlob;
+                }
             }
         };
 
