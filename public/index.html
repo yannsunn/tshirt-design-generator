@@ -465,14 +465,14 @@
                 </div>
             </div>
 
-            <!-- Japan POD Integration Section -->
+            <!-- Global POD Integration Section -->
             <div class="mt-8 bg-gray-800 rounded-lg p-6 border-2 border-purple-700">
                 <h2 class="text-lg font-semibold mb-4 text-purple-300 flex items-center gap-2">
-                    <span>🇯🇵</span>
-                    <span>日本国内POD連携</span>
+                    <span>🌐</span>
+                    <span>グローバルPOD連携</span>
                 </h2>
                 <p class="text-sm text-gray-400 mb-4">
-                    SUZURI・BASEに商品を出品します（現在のデザインを使用）
+                    Printify・SUZURI・Gelatoに商品を出品します（現在のデザインを使用）
                 </p>
                 <!-- 一括出品ボタン -->
                 <button
@@ -480,7 +480,7 @@
                     class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-2 mb-3"
                     disabled>
                     <span>🌐</span>
-                    <span>Printify + SUZURIに一括出品</span>
+                    <span>Printify + SUZURI + Gelatoに一括出品</span>
                 </button>
 
                 <!-- 個別出品ボタン -->
@@ -2351,11 +2351,11 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                 return showError('先にデザインを生成してください');
             }
 
-            if (!confirm('Printify + SUZURIに一括出品しますか？\n\n出品先:\n• Printify (Etsy/eBay/Storefront)\n• SUZURI (Tシャツ/パーカー/スウェット)')) {
+            if (!confirm('Printify + SUZURI + Gelatoに一括出品しますか？\n\n出品先:\n• Printify (Etsy/eBay/Storefront)\n• SUZURI (Tシャツ/パーカー/スウェット)\n• Gelato (ドラフト注文作成)')) {
                 return;
             }
 
-            console.log('🌐 Printify + SUZURI一括出品開始');
+            console.log('🌐 Printify + SUZURI + Gelato一括出品開始');
             publishAllBtn.disabled = true;
             publishAllBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
             hideError();
@@ -2365,9 +2365,17 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                 const title = imgData.idea.phrase || 'オリジナルデザイン';
                 const description = `オリジナルデザインの商品です。\n\nデザイン: ${title}`;
 
-                progressText.textContent = 'Printify + SUZURIに出品中...';
+                progressText.textContent = 'Printify + SUZURI + Gelatoに並列出品中...';
 
-                const response = await fetch(`${API_BASE_URL}/publish-all-platforms`, {
+                // 各APIを並列に直接呼び出し（中間APIを経由しない）
+                const results = {
+                    printify: { success: false, error: null },
+                    suzuri: { success: false, error: null },
+                    gelato: { success: false, error: null }
+                };
+
+                // Printifyへの出品
+                const printifyPromise = fetch(`${API_BASE_URL}/printify-batch-auto-generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2376,34 +2384,97 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                         description: description,
                         theme: selectedTheme
                     })
+                }).then(async response => {
+                    if (response.ok) {
+                        results.printify.success = true;
+                        console.log('✅ Printify出品成功');
+                    } else {
+                        const error = await response.json();
+                        results.printify.error = error.error || 'Printify出品失敗';
+                        console.log('❌ Printify出品失敗:', results.printify.error);
+                    }
+                }).catch(error => {
+                    results.printify.error = error.message;
+                    console.error('❌ Printify出品エラー:', error);
                 });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || '一括出品に失敗しました');
-                }
+                // SUZURIへの出品
+                const suzuriPromise = fetch(`${API_BASE_URL}/suzuri-batch-create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageUrl: imgData.imageData,
+                        title: title,
+                        description: description
+                    })
+                }).then(async response => {
+                    if (response.ok) {
+                        results.suzuri.success = true;
+                        console.log('✅ SUZURI出品成功');
+                    } else {
+                        const error = await response.json();
+                        results.suzuri.error = error.error || 'SUZURI出品失敗';
+                        console.log('❌ SUZURI出品失敗:', results.suzuri.error);
+                    }
+                }).catch(error => {
+                    results.suzuri.error = error.message;
+                    console.error('❌ SUZURI出品エラー:', error);
+                });
 
-                const result = await response.json();
-                console.log('✅ 一括出品結果:', result);
+                // Gelatoへの出品（ドラフト注文）
+                const gelatoPromise = fetch(`${API_BASE_URL}/gelato-create-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageUrl: imgData.imageData,
+                        title: title,
+                        description: description,
+                        isDryRun: true // Test order (draft)
+                    })
+                }).then(async response => {
+                    if (response.ok) {
+                        results.gelato.success = true;
+                        console.log('✅ Gelato出品成功');
+                    } else {
+                        const error = await response.json();
+                        results.gelato.error = error.error || 'Gelato出品失敗';
+                        console.log('❌ Gelato出品失敗:', results.gelato.error);
+                    }
+                }).catch(error => {
+                    results.gelato.error = error.message;
+                    console.error('❌ Gelato出品エラー:', error);
+                });
 
-                // Display detailed results
+                // 全ての完了を待つ
+                await Promise.all([printifyPromise, suzuriPromise, gelatoPromise]);
+
+                // 結果表示
+                const successCount = Object.values(results).filter(r => r.success).length;
+                const totalCount = Object.keys(results).length;
+
                 let successMessage = `🎉 一括出品完了！\n\n`;
-                successMessage += `成功: ${result.summary.successful}/${result.summary.total}プラットフォーム\n\n`;
+                successMessage += `成功: ${successCount}/${totalCount}プラットフォーム\n\n`;
 
-                if (result.results.printify.success) {
+                if (results.printify.success) {
                     successMessage += `✅ Printify: 出品成功\n`;
                 } else {
-                    successMessage += `❌ Printify: ${result.results.printify.error}\n`;
+                    successMessage += `❌ Printify: ${results.printify.error}\n`;
                 }
 
-                if (result.results.suzuri.success) {
+                if (results.suzuri.success) {
                     successMessage += `✅ SUZURI: 出品成功\n`;
                 } else {
-                    successMessage += `❌ SUZURI: ${result.results.suzuri.error}\n`;
+                    successMessage += `❌ SUZURI: ${results.suzuri.error}\n`;
+                }
+
+                if (results.gelato.success) {
+                    successMessage += `✅ Gelato: ドラフト注文作成成功\n`;
+                } else {
+                    successMessage += `❌ Gelato: ${results.gelato.error}\n`;
                 }
 
                 alert(successMessage);
-                progressText.textContent = `✅ ${result.summary.successful}/${result.summary.total}プラットフォームに出品完了`;
+                progressText.textContent = `✅ ${successCount}/${totalCount}プラットフォームに出品完了`;
 
             } catch (error) {
                 console.error('一括出品エラー:', error);
@@ -2411,7 +2482,7 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                 progressText.textContent = 'エラーが発生しました';
             } finally {
                 publishAllBtn.disabled = false;
-                publishAllBtn.innerHTML = '<span>🌐</span><span>Printify + SUZURIに一括出品</span>';
+                publishAllBtn.innerHTML = '<span>🌐</span><span>Printify + SUZURI + Gelatoに一括出品</span>';
             }
         };
 
