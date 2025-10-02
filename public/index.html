@@ -1843,17 +1843,30 @@
 
             console.log('⚡ Express一括設定開始');
             enableExpressBtn.disabled = true;
-            enableExpressBtn.textContent = '処理中...';
+            enableExpressBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
             hideError();
 
+            // 進捗アニメーション用の変数
+            let progressDots = 0;
+            let progressInterval = null;
+
             try {
-                progressText.textContent = 'Express設定を確認中...';
+                // 推定時間を表示
+                progressText.textContent = '⚡ Express設定を確認中... (推定: 1-3分)';
+
+                // 進捗アニメーション開始
+                progressInterval = setInterval(() => {
+                    progressDots = (progressDots + 1) % 4;
+                    progressText.textContent = `⚡ Express設定を更新中${'.'.repeat(progressDots)} (推定: 1-3分、商品数により変動)`;
+                }, 500);
 
                 const response = await fetch(`${API_BASE_URL}/printify-enable-express`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ shopId: printifyShopId })
                 });
+
+                clearInterval(progressInterval);
 
                 if (!response.ok) {
                     const error = await response.json();
@@ -1892,12 +1905,13 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 });
 
             } catch (error) {
+                if (progressInterval) clearInterval(progressInterval);
                 console.error('Express設定エラー:', error);
                 showError(`Express設定エラー: ${error.message}`);
                 progressText.textContent = 'エラーが発生しました';
             } finally {
                 enableExpressBtn.disabled = false;
-                enableExpressBtn.textContent = '⚡ 既存商品のExpress一括設定';
+                enableExpressBtn.innerHTML = '<span>⚡</span><span>既存商品のExpress一括設定</span>';
             }
         };
 
@@ -1923,17 +1937,30 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             console.log('💰 価格一括更新開始');
             const updatePricesBtn = document.getElementById('update-prices-btn');
             updatePricesBtn.disabled = true;
-            updatePricesBtn.textContent = '処理中...';
+            updatePricesBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
             hideError();
 
+            // 進捗アニメーション用の変数
+            let progressDots = 0;
+            let progressInterval = null;
+
             try {
-                progressText.textContent = '商品価格を更新中...';
+                // 推定時間を表示
+                progressText.textContent = '💰 商品価格を更新中... (推定: 1-3分)';
+
+                // 進捗アニメーション開始
+                progressInterval = setInterval(() => {
+                    progressDots = (progressDots + 1) % 4;
+                    progressText.textContent = `💰 商品価格を更新中${'.'.repeat(progressDots)} (推定: 1-3分、商品数により変動)`;
+                }, 500);
 
                 const response = await fetch(`${API_BASE_URL}/printify-update-prices`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ shopId: printifyShopId })
                 });
+
+                clearInterval(progressInterval);
 
                 if (!response.ok) {
                     const error = await response.json();
@@ -1976,12 +2003,13 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 });
 
             } catch (error) {
+                if (progressInterval) clearInterval(progressInterval);
                 console.error('価格更新エラー:', error);
                 showError(`価格更新エラー: ${error.message}`);
                 progressText.textContent = 'エラーが発生しました';
             } finally {
                 updatePricesBtn.disabled = false;
-                updatePricesBtn.textContent = '💰 既存商品の価格一括更新';
+                updatePricesBtn.innerHTML = '<span>💰</span><span>既存商品の価格一括更新</span>';
             }
         };
 
