@@ -1,4 +1,4 @@
-// Printify API統合 - 既存商品の価格一括更新エンドポイント
+// Printifyサイズ別価格一括更新（2XL/3XL対応、38%利益率達成）
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateRequired, validateEnv, ExternalAPIError } from '../lib/errorHandler.js';
 
@@ -7,33 +7,44 @@ async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Validate environment variables
     validateEnv(['PRINTIFY_API_KEY']);
-
-    // Validate required fields
     validateRequired(req.body, ['shopId']);
 
-    const { shopId } = req.body;
+    const { shopId, targetMargin = 38, dryRun = false } = req.body;
     const apiKey = process.env.PRINTIFY_API_KEY;
 
-        // Blueprint IDから商品タイプと価格を判定
-        const blueprintToPriceMap = {
-            // Tシャツ系
-            6: { type: 'tshirt', price: 2500, name: 'Gildan 5000 T-Shirt' },
-            26: { type: 'lightweight_tee', price: 2700, name: 'Gildan 980 Lightweight Fashion Tee' },
-            36: { type: 'ultra_cotton_tee', price: 2800, name: 'Gildan 2000 Ultra Cotton Tee' },
-            145: { type: 'softstyle_tee', price: 2700, name: 'Gildan 64000 Softstyle T-Shirt' },
-            157: { type: 'kids_tee', price: 2200, name: 'Gildan 5000B Kids Heavy Cotton Tee' },
-            // 長袖
-            80: { type: 'longsleeve', price: 3200, name: 'Gildan 2400 Ultra Cotton Long Sleeve Tee' },
-            // スウェット・フーディ
-            49: { type: 'sweatshirt', price: 4000, name: 'Gildan 18000 Sweatshirt' },
-            77: { type: 'hoodie', price: 4500, name: 'Gildan 18500 Hoodie' }
-        };
+    // Blueprint IDごとの原価マッピング
+    const blueprintCosts = {
+        6: { baseCost: 900, extraCost: { '2XL': 1200, '3XL': 1500 }, name: 'Gildan 5000 T-Shirt' },
+        26: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 980 Lightweight Tee' },
+        36: { baseCost: 1200, extraCost: { '2XL': 1500, '3XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
+        145: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 64000 Softstyle T-Shirt' },
+        157: { baseCost: 750, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
+        80: { baseCost: 1350, extraCost: { '2XL': 1650, '3XL': 1950 }, name: 'Gildan 2400 Long Sleeve Tee' },
+        49: { baseCost: 2100, extraCost: { '2XL': 2550, '3XL': 3000 }, name: 'Gildan 18000 Sweatshirt' },
+        77: { baseCost: 2550, extraCost: { '2XL': 3000, '3XL': 3450 }, name: 'Gildan 18500 Hoodie' }
+    };
 
-        console.log('Starting bulk price update for shop:', shopId);
+    // USD $X.99 価格計算関数（38%前後の利益率）
+    const JPY_TO_USD = 150; // 1 USD = 150 JPY
+    const calculateOptimalPrice = (costJpy, targetMargin) => {
+        // 円→ドル変換
+        const costUsd = costJpy / JPY_TO_USD;
+        // 目標価格を計算
+        const exactPriceUsd = costUsd / (1 - targetMargin / 100);
+        // 次の$X.99に切り上げ
+        const priceUsd = Math.ceil(exactPriceUsd) - 0.01;
+        // Printify APIはセント単位（整数）で価格を受け取る
+        return Math.round(priceUsd * 100);
+    };
 
-        // 1. 全商品を取得
+    try {
+        console.log(`📊 サイズ別価格一括更新開始: 目標利益率${targetMargin}%`);
+        if (dryRun) {
+            console.log('⚠️ DRY RUNモード: 実際の更新は行いません');
+        }
+
+        // 全商品を取得
         const productsResponse = await fetch(
             `https://api.printify.com/v1/shops/${shopId}/products.json`,
             {
@@ -52,21 +63,20 @@ async function handler(req, res) {
 
         const productsData = await productsResponse.json();
         const products = productsData.data || [];
-
-        console.log(`Found ${products.length} products in shop`);
+        console.log(`📋 ${products.length}商品を取得`);
 
         let updatedCount = 0;
         let skippedCount = 0;
         let errorCount = 0;
         const updateDetails = [];
 
-        // 2. 各商品の価格を更新
+        // 各商品を処理
         for (const product of products) {
             try {
-                console.log(`Processing product ${product.id}: ${product.title}`);
+                console.log(`\n処理中: ${product.title} (ID: ${product.id})`);
 
-                // 商品の詳細情報を取得（blueprint_idを確認するため）
-                const productDetailResponse = await fetch(
+                // 商品詳細を取得
+                const detailResponse = await fetch(
                     `https://api.printify.com/v1/shops/${shopId}/products/${product.id}.json`,
                     {
                         method: 'GET',
@@ -77,55 +87,85 @@ async function handler(req, res) {
                     }
                 );
 
-                if (!productDetailResponse.ok) {
-                    console.error(`Failed to fetch product ${product.id} details`);
+                if (!detailResponse.ok) {
+                    console.error(`Failed to fetch product ${product.id}`);
                     errorCount++;
                     continue;
                 }
 
-                const productDetail = await productDetailResponse.json();
-                const blueprintId = productDetail.blueprint_id;
+                const detail = await detailResponse.json();
+                const blueprintId = detail.blueprint_id;
+                const variants = detail.variants || [];
 
-                // Blueprint IDから価格を判定
-                const priceConfig = blueprintToPriceMap[blueprintId];
-
-                if (!priceConfig) {
-                    console.log(`Unknown blueprint ID ${blueprintId} for product ${product.id}, skipping`);
+                const costInfo = blueprintCosts[blueprintId];
+                if (!costInfo) {
+                    console.log(`Unknown blueprint ${blueprintId}, skipping`);
                     skippedCount++;
                     updateDetails.push({
                         productId: product.id,
                         title: product.title,
                         status: 'skipped',
-                        reason: `Unknown blueprint ID: ${blueprintId}`
+                        reason: `Unknown blueprint: ${blueprintId}`
                     });
                     continue;
                 }
 
-                const { type, price, name } = priceConfig;
+                // 各variantに最適価格を設定
+                const updatedVariants = variants.map(variant => {
+                    const variantTitle = variant.title || '';
+                    let cost = costInfo.baseCost;
 
-                // 現在の価格を確認
-                const currentVariants = productDetail.variants || [];
-                const needsUpdate = currentVariants.some(v => v.price !== price);
+                    // サイズを検出
+                    if (variantTitle.includes('2XL')) {
+                        cost = costInfo.extraCost['2XL'] || costInfo.baseCost * 1.33;
+                    } else if (variantTitle.includes('3XL')) {
+                        cost = costInfo.extraCost['3XL'] || costInfo.baseCost * 1.67;
+                    }
 
-                if (!needsUpdate) {
-                    console.log(`Product ${product.id} already has correct price (¥${price}), skipping`);
+                    const optimalPrice = calculateOptimalPrice(cost, targetMargin);
+
+                    return {
+                        id: variant.id,
+                        price: optimalPrice,
+                        is_enabled: variant.is_enabled
+                    };
+                });
+
+                // 価格が変更されたか確認
+                const hasChanges = updatedVariants.some((updatedVariant, index) => {
+                    return updatedVariant.price !== variants[index].price;
+                });
+
+                if (!hasChanges) {
+                    console.log(`✓ 価格は既に最適です`);
                     skippedCount++;
                     updateDetails.push({
                         productId: product.id,
                         title: product.title,
-                        productType: name,
+                        productType: costInfo.name,
                         status: 'skipped',
-                        reason: 'Already correct price'
+                        reason: 'Already optimal pricing'
                     });
                     continue;
                 }
 
-                // 全variantの価格を更新
-                const updatedVariants = currentVariants.map(variant => ({
-                    id: variant.id,
-                    price: price,
-                    is_enabled: variant.is_enabled
-                }));
+                if (dryRun) {
+                    console.log(`[DRY RUN] 更新予定: ${costInfo.name}`);
+                    updatedCount++;
+                    updateDetails.push({
+                        productId: product.id,
+                        title: product.title,
+                        productType: costInfo.name,
+                        status: 'dry-run',
+                        message: '更新が必要（DRY RUNのため実行なし）',
+                        variants: updatedVariants.map((v, i) => ({
+                            title: variants[i].title,
+                            currentPrice: variants[i].price,
+                            newPrice: v.price
+                        }))
+                    });
+                    continue;
+                }
 
                 // 商品を更新
                 const updateResponse = await fetch(
@@ -149,24 +189,24 @@ async function handler(req, res) {
                     updateDetails.push({
                         productId: product.id,
                         title: product.title,
-                        productType: name,
+                        productType: costInfo.name,
                         status: 'error',
                         reason: `Update failed: ${errorText.substring(0, 100)}`
                     });
                     continue;
                 }
 
-                console.log(`✅ Updated product ${product.id} (${name}) to ¥${price}`);
+                console.log(`✅ 更新成功: ${costInfo.name}`);
                 updatedCount++;
                 updateDetails.push({
                     productId: product.id,
                     title: product.title,
-                    productType: name,
+                    productType: costInfo.name,
                     status: 'updated',
-                    newPrice: `¥${price}`
+                    message: `サイズ別価格を最適化（${targetMargin}%利益率達成）`
                 });
 
-                // レート制限対策：各更新の間に500ms待機
+                // レート制限対策
                 await new Promise(resolve => setTimeout(resolve, 500));
 
             } catch (error) {
@@ -181,29 +221,44 @@ async function handler(req, res) {
             }
         }
 
-        console.log(`Price update completed. Updated: ${updatedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`);
+        console.log(`\n📊 処理完了: 更新${updatedCount}件、スキップ${skippedCount}件、エラー${errorCount}件`);
 
         res.status(200).json({
             success: true,
+            dryRun: dryRun,
+            targetMargin: targetMargin,
             updated: updatedCount,
             skipped: skippedCount,
             errors: errorCount,
             total: products.length,
             details: updateDetails,
             priceConfig: {
-                'Tシャツ (Gildan 5000)': '¥2,500',
-                '軽量Tシャツ (Gildan 980)': '¥2,700',
-                'ウルトラコットンTシャツ (Gildan 2000)': '¥2,800',
-                'ソフトスタイルTシャツ (Gildan 64000)': '¥2,700',
-                'キッズTシャツ (Gildan 5000B)': '¥2,200',
-                '長袖Tシャツ (Gildan 2400)': '¥3,200',
-                'スウェット (Gildan 18000)': '¥4,000',
-                'フーディ (Gildan 18500)': '¥4,500'
-            }
+                'Tシャツ (Gildan 5000)': {
+                    'S-XL': '$9.99 (39.9%)',
+                    '2XL': '$12.99 (38.4%)',
+                    '3XL': '$16.99 (41.1%)'
+                },
+                'スウェット (Gildan 18000)': {
+                    'S-XL': '$22.99 (39.1%)',
+                    '2XL': '$27.99 (39.3%)',
+                    '3XL': '$32.99 (39.4%)'
+                },
+                'フーディ (Gildan 18500)': {
+                    'S-XL': '$27.99 (39.3%)',
+                    '2XL': '$32.99 (39.4%)',
+                    '3XL': '$37.99 (39.5%)'
+                }
+            },
+            note: dryRun ? 'DRY RUNモードです。実際の更新を行うにはdryRun=falseで再実行してください。' : 'サイズ別価格を$X.99形式で最適化しました（利益率38〜41%）。'
         });
+
+    } catch (error) {
+        console.error('❌ 価格更新エラー:', error);
+        throw error;
+    }
 }
 
-// Apply rate limiting: max 2 requests per minute (this is a heavy operation)
+// レート制限: 2リクエスト/分（重い処理）
 export default rateLimitMiddleware(
     asyncHandler(handler),
     { maxRequests: 2, windowMs: 60000 }

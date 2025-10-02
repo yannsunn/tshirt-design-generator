@@ -16,59 +16,76 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'shopId and imageId are required' });
         }
 
-        // 商品タイプに応じたBlueprint ID、Print Provider ID、価格を設定
+        // Blueprint IDごとの原価マッピング（38%利益率達成用）
+        const blueprintCosts = {
+            6: { baseCost: 900, extraCost: { '2XL': 1200, '3XL': 1500 }, name: 'Gildan 5000 T-Shirt' },
+            26: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 980 Lightweight Tee' },
+            36: { baseCost: 1200, extraCost: { '2XL': 1500, '3XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
+            145: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 64000 Softstyle T-Shirt' },
+            157: { baseCost: 750, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
+            80: { baseCost: 1350, extraCost: { '2XL': 1650, '3XL': 1950 }, name: 'Gildan 2400 Long Sleeve Tee' },
+            49: { baseCost: 2100, extraCost: { '2XL': 2550, '3XL': 3000 }, name: 'Gildan 18000 Sweatshirt' },
+            77: { baseCost: 2550, extraCost: { '2XL': 3000, '3XL': 3450 }, name: 'Gildan 18500 Hoodie' }
+        };
+
+        // USD $X.99 価格計算関数（38%前後の利益率）
+        const JPY_TO_USD = 150; // 1 USD = 150 JPY
+        const calculateOptimalPrice = (costJpy, targetMargin = 38) => {
+            // 円→ドル変換
+            const costUsd = costJpy / JPY_TO_USD;
+            // 目標価格を計算
+            const exactPriceUsd = costUsd / (1 - targetMargin / 100);
+            // 次の$X.99に切り上げ
+            const priceUsd = Math.ceil(exactPriceUsd) - 0.01;
+            // Printify APIはセント単位（整数）で価格を受け取る
+            return Math.round(priceUsd * 100);
+        };
+
+        // 商品タイプに応じたBlueprint ID、Print Provider ID を設定
         // Note: Blueprint IDはPrint Provider 3 (MyLocker)で確認済み
         const productConfig = {
             // --- Tシャツ系 ---
             tshirt: {
                 blueprintId: 6,  // Gildan 5000 (ベーシックTシャツ) - 売れ筋No.1
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 5000 T-Shirt',
-                price: 2500  // ¥2,500
+                name: 'Gildan 5000 T-Shirt'
             },
             lightweight_tee: {
                 blueprintId: 26,  // Gildan 980 (軽量ファッションTシャツ)
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 980 Lightweight Fashion Tee',
-                price: 2700  // ¥2,700 (+8%)
+                name: 'Gildan 980 Lightweight Fashion Tee'
             },
             ultra_cotton_tee: {
                 blueprintId: 36,  // Gildan 2000 (ウルトラコットンTシャツ)
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 2000 Ultra Cotton Tee',
-                price: 2800  // ¥2,800 (+12%)
+                name: 'Gildan 2000 Ultra Cotton Tee'
             },
             softstyle_tee: {
                 blueprintId: 145,  // Gildan 64000 (ソフトスタイルTシャツ)
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 64000 Softstyle T-Shirt',
-                price: 2700  // ¥2,700 (+8%)
+                name: 'Gildan 64000 Softstyle T-Shirt'
             },
             kids_tee: {
                 blueprintId: 157,  // Gildan 5000B (キッズTシャツ)
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 5000B Kids Heavy Cotton Tee',
-                price: 2200  // ¥2,200 (-12%)
+                name: 'Gildan 5000B Kids Heavy Cotton Tee'
             },
             // --- 長袖 ---
             longsleeve: {
                 blueprintId: 80,  // Gildan 2400 (長袖Tシャツ)
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 2400 Ultra Cotton Long Sleeve Tee',
-                price: 3200  // ¥3,200 (+28%)
+                name: 'Gildan 2400 Ultra Cotton Long Sleeve Tee'
             },
             // --- スウェット・フーディ ---
             sweatshirt: {
                 blueprintId: 49,  // Gildan 18000 (スウェットシャツ) - 人気商品
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 18000 Sweatshirt',
-                price: 4000  // ¥4,000 (+60%)
+                name: 'Gildan 18000 Sweatshirt'
             },
             hoodie: {
                 blueprintId: 77,  // Gildan 18500 (フーディ/パーカー) - 人気商品
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 18500 Hoodie',
-                price: 4500  // ¥4,500 (+80%)
+                name: 'Gildan 18500 Hoodie'
             }
         };
 
@@ -78,8 +95,10 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: `Invalid productType: ${productType}. Valid types: ${validTypes}` });
         }
 
-        const { blueprintId, printProviderId, name: productName, price: productPrice } = config;
+        const { blueprintId, printProviderId, name: productName } = config;
+        const costInfo = blueprintCosts[blueprintId];
         console.log(`Creating product: ${productName} (Blueprint ${blueprintId}, Provider ${printProviderId})`);
+        console.log(`Cost structure: Base ¥${costInfo.baseCost}, 2XL ¥${costInfo.extraCost['2XL'] || 'N/A'}, 3XL ¥${costInfo.extraCost['3XL'] || 'N/A'}`);
 
         // 1. まず利用可能なvariantsを取得
         const variantsResponse = await fetch(
@@ -216,9 +235,22 @@ export default async function handler(req, res) {
                     break;
                 }
 
+                // サイズ別価格を計算（38%利益率達成）
+                const variantTitle = variant.title || '';
+                let cost = costInfo.baseCost;
+
+                // サイズを検出
+                if (variantTitle.includes('2XL')) {
+                    cost = costInfo.extraCost['2XL'] || costInfo.baseCost * 1.33;
+                } else if (variantTitle.includes('3XL')) {
+                    cost = costInfo.extraCost['3XL'] || costInfo.baseCost * 1.67;
+                }
+
+                const optimalPrice = calculateOptimalPrice(cost);
+
                 selectedVariants.push({
                     id: variant.id,
-                    price: productPrice, // 商品タイプ別価格
+                    price: optimalPrice, // サイズ別価格（38%利益率）
                     is_enabled: true
                 });
                 variantIds.push(variant.id);
@@ -241,9 +273,22 @@ export default async function handler(req, res) {
             console.warn('No variants matched criteria, using first 35 variants');
             const fallbackLimit = Math.min(35, availableVariants.length);
             for (let i = 0; i < fallbackLimit; i++) {
+                // サイズ別価格を計算（38%利益率達成）
+                const variantTitle = availableVariants[i].title || '';
+                let cost = costInfo.baseCost;
+
+                // サイズを検出
+                if (variantTitle.includes('2XL')) {
+                    cost = costInfo.extraCost['2XL'] || costInfo.baseCost * 1.33;
+                } else if (variantTitle.includes('3XL')) {
+                    cost = costInfo.extraCost['3XL'] || costInfo.baseCost * 1.67;
+                }
+
+                const optimalPrice = calculateOptimalPrice(cost);
+
                 selectedVariants.push({
                     id: availableVariants[i].id,
-                    price: productPrice, // 商品タイプ別価格
+                    price: optimalPrice, // サイズ別価格（38%利益率）
                     is_enabled: true
                 });
                 variantIds.push(availableVariants[i].id);
@@ -333,6 +378,11 @@ Care instructions: Machine wash: cold (max 30C or 90F), Non-chlorine: bleach as 
         const actualColorCount = actualColorsUsed.length || Math.ceil(selectedVariants.length / 5);
         const estimatedSizesPerColor = actualColorCount > 0 ? Math.floor(selectedVariants.length / actualColorCount) : 5;
 
+        // 価格例を計算
+        const priceS_XL = calculateOptimalPrice(costInfo.baseCost);
+        const price2XL = costInfo.extraCost['2XL'] ? calculateOptimalPrice(costInfo.extraCost['2XL']) : priceS_XL;
+        const price3XL = costInfo.extraCost['3XL'] ? calculateOptimalPrice(costInfo.extraCost['3XL']) : priceS_XL;
+
         res.status(200).json({
             productId: productId,
             productUrl: `https://printify.com/app/products/${productId}`,
@@ -346,8 +396,12 @@ Care instructions: Machine wash: cold (max 30C or 90F), Non-chlorine: bleach as 
 • Color groups: ${actualColorCount} (${selectedColorNames})
 • Approx. ${estimatedSizesPerColor} sizes per color
 • Design positioned at center (y=0.45, scale=0.95)
-• Price: ¥${productPrice.toLocaleString()} per item
 • English title & description for international reach
+
+💰 Size-Specific Pricing (38-41% Profit Margin, all $X.99):
+• S-XL: $${(priceS_XL / 100).toFixed(2)}${price2XL !== priceS_XL ? `
+• 2XL: $${(price2XL / 100).toFixed(2)}` : ''}${price3XL !== priceS_XL && price3XL !== price2XL ? `
+• 3XL: $${(price3XL / 100).toFixed(2)}` : ''}
 
 🎨 IMPORTANT: Mockup Selection Required (API Limitation)
 ⚠️ Printify API does not auto-select mockups. You MUST manually select them:

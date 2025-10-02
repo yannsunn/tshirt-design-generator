@@ -49,6 +49,15 @@ async function handler(req, res) {
             // 動物
             { value: 'cat', label: '猫 (Maneki-neko)' },
             { value: 'deer', label: '鹿 (Deer in Nara)' },
+            // 日本民話・伝説（パブリックドメイン）
+            { value: 'momotaro', label: '桃太郎 (Momotaro - Public Domain)' },
+            { value: 'kintaro', label: '金太郎 (Kintaro - Public Domain)' },
+            { value: 'urashima-taro', label: '浦島太郎 (Urashima Taro - Public Domain)' },
+            // 妖怪（パブリックドメイン伝統妖怪）
+            { value: 'kitsune', label: '狐 (Kitsune Fox Spirit - Public Domain)' },
+            { value: 'tanuki', label: '狸 (Tanuki Raccoon Dog - Public Domain)' },
+            { value: 'kappa', label: '河童 (Kappa Water Imp - Public Domain)' },
+            { value: 'tengu', label: '天狗 (Tengu Mountain Goblin - Public Domain)' },
             // アニメ風（著作権フリー）
             { value: 'kawaii-animal', label: 'かわいい動物アニメ (Kawaii Animal Anime)' },
             { value: 'chibi-warrior', label: 'ちび戦士 (Chibi Warrior)' },
