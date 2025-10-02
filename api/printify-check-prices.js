@@ -58,20 +58,24 @@ export default async function handler(req, res) {
                     continue;
                 }
 
-                // Get base cost from first variant
-                const baseCost = variants[0].cost || 0;
-                const profit = blueprint.price - baseCost;
+                // Get base cost from first variant (in cents)
+                const firstVariant = variants[0];
+                const baseCostCents = firstVariant.cost || 0;
+                const baseCostYen = Math.round(baseCostCents * 1.5); // Convert cents to yen (approx $1 = ¥150)
+                const profit = blueprint.price - baseCostYen;
                 const profitMargin = ((profit / blueprint.price) * 100).toFixed(1);
 
                 results.push({
                     name: blueprint.name,
                     blueprintId: blueprint.id,
                     sellingPrice: blueprint.price,
-                    baseCost: baseCost,
+                    baseCostCents: baseCostCents,
+                    baseCostYen: baseCostYen,
                     profit: profit,
                     profitMargin: `${profitMargin}%`,
                     meetsTarget: parseFloat(profitMargin) >= 38,
-                    sampleVariant: variants[0].title
+                    sampleVariant: firstVariant.title,
+                    debugVariant: firstVariant // デバッグ用
                 });
 
             } catch (error) {
