@@ -161,17 +161,26 @@
                 <div class="bg-gray-900 rounded-lg p-4">
                     <label class="block text-sm text-gray-400 mb-3">Printifyで作成する商品タイプ（複数選択可）:</label>
                     <div class="space-y-2">
-                        <label class="flex items-center text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <input type="checkbox" id="product-type-tshirt" value="tshirt" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                            <span>👕 Tシャツ (Gildan 5000)</span>
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-tshirt" value="tshirt" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>👕 Tシャツ (Gildan 5000)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥2,500</span>
                         </label>
-                        <label class="flex items-center text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <input type="checkbox" id="product-type-sweatshirt" value="sweatshirt" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                            <span>🧥 スウェットシャツ (Gildan 18000)</span>
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-sweatshirt" value="sweatshirt" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>🧥 スウェットシャツ (Gildan 18000)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥4,000</span>
                         </label>
-                        <label class="flex items-center text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <input type="checkbox" id="product-type-hoodie" value="hoodie" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                            <span>🧥 フーディ・パーカー (Gildan 18500)</span>
+                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="product-type-hoodie" value="hoodie" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                                <span>🧥 フーディ・パーカー (Gildan 18500)</span>
+                            </div>
+                            <span class="text-green-400 font-semibold">¥4,500</span>
                         </label>
                     </div>
                     <p class="text-xs text-gray-500 mt-3">
@@ -318,6 +327,11 @@
                                 id="enable-express-btn"
                                 class="inline-block bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
                                 ⚡ 既存商品のExpress一括設定
+                            </button>
+                            <button
+                                id="update-prices-btn"
+                                class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
+                                💰 既存商品の価格一括更新
                             </button>
                         </div>
                         <!-- SNS Post Section -->
@@ -1660,6 +1674,90 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
         };
 
+        // Update prices for all existing products
+        const handleUpdatePrices = async () => {
+            if (!printifyShopId) {
+                return showError('Printify Shop IDが設定されていません');
+            }
+
+            const confirmMessage = `既存の全商品の価格を以下の設定に更新しますか？
+
+📋 価格設定:
+• Tシャツ (Gildan 5000): ¥2,500
+• スウェット (Gildan 18000): ¥4,000
+• フーディ (Gildan 18500): ¥4,500
+
+⚠️ 注意: この操作は元に戻せません。`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            console.log('💰 価格一括更新開始');
+            const updatePricesBtn = document.getElementById('update-prices-btn');
+            updatePricesBtn.disabled = true;
+            updatePricesBtn.textContent = '処理中...';
+            hideError();
+
+            try {
+                progressText.textContent = '商品価格を更新中...';
+
+                const response = await fetch(`${API_BASE_URL}/printify-update-prices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shopId: printifyShopId })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '価格更新に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 価格更新完了:', result);
+
+                // Show detailed results
+                progressText.textContent = `✅ 価格更新完了: ${result.updated}件を更新`;
+
+                const message = `
+🎉 価格更新が完了しました！
+
+📊 結果:
+• 更新: ${result.updated}件
+• スキップ: ${result.skipped}件 (既に正しい価格または対象外)
+• エラー: ${result.errors}件
+• 合計: ${result.total}件
+
+💰 適用された価格:
+${Object.entries(result.priceConfig).map(([type, price]) => `• ${type}: ${price}`).join('\n')}
+
+${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+                // Log detailed results
+                console.log('📋 詳細結果:');
+                result.details.forEach((item, index) => {
+                    if (item.status === 'updated') {
+                        console.log(`${index + 1}. ✅ ${item.title} (${item.productType}) → ${item.newPrice}`);
+                    } else if (item.status === 'skipped') {
+                        console.log(`${index + 1}. ⏭️  ${item.title} - ${item.reason}`);
+                    } else if (item.status === 'error') {
+                        console.log(`${index + 1}. ❌ ${item.title} - ${item.reason}`);
+                    }
+                });
+
+            } catch (error) {
+                console.error('価格更新エラー:', error);
+                showError(`価格更新エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                updatePricesBtn.disabled = false;
+                updatePricesBtn.textContent = '💰 既存商品の価格一括更新';
+            }
+        };
+
         // ========================================
         // END: Bulk Generation Functions
         // ========================================
@@ -1669,6 +1767,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         generateAllBtn.addEventListener('click', handleGenerateAllImages);
         createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
         enableExpressBtn.addEventListener('click', handleEnableExpress);
+        document.getElementById('update-prices-btn').addEventListener('click', handleUpdatePrices);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
 
         // --- App Initialization ---

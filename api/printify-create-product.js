@@ -16,23 +16,26 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'shopId and imageId are required' });
         }
 
-        // 商品タイプに応じたBlueprint IDとPrint Provider IDを設定
+        // 商品タイプに応じたBlueprint ID、Print Provider ID、価格を設定
         // Note: Blueprint IDはPrint Provider 3 (MyLocker)で確認済み
         const productConfig = {
             tshirt: {
                 blueprintId: 6,  // Gildan 5000 (ベーシックTシャツ) - 売れ筋No.1
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 5000 T-Shirt'
+                name: 'Gildan 5000 T-Shirt',
+                price: 2500  // ¥2,500
             },
             sweatshirt: {
                 blueprintId: 49,  // Gildan 18000 (スウェットシャツ) - 人気商品
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 18000 Sweatshirt'
+                name: 'Gildan 18000 Sweatshirt',
+                price: 4000  // ¥4,000 (Tシャツ+60%)
             },
             hoodie: {
                 blueprintId: 77,  // Gildan 18500 (フーディ/パーカー) - 人気商品
                 printProviderId: 3,  // MyLocker
-                name: 'Gildan 18500 Hoodie'
+                name: 'Gildan 18500 Hoodie',
+                price: 4500  // ¥4,500 (Tシャツ+80%)
             }
         };
 
@@ -41,7 +44,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: `Invalid productType: ${productType}. Valid types: tshirt, sweatshirt, hoodie` });
         }
 
-        const { blueprintId, printProviderId, name: productName } = config;
+        const { blueprintId, printProviderId, name: productName, price: productPrice } = config;
         console.log(`Creating product: ${productName} (Blueprint ${blueprintId}, Provider ${printProviderId})`);
 
         // 1. まず利用可能なvariantsを取得
@@ -181,7 +184,7 @@ export default async function handler(req, res) {
 
                 selectedVariants.push({
                     id: variant.id,
-                    price: 2500, // 基本価格2500円
+                    price: productPrice, // 商品タイプ別価格
                     is_enabled: true
                 });
                 variantIds.push(variant.id);
@@ -206,7 +209,7 @@ export default async function handler(req, res) {
             for (let i = 0; i < fallbackLimit; i++) {
                 selectedVariants.push({
                     id: availableVariants[i].id,
-                    price: 2500,
+                    price: productPrice, // 商品タイプ別価格
                     is_enabled: true
                 });
                 variantIds.push(availableVariants[i].id);
@@ -309,7 +312,7 @@ Care instructions: Machine wash: cold (max 30C or 90F), Non-chlorine: bleach as 
 • Color groups: ${actualColorCount} (${selectedColorNames})
 • Approx. ${estimatedSizesPerColor} sizes per color
 • Design positioned at center (y=0.45, scale=0.95)
-• Price: ¥2,500 per item
+• Price: ¥${productPrice.toLocaleString()} per item
 • English title & description for international reach
 
 🎨 IMPORTANT: Mockup Selection Required (API Limitation)
