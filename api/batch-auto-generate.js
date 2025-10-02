@@ -170,9 +170,11 @@ async function handler(req, res) {
                 const { imageId } = await uploadResponse.json();
 
                 // 各商品タイプで作成
+                // IMPORTANT: Title and description MUST be in English only (no Japanese/Hiragana)
                 for (const productType of productTypes) {
-                    const title = `${imgData.idea.character} - ${imgData.idea.phrase}`;
-                    const description = `Japanese culture design featuring ${imgData.idea.character}. ${imgData.idea.phrase}. Perfect souvenir from Japan!`;
+                    // Extract keywords from Japanese character description for English title
+                    const englishTitle = `Japanese Culture T-Shirt - ${selectedTheme.charAt(0).toUpperCase() + selectedTheme.slice(1)} Design`;
+                    const englishDescription = `Unique Japanese-themed design featuring traditional ${selectedTheme} motif. AI-generated artwork perfect for tourists and Japan culture enthusiasts. High-quality print on comfortable fabric.`;
 
                     const productResponse = await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/printify-create-product`, {
                         method: 'POST',
@@ -180,8 +182,8 @@ async function handler(req, res) {
                         body: JSON.stringify({
                             shopId,
                             imageId,
-                            title,
-                            description,
+                            title: englishTitle,
+                            description: englishDescription,
                             tags: ['Japanese Culture', 'AI Generated', 'Batch Auto-Created'],
                             productType
                         })
