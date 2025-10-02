@@ -496,6 +496,13 @@
                     </summary>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pl-4">
                         <button
+                            id="printify-only-btn"
+                            class="bg-green-600/80 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm"
+                            disabled>
+                            <span>🛒</span>
+                            <span>Printifyのみ出品</span>
+                        </button>
+                        <button
                             id="suzuri-create-btn"
                             class="bg-pink-600/80 hover:bg-pink-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm"
                             disabled>
@@ -565,6 +572,7 @@
         const suzuriCreateBtn = document.getElementById('suzuri-create-btn');
         const baseCreateBtn = document.getElementById('base-create-btn');
         const publishAllBtn = document.getElementById('publish-all-btn');
+        const printifyOnlyBtn = document.getElementById('printify-only-btn');
 
         // Helper function: Get selected product types from checkboxes
         function getSelectedProductTypes() {
@@ -2436,7 +2444,7 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            imageUrl: imgData.imageData,
+                            imageUrl: compressedImage,  // Use compressed image to avoid 413 error
                             title: suzuriTitle
                         })
                     });
@@ -2486,10 +2494,11 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
             }
         };
 
-        // Enable SUZURI buttons when images are generated
+        // Enable SUZURI and Printify buttons when images are generated
         function updateJPPODButtons() {
             const hasImages = generatedImages.length > 0;
             suzuriCreateBtn.disabled = !hasImages;
+            printifyOnlyBtn.disabled = !hasImages;
             publishAllBtn.disabled = !hasImages;
             // BASEは手動設定が必要なため常に非表示
         }
@@ -2508,6 +2517,7 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
+        printifyOnlyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
         baseCreateBtn.addEventListener('click', handleBASECreate);
         publishAllBtn.addEventListener('click', handlePublishAll);
 
