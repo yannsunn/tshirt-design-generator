@@ -606,6 +606,7 @@
         };
 
         // 簡易的な白背景除去（無料、クライアント側処理）
+        // 四隅から連結した背景のみを削除（キャラクターの白い部分を保護）
         const removeWhiteBackgroundSimple = async (imageBlob) => {
             return new Promise((resolve, reject) => {
                 const canvas = document.createElement('canvas');
@@ -627,44 +628,74 @@
                     const width = canvas.width;
                     const height = canvas.height;
 
-                    // エッジ検出マップを作成（キャラクター領域を保護）
-                    const isEdge = new Uint8Array(width * height);
+                    // 白色判定ヘルパー
+                    const isWhitePixel = (idx) => {
+                        return pixels[idx] > 240 && pixels[idx + 1] > 240 && pixels[idx + 2] > 240;
+                    };
 
-                    for (let y = 1; y < height - 1; y++) {
-                        for (let x = 1; x < width - 1; x++) {
-                            const idx = (y * width + x) * 4;
+                    // 背景マーク用配列（四隅と連結した白領域）
+                    const isBackground = new Uint8Array(width * height);
 
-                            // 周囲8ピクセルとの差分を計算
-                            let maxDiff = 0;
-                            for (let dy = -1; dy <= 1; dy++) {
-                                for (let dx = -1; dx <= 1; dx++) {
-                                    if (dx === 0 && dy === 0) continue;
-                                    const nIdx = ((y + dy) * width + (x + dx)) * 4;
-                                    const diff = Math.abs(pixels[idx] - pixels[nIdx]) +
-                                                Math.abs(pixels[idx + 1] - pixels[nIdx + 1]) +
-                                                Math.abs(pixels[idx + 2] - pixels[nIdx + 2]);
-                                    maxDiff = Math.max(maxDiff, diff);
+                    // BFS（幅優先探索）で四隅から連結した白領域をマーク
+                    const floodFillFromCorner = (startX, startY) => {
+                        const queue = [[startX, startY]];
+                        const visited = new Set();
+                        visited.add(startY * width + startX);
+
+                        while (queue.length > 0) {
+                            const [x, y] = queue.shift();
+                            const pixelIdx = y * width + x;
+                            const dataIdx = pixelIdx * 4;
+
+                            if (!isWhitePixel(dataIdx)) continue;
+
+                            // 背景としてマーク
+                            isBackground[pixelIdx] = 1;
+
+                            // 4方向の隣接ピクセルをチェック
+                            const directions = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+                            for (const [dx, dy] of directions) {
+                                const nx = x + dx;
+                                const ny = y + dy;
+
+                                // 範囲チェック
+                                if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+
+                                const nPixelIdx = ny * width + nx;
+                                if (visited.has(nPixelIdx)) continue;
+
+                                visited.add(nPixelIdx);
+                                const nDataIdx = nPixelIdx * 4;
+
+                                if (isWhitePixel(nDataIdx)) {
+                                    queue.push([nx, ny]);
                                 }
                             }
+                        }
+                    };
 
-                            // エッジ判定（差分が30以上ならエッジ）
-                            if (maxDiff > 30) {
-                                isEdge[y * width + x] = 1;
-                            }
+                    // 四隅から開始
+                    const corners = [
+                        [0, 0],                    // 左上
+                        [width - 1, 0],            // 右上
+                        [0, height - 1],           // 左下
+                        [width - 1, height - 1]    // 右下
+                    ];
+
+                    for (const [x, y] of corners) {
+                        const pixelIdx = y * width + x;
+                        if (!isBackground[pixelIdx]) {
+                            floodFillFromCorner(x, y);
                         }
                     }
 
-                    // 白背景を透明化（エッジ以外の白いピクセルのみ）
+                    // 背景としてマークされた領域のみを透明化
+                    let removedCount = 0;
                     for (let i = 0; i < pixels.length; i += 4) {
-                        const r = pixels[i];
-                        const g = pixels[i + 1];
-                        const b = pixels[i + 2];
                         const pixelIdx = Math.floor(i / 4);
-
-                        // 白色判定（RGB > 240）かつ非エッジ領域
-                        const isWhite = r > 240 && g > 240 && b > 240;
-                        if (isWhite && !isEdge[pixelIdx]) {
+                        if (isBackground[pixelIdx]) {
                             pixels[i + 3] = 0; // 透明化
+                            removedCount++;
                         }
                     }
 
@@ -673,7 +704,7 @@
 
                     // BlobとしてPNG出力
                     canvas.toBlob((blob) => {
-                        console.log('✅ 簡易背景除去完了（精度60-70%）');
+                        console.log(`✅ 簡易背景除去完了（四隅連結方式）: ${removedCount}ピクセル除去`);
                         resolve(blob);
                     }, 'image/png');
                 };
@@ -715,8 +746,8 @@
                 // APIキーが設定されていない、またはエラーの場合は簡易背景除去を使用
                 if (result.skipped) {
                     console.warn('⚠️ 背景除去がスキップされました:', result.message);
-                    console.warn('簡易的な白背景除去を実行します（無料、精度60-70%）');
-                    showWarning('簡易的な白背景除去を実行中...\n精度60-70%（無料版）\n\n高精度が必要な場合はremove.bg APIキーを設定してください（精度99%、$0.20/枚）');
+                    console.warn('簡易的な白背景除去を実行します（四隅連結方式、無料）');
+                    showWarning('簡易的な白背景除去を実行中...\n四隅から連結した背景のみ削除（キャラクターの白い部分を保護）\n\n高精度が必要な場合はremove.bg APIキーを設定してください（精度99%、$0.20/枚）');
                     return await removeWhiteBackgroundSimple(imageBlob);
                 }
 
