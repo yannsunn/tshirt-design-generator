@@ -1,3 +1,5 @@
+import { getSupabaseClient } from '../lib/supabase.js';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -15,6 +17,51 @@ export default async function handler(req, res) {
         }
         if (theme.trim().length === 0) {
             return res.status(400).json({ error: 'テーマを入力してください' });
+        }
+
+        // 過去のアイデア履歴を取得（重複防止）
+        const supabase = getSupabaseClient();
+        let previousIdeas = [];
+        let duplicateAvoidanceText = '';
+
+        if (supabase) {
+            try {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                const { data, error } = await supabase
+                    .from('design_ideas')
+                    .select('character, phrase')
+                    .gte('created_at', thirtyDaysAgo.toISOString())
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+
+                if (!error && data && data.length > 0) {
+                    previousIdeas = data;
+
+                    // フレーズのリストを作成
+                    const usedPhrases = [...new Set(data.map(d => d.phrase))];
+                    const usedCharacterKeywords = data.map(d => {
+                        // キャラクター説明から主要なキーワードを抽出（最初の20文字程度）
+                        return d.character.substring(0, 30);
+                    });
+
+                    duplicateAvoidanceText = `
+
+🚨 重複回避（超重要）:
+以下のフレーズは過去に使用されているため、**絶対に使用しないでください**:
+${usedPhrases.slice(0, 20).map(p => `- "${p}"`).join('\n')}
+
+以下のキャラクター・モチーフは過去に使用されているため、**できるだけ避けてください**:
+${usedCharacterKeywords.slice(0, 15).map(k => `- ${k}...`).join('\n')}
+
+必ず新しいフレーズと異なるキャラクター・モチーフを提案してください。`;
+
+                    console.log(`📖 過去のアイデア ${data.length}件を取得し、重複回避を指示`);
+                }
+            } catch (historyError) {
+                console.warn('履歴取得エラー（スキップ）:', historyError.message);
+            }
         }
 
         const apiKey = process.env.GEMINI_API_KEY;
@@ -103,7 +150,8 @@ export default async function handler(req, res) {
 
 重要:
 1. 4つのアイデアは互いに大きく異なるものにしてください。同じようなキャラクター、色、構図、フレーズを避け、最大限の多様性を追求してください。
-2. フレーズは必ずすべてひらがなのみで出力してください（漢字・カタカナ・英語は絶対に使用禁止）。` }] }],
+2. フレーズは必ずすべてひらがなのみで出力してください（漢字・カタカナ・英語は絶対に使用禁止）。
+${duplicateAvoidanceText}` }] }],
             systemInstruction: { parts: [{ text: systemPrompt }] },
             generationConfig: {
                 temperature: 1.5,  // ← INCREASE from 1.2 to 1.5 for maximum diversity

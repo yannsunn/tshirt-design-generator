@@ -81,6 +81,7 @@ cd tshirt-design-generator
 #### オプション
 | サービス | 用途 | 料金 | 取得先 |
 |---------|------|------|--------|
+| **Supabase** | アイデア履歴保存（重複防止） | 無料枠500MB | https://supabase.com/dashboard |
 | **remove.bg API** | 背景除去 | 月50枚無料、以降$0.20/枚 | https://www.remove.bg/api |
 | **Printify API** | 商品登録 | 無料 | https://printify.com/app/account/api |
 
@@ -103,10 +104,48 @@ Vercelダッシュボード → Settings → Environment Variables
 |--------|------|------|
 | `GEMINI_API_KEY` | ✅ | Gemini API（アイデア生成・代替画像生成） |
 | `FAL_API_KEY` | ✅ | FAL AI（メイン画像生成） |
+| `SUPABASE_URL` | ⭕ | Supabase Project URL（重複防止） |
+| `SUPABASE_ANON_KEY` | ⭕ | Supabase Anon Key（重複防止） |
 | `REMOVEBG_API_KEY` | ⭕ | remove.bg（高精度背景除去） |
 | `PRINTIFY_API_KEY` | ⭕ | Printify（商品登録） |
 
 **重要**: 環境変数設定後、必ず **Redeploy** を実行してください。
+
+#### Supabaseセットアップ（重複防止機能）
+
+Supabaseを設定すると、過去に生成したアイデアを記録し、同じモチーフ・フレーズの重複を防ぎます。
+
+1. **プロジェクト作成**
+   - https://supabase.com/dashboard にアクセス
+   - "New Project" をクリック
+   - プロジェクト名を入力（例: tshirt-ideas）
+
+2. **テーブル作成**
+   - SQL Editor を開く
+   - 以下のSQLを実行:
+   ```sql
+   CREATE TABLE design_ideas (
+     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     theme TEXT NOT NULL,
+     character TEXT NOT NULL,
+     phrase TEXT NOT NULL,
+     font_style TEXT NOT NULL
+   );
+
+   CREATE INDEX idx_design_ideas_theme ON design_ideas(theme);
+   CREATE INDEX idx_design_ideas_created_at ON design_ideas(created_at DESC);
+   ```
+
+3. **環境変数を取得**
+   - Settings → API
+   - `Project URL` → `SUPABASE_URL`
+   - `anon public` key → `SUPABASE_ANON_KEY`
+   - Vercelの環境変数に設定
+
+4. **動作確認**
+   - アイデア生成後、コンソールに「✅ 4件のアイデアを履歴に保存しました」と表示されればOK
+   - 2回目以降は過去のフレーズ・モチーフを避けた新しいアイデアが生成されます
 
 ---
 

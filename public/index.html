@@ -422,6 +422,9 @@
                 const ideas = await fetchDesignIdeas(theme);
                 displayIdeas(ideas);
                 ideasSection.classList.remove('hidden');
+
+                // Supabaseに保存して重複を防止
+                await saveIdeasToHistory(theme, ideas);
             } catch (error) {
                 console.error('Error fetching design ideas:', error);
                 showError(`アイディアの生成に失敗しました: ${error.message}`);
@@ -444,6 +447,30 @@
 
             const result = await response.json();
             return result.ideas;
+        };
+
+        const saveIdeasToHistory = async (theme, ideas) => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/save-ideas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theme, ideas })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.saved) {
+                        console.log(`✅ ${result.count}件のアイデアを履歴に保存しました`);
+                    } else {
+                        console.warn('⚠️ Supabase未設定のため履歴保存をスキップしました');
+                    }
+                } else {
+                    console.warn('履歴保存に失敗しましたが、処理を続行します');
+                }
+            } catch (error) {
+                console.warn('履歴保存エラー（スキップ）:', error.message);
+                // エラーでも処理を続行
+            }
         };
 
         const displayIdeas = (ideas) => {

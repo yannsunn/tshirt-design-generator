@@ -4,5 +4,8 @@
   "description": "Tシャツデザインジェネレーター with Vercel Serverless Functions",
   "keywords": ["tshirt", "design", "generator", "printify", "vercel"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
 }
