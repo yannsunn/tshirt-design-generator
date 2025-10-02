@@ -1876,16 +1876,25 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             };
             const typesText = selectedProductTypes.map(t => typeNames[t] || t).join(', ');
 
+            // デザイン数を計算（24件制限を考慮）
+            const maxDesigns = Math.floor(24 / selectedProductTypes.length);
+            const designCount = Math.min(3, maxDesigns); // デフォルト3、最大24件まで
+            const totalProducts = designCount * selectedProductTypes.length;
+
             const confirmMessage = `🤖 バッチ自動出品を開始しますか？
 
 📋 設定:
 • テーマ: ランダム選択
-• デザイン数: 4個
+• デザイン数: ${designCount}個
 • 商品タイプ: ${typesText}
-• 合計: 約${4 * selectedProductTypes.length}商品
+• 合計: ${totalProducts}商品
 
-⏰ 所要時間: 約5-10分
-⚠️ 処理中は他の操作をしないでください`;
+💡 24件制限対策: ${selectedProductTypes.length}タイプ選択時は${maxDesigns}デザインまで
+⏰ 所要時間: 約${Math.ceil(totalProducts / 3)}-${Math.ceil(totalProducts / 2)}分
+⚠️ 処理中は他の操作をしないでください
+
+注: 商品は下書きとして作成されます。
+販売チャネルへの公開は手動で行ってください。`;
 
             if (!confirm(confirmMessage)) {
                 return;
@@ -1906,7 +1915,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                     body: JSON.stringify({
                         shopId: printifyShopId,
                         productTypes: selectedProductTypes,
-                        ideaCount: 4
+                        ideaCount: designCount,  // 24件制限に基づいて計算
+                        autoPublish: false  // 手動公開モード（フリープランで使用可能）
                     })
                 });
 

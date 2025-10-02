@@ -13,8 +13,9 @@ async function handler(req, res) {
     const {
         theme = null,  // null = ランダム選択
         productTypes = ['tshirt', 'sweatshirt', 'hoodie'],  // デフォルト3種
-        ideaCount = 4,  // デザイン数
-        shopId
+        ideaCount = 3,  // デザイン数（デフォルト3: 3タイプ×3デザイン=9商品）
+        shopId,
+        autoPublish = false  // 自動公開オプション
     } = req.body;
 
     if (!shopId) {
@@ -197,12 +198,43 @@ async function handler(req, res) {
             }
         }
 
+        // 5. 自動公開（オプション）
+        let publishedCount = 0;
+        if (autoPublish && results.products.length > 0) {
+            console.log('📤 商品を自動公開中...');
+            const productIds = results.products.map(p => p.productId);
+
+            try {
+                const publishResponse = await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/printify-publish-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        shopId,
+                        productIds
+                    })
+                });
+
+                if (publishResponse.ok) {
+                    const publishResult = await publishResponse.json();
+                    publishedCount = publishResult.published;
+                    console.log(`✅ ${publishedCount}件の商品を公開しました`);
+                }
+            } catch (error) {
+                console.error('❌ 自動公開エラー:', error.message);
+                results.errors.push({
+                    step: 'auto_publish',
+                    error: error.message
+                });
+            }
+        }
+
         // サマリー作成
         results.summary = {
             theme: selectedTheme,
             ideasGenerated: ideas.length,
             imagesGenerated: results.images.length,
             productsCreated: results.products.length,
+            productsPublished: publishedCount,
             expectedProducts: ideas.length * productTypes.length,
             errorCount: results.errors.length,
             productTypes: productTypes,
