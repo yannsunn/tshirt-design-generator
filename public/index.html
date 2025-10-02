@@ -447,9 +447,14 @@
         };
 
         const displayIdeas = (ideas) => {
-            designIdeas = ideas; // Save to global variable for bulk generation
+            // Add theme to each idea for later use in Printify product creation
+            const ideasWithTheme = ideas.map(idea => ({
+                ...idea,
+                theme: selectedTheme  // Add selected theme to each idea
+            }));
+            designIdeas = ideasWithTheme; // Save to global variable for bulk generation
             ideasContainer.innerHTML = '';
-            ideas.forEach((idea, index) => {
+            ideasWithTheme.forEach((idea, index) => {
                 const card = document.createElement('div');
                 card.className = 'bg-gray-700 p-4 rounded-lg flex flex-col';
                 card.innerHTML = `
@@ -964,6 +969,7 @@
             if (!idea) return 'Japanese Culture T-Shirt - Unique AI-Generated Design';
 
             const fontStyle = idea.fontStyle || 'modern';
+            const phrase = idea.phrase || '';
             const theme = idea.theme || '';
 
             const stylePrefixes = {
@@ -973,20 +979,19 @@
                 'modern': 'Modern Japanese'
             };
 
-            const themeKeywords = {
-                '日本の幽霊': 'Ghost',
-                '日本の動物': 'Animal',
-                '日本の妖怪': 'Yokai Monster',
-                '日本の祭り': 'Festival',
-                '日本の侍': 'Samurai Warrior',
-                '日本の忍者': 'Ninja',
-                '和風ハロウィン': 'Halloween'
-            };
+            // Extract English part from theme (after parentheses)
+            let themeEnglish = '';
+            const themeMatch = theme.match(/\(([^)]+)\)/);
+            if (themeMatch) {
+                themeEnglish = themeMatch[1];
+            } else {
+                // Fallback: use phrase's first few characters as identifier
+                themeEnglish = phrase.substring(0, 8);
+            }
 
             const prefix = stylePrefixes[fontStyle] || 'Japanese';
-            const keyword = themeKeywords[theme] || 'Character';
 
-            return `${prefix} ${keyword} T-Shirt - Traditional Art Design`;
+            return `${prefix} ${themeEnglish} T-Shirt - ${phrase}`;
         };
 
         // ========================================

@@ -12,9 +12,15 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'PRINTIFY_API_KEY is not configured' });
         }
 
-        // Base64からバッファに変換
+        // Base64データを抽出
         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
+
+        // Validate base64 data
+        if (!base64Data || base64Data.length === 0) {
+            throw new Error('Invalid image data: empty or malformed base64 string');
+        }
+
+        console.log(`Uploading image: ${fileName}, size: ${base64Data.length} characters`);
 
         // Printify画像アップロードAPI
         const response = await fetch('https://api.printify.com/v1/uploads/images.json', {
@@ -35,6 +41,8 @@ export default async function handler(req, res) {
         }
 
         const result = await response.json();
+        console.log(`Image uploaded successfully: ID=${result.id}`);
+
         res.status(200).json({
             imageId: result.id,
             imageUrl: result.file_name,
