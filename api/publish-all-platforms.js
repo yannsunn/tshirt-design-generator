@@ -1,5 +1,5 @@
 // 全プラットフォーム一括出品API
-// Printify, SUZURI, BASEに同時に出品
+// Printify, SUZURIに同時に出品（BASEは手動設定が必要なため除外）
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -14,8 +14,7 @@ export default async function handler(req, res) {
 
     const results = {
         printify: { success: false, error: null, data: null },
-        suzuri: { success: false, error: null, data: null },
-        base: { success: false, error: null, data: null }
+        suzuri: { success: false, error: null, data: null }
     };
 
     try {
@@ -74,35 +73,6 @@ export default async function handler(req, res) {
         } catch (error) {
             results.suzuri.error = error.message;
             console.log('❌ SUZURI出品エラー:', error.message);
-        }
-
-        // 3. BASE出品
-        console.log('🛒 BASE出品開始...');
-        try {
-            const baseResponse = await fetch(`${req.headers.origin || 'http://localhost:3000'}/api/base-create-product`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    imageUrl: imageData,
-                    title,
-                    detail: description,
-                    price: 2500
-                })
-            });
-
-            if (baseResponse.ok) {
-                const baseData = await baseResponse.json();
-                results.base.success = true;
-                results.base.data = baseData;
-                console.log('✅ BASE出品成功');
-            } else {
-                const errorData = await baseResponse.json();
-                results.base.error = errorData.error || 'BASE出品失敗';
-                console.log('❌ BASE出品失敗:', results.base.error);
-            }
-        } catch (error) {
-            results.base.error = error.message;
-            console.log('❌ BASE出品エラー:', error.message);
         }
 
         // 結果集計
