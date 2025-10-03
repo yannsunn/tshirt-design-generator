@@ -422,22 +422,16 @@
                 </div>
             </div>
 
-            <!-- Management & Batch Functions Section -->
+            <!-- Management Functions Section -->
             <div class="mt-8 bg-gray-800 rounded-lg p-6 border-2 border-gray-700">
                 <h2 class="text-lg font-semibold mb-4 text-gray-300 flex items-center gap-2">
                     <span>⚙️</span>
-                    <span>商品管理・バッチ処理</span>
+                    <span>商品管理</span>
                 </h2>
                 <p class="text-sm text-gray-400 mb-4">
-                    既存商品の一括管理や、完全自動でのバッチ出品を行います
+                    既存商品の一括管理や連携確認を行います
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button
-                        id="batch-auto-generate-btn"
-                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
-                        <span>🤖</span>
-                        <span>バッチ自動出品（全自動）</span>
-                    </button>
                     <button
                         id="check-stores-btn"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
@@ -2172,112 +2166,6 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             }
         };
 
-        // Batch auto-generate: Full automation (ideas → images → products)
-        const handleBatchAutoGenerate = async () => {
-            if (!printifyShopId) {
-                return showError('Printify Shop IDが設定されていません');
-            }
-
-            const selectedProductTypes = getSelectedProductTypes();
-            const typeNames = {
-                tshirt: 'Tシャツ',
-                lightweight_tee: '軽量Tシャツ',
-                ultra_cotton_tee: 'ウルトラコットンTシャツ',
-                softstyle_tee: 'ソフトスタイルTシャツ',
-                kids_tee: 'キッズTシャツ',
-                longsleeve: '長袖Tシャツ',
-                sweatshirt: 'スウェット',
-                hoodie: 'フーディ'
-            };
-            const typesText = selectedProductTypes.map(t => typeNames[t] || t).join(', ');
-
-            const designCount = 3;  // デフォルト3デザイン
-            const totalProducts = designCount * selectedProductTypes.length;
-
-            const confirmMessage = `🤖 バッチ自動出品を開始しますか？
-
-📋 設定:
-• テーマ: ランダム選択
-• デザイン数: ${designCount}個
-• 商品タイプ: ${typesText}
-• 合計: ${totalProducts}商品
-
-⏰ 所要時間: 約${Math.ceil(totalProducts / 3)}-${Math.ceil(totalProducts / 2)}分
-⚠️ 処理中は他の操作をしないでください
-
-注: 商品は下書きとして作成されます。
-販売チャネル（Shopify/Etsy/eBay等）への公開は
-Printifyダッシュボードから手動で行ってください（24件ずつ）。`;
-
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-
-            console.log('🤖 バッチ自動出品開始');
-            const batchBtn = document.getElementById('batch-auto-generate-btn');
-            batchBtn.disabled = true;
-            batchBtn.textContent = '処理中...（数分かかります）';
-            hideError();
-
-            try {
-                progressText.textContent = 'バッチ処理を実行中...（アイデア生成 → 画像生成 → 商品作成）';
-
-                const response = await fetch(`${API_BASE_URL}/batch-auto-generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        shopId: printifyShopId,
-                        productTypes: selectedProductTypes,
-                        ideaCount: designCount,  // 24件制限に基づいて計算
-                        autoPublish: false  // 手動公開モード（フリープランで使用可能）
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'バッチ処理に失敗しました');
-                }
-
-                const result = await response.json();
-                console.log('✅ バッチ処理完了:', result);
-
-                progressText.textContent = `✅ バッチ処理完了: ${result.results.summary.productsCreated}商品を作成`;
-
-                const message = `
-🎉 バッチ自動出品が完了しました！
-
-📊 結果:
-• テーマ: ${result.results.summary.theme}
-• アイデア: ${result.results.summary.ideasGenerated}個
-• 画像: ${result.results.summary.imagesGenerated}個
-• 商品: ${result.results.summary.productsCreated}個作成
-• 成功率: ${result.results.summary.successRate}
-
-${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.summary.errorCount}件（詳細はコンソールで確認）` : ''}
-
-🔗 Printify Dashboardで確認してください
-                `.trim();
-
-                alert(message);
-
-                // 詳細結果をコンソールに出力
-                console.log('📋 詳細結果:');
-                console.log('  生成されたアイデア:', result.results.ideas);
-                console.log('  作成された商品:', result.results.products);
-                if (result.results.errors.length > 0) {
-                    console.log('  エラー:', result.results.errors);
-                }
-
-            } catch (error) {
-                console.error('バッチ処理エラー:', error);
-                showError(`バッチ処理エラー: ${error.message}`);
-                progressText.textContent = 'エラーが発生しました';
-            } finally {
-                batchBtn.disabled = false;
-                batchBtn.textContent = '🤖 バッチ自動出品（全自動）';
-            }
-        };
-
         // ========================================
         // Japan POD Functions (SUZURI / BASE)
         // ========================================
@@ -2593,7 +2481,6 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
         createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
         enableExpressBtn.addEventListener('click', handleEnableExpress);
         document.getElementById('update-prices-btn').addEventListener('click', handleUpdatePrices);
-        document.getElementById('batch-auto-generate-btn').addEventListener('click', handleBatchAutoGenerate);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
