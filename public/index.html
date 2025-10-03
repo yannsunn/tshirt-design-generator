@@ -451,6 +451,18 @@
                         <span>全ショップ価格一括更新</span>
                     </button>
                     <button
+                        id="sync-prices-btn"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>🔄</span>
+                        <span>価格自動同期</span>
+                    </button>
+                    <button
+                        id="sync-inventory-btn"
+                        class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>📦</span>
+                        <span>在庫同期</span>
+                    </button>
+                    <button
                         id="reset-processed-btn"
                         class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
                         <span>🔄</span>
@@ -2334,6 +2346,122 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             }
         };
 
+        // Sync prices from Storefront to Etsy/eBay
+        const handleSyncPrices = async () => {
+            const confirmed = confirm(
+                'Storefrontの価格をEtsy/eBayに自動同期しますか？\n\n' +
+                '⚠️ Storefront（基準）の価格がEtsy/eBayに上書きされます。\n' +
+                '最初の100商品を処理します。'
+            );
+
+            if (!confirmed) return;
+
+            console.log('🔄 価格自動同期開始');
+            const syncPricesBtn = document.getElementById('sync-prices-btn');
+            syncPricesBtn.disabled = true;
+            syncPricesBtn.innerHTML = '<span>⏳</span><span>同期中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = '🔄 Storefrontの価格をEtsy/eBayに同期中...';
+
+                const response = await fetch(`${API_BASE_URL}/auto-sync-prices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: '価格同期に失敗しました' }));
+                    throw new Error(error.error || '価格同期に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 価格同期完了:', result);
+
+                progressText.textContent = `✅ 価格同期完了: ${result.synced}商品`;
+
+                const message = `
+🎉 価格自動同期完了！
+
+📊 結果:
+• 同期成功: ${result.synced}商品
+• エラー: ${result.errors}件
+• 合計: ${result.total}商品
+
+${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error('価格同期エラー:', error);
+                showError(`価格同期エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                syncPricesBtn.disabled = false;
+                syncPricesBtn.innerHTML = '<span>🔄</span><span>価格自動同期</span>';
+            }
+        };
+
+        // Sync inventory from Storefront to Etsy/eBay
+        const handleSyncInventory = async () => {
+            const confirmed = confirm(
+                'Storefrontの在庫をEtsy/eBayに同期しますか？\n\n' +
+                '⚠️ Storefront（基準）の在庫状態がEtsy/eBayに上書きされます。\n' +
+                '最初の50商品を処理します。'
+            );
+
+            if (!confirmed) return;
+
+            console.log('📦 在庫同期開始');
+            const syncInventoryBtn = document.getElementById('sync-inventory-btn');
+            syncInventoryBtn.disabled = true;
+            syncInventoryBtn.innerHTML = '<span>⏳</span><span>同期中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = '📦 Storefrontの在庫をEtsy/eBayに同期中...';
+
+                const response = await fetch(`${API_BASE_URL}/sync-inventory`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: '在庫同期に失敗しました' }));
+                    throw new Error(error.error || '在庫同期に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 在庫同期完了:', result);
+
+                progressText.textContent = `✅ 在庫同期完了: ${result.totalSynced}商品`;
+
+                const message = `
+🎉 在庫同期完了！
+
+📊 結果:
+• 同期成功: ${result.totalSynced}商品
+• エラー: ${result.totalErrors}件
+• 基準商品数: ${result.baseProducts}商品
+
+${result.totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error('在庫同期エラー:', error);
+                showError(`在庫同期エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                syncInventoryBtn.disabled = false;
+                syncInventoryBtn.innerHTML = '<span>📦</span><span>在庫同期</span>';
+            }
+        };
+
         // Check Printify connected stores (Etsy, eBay, etc.)
         const handleCheckStores = async () => {
             console.log('🔌 販売チャネル連携確認開始');
@@ -2862,6 +2990,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         enableExpressBtn.addEventListener('click', handleEnableExpress);
         document.getElementById('update-prices-btn').addEventListener('click', handleUpdatePrices);
         document.getElementById('update-all-shops-btn').addEventListener('click', handleUpdateAllShops);
+        document.getElementById('sync-prices-btn').addEventListener('click', handleSyncPrices);
+        document.getElementById('sync-inventory-btn').addEventListener('click', handleSyncInventory);
         document.getElementById('reset-processed-btn').addEventListener('click', handleResetProcessed);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
