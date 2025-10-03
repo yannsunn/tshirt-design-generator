@@ -463,6 +463,12 @@
                         <span>在庫同期</span>
                     </button>
                     <button
+                        id="setup-webhook-btn"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>🔗</span>
+                        <span>Webhook登録</span>
+                    </button>
+                    <button
                         id="reset-processed-btn"
                         class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
                         <span>🔄</span>
@@ -2462,6 +2468,65 @@ ${result.totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）
             }
         };
 
+        // Setup Printify Webhook for auto price sync
+        const handleSetupWebhook = async () => {
+            const confirmed = confirm(
+                'Printify Webhookを登録しますか？\n\n' +
+                '✅ Storefrontで価格を変更すると、自動的にEtsy/eBayに同期されます\n' +
+                '📡 Webhook URL: https://design-generator-puce.vercel.app/api/webhooks/printify\n' +
+                '🔔 イベント: product:updated'
+            );
+
+            if (!confirmed) return;
+
+            console.log('🔗 Webhook登録開始');
+            const setupWebhookBtn = document.getElementById('setup-webhook-btn');
+            setupWebhookBtn.disabled = true;
+            setupWebhookBtn.innerHTML = '<span>⏳</span><span>登録中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = '🔗 Printify Webhookを登録中...';
+
+                const response = await fetch(`${API_BASE_URL}/setup-webhook`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'Webhook登録に失敗しました' }));
+                    throw new Error(error.error || 'Webhook登録に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ Webhook登録完了:', result);
+
+                progressText.textContent = `✅ Webhook登録完了`;
+
+                const message = `
+🎉 Webhook登録完了！
+
+📡 Webhook情報:
+• URL: ${result.targetUrl || 'N/A'}
+• イベント: ${result.events ? result.events.join(', ') : 'product:updated'}
+• Webhook ID: ${result.webhook?.id || 'N/A'}
+
+✅ 今後、Storefrontで価格を変更すると自動的にEtsy/eBayに同期されます！
+                `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error('Webhook登録エラー:', error);
+                showError(`Webhook登録エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                setupWebhookBtn.disabled = false;
+                setupWebhookBtn.innerHTML = '<span>🔗</span><span>Webhook登録</span>';
+            }
+        };
+
         // Check Printify connected stores (Etsy, eBay, etc.)
         const handleCheckStores = async () => {
             console.log('🔌 販売チャネル連携確認開始');
@@ -2992,6 +3057,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         document.getElementById('update-all-shops-btn').addEventListener('click', handleUpdateAllShops);
         document.getElementById('sync-prices-btn').addEventListener('click', handleSyncPrices);
         document.getElementById('sync-inventory-btn').addEventListener('click', handleSyncInventory);
+        document.getElementById('setup-webhook-btn').addEventListener('click', handleSetupWebhook);
         document.getElementById('reset-processed-btn').addEventListener('click', handleResetProcessed);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
