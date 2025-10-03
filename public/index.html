@@ -469,6 +469,12 @@
                         <span>Webhook登録</span>
                     </button>
                     <button
+                        id="test-webhook-api-btn"
+                        class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
+                        <span>🧪</span>
+                        <span>Webhook APIテスト</span>
+                    </button>
+                    <button
                         id="reset-processed-btn"
                         class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
                         <span>🔄</span>
@@ -2527,6 +2533,67 @@ ${result.totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）
             }
         };
 
+        // Test Webhook API availability
+        const handleTestWebhookApi = async () => {
+            console.log('🧪 Webhook APIテスト開始');
+            const testWebhookApiBtn = document.getElementById('test-webhook-api-btn');
+            testWebhookApiBtn.disabled = true;
+            testWebhookApiBtn.innerHTML = '<span>⏳</span><span>テスト中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = '🧪 Webhook APIをテスト中...';
+
+                const response = await fetch(`${API_BASE_URL}/test-webhook-api`, {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'テストに失敗しました' }));
+                    throw new Error(error.error || 'テストに失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('🧪 テスト結果:', result);
+
+                progressText.textContent = result.success ? '✅ テスト成功' : '❌ テスト失敗';
+
+                // 詳細な結果を表示
+                const message = result.success
+                    ? `✅ Webhook API利用可能！
+
+📊 テスト結果:
+• API Status: ${result.apiStatus}
+• 既存Webhook数: ${result.webhooksCount || 0}
+• メッセージ: ${result.message}
+
+${result.existingWebhooks ? '\n📋 既存Webhooks:\n' + JSON.stringify(result.existingWebhooks, null, 2) : ''}
+                    `.trim()
+                    : `❌ Webhook API利用不可
+
+📊 テスト結果:
+• API Status: ${result.apiStatus || 'N/A'}
+• エラー: ${result.error || result.apiError || 'Unknown'}
+• メッセージ: ${result.message}
+
+${result.rawResponse ? '\n📡 生レスポンス:\n' + result.rawResponse : ''}
+
+⚠️ PrintifyアカウントがWebhook機能をサポートしていない可能性があります。
+代わりに「🔄 価格自動同期」ボタンで手動同期をご利用ください。
+                    `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error('テストエラー:', error);
+                showError(`テストエラー: ${error.message}`);
+                progressText.textContent = 'テスト失敗';
+            } finally {
+                testWebhookApiBtn.disabled = false;
+                testWebhookApiBtn.innerHTML = '<span>🧪</span><span>Webhook APIテスト</span>';
+            }
+        };
+
         // Check Printify connected stores (Etsy, eBay, etc.)
         const handleCheckStores = async () => {
             console.log('🔌 販売チャネル連携確認開始');
@@ -3058,6 +3125,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         document.getElementById('sync-prices-btn').addEventListener('click', handleSyncPrices);
         document.getElementById('sync-inventory-btn').addEventListener('click', handleSyncInventory);
         document.getElementById('setup-webhook-btn').addEventListener('click', handleSetupWebhook);
+        document.getElementById('test-webhook-api-btn').addEventListener('click', handleTestWebhookApi);
         document.getElementById('reset-processed-btn').addEventListener('click', handleResetProcessed);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
