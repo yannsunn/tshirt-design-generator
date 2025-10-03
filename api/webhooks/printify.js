@@ -4,8 +4,21 @@
 import { validateEnv } from '../../lib/errorHandler.js';
 
 export default async function handler(req, res) {
+    // GETリクエスト: Webhookステータス確認用
+    if (req.method === 'GET') {
+        return res.status(200).json({
+            status: 'active',
+            endpoint: '/api/webhooks/printify',
+            method: 'POST only',
+            events: ['product:updated'],
+            description: 'Printify Webhook endpoint for automatic price synchronization',
+            message: '✅ Webhook is ready to receive POST requests from Printify'
+        });
+    }
+
+    // POST以外のリクエスト
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return res.status(405).json({ error: 'Method not allowed. This endpoint only accepts POST requests.' });
     }
 
     try {
