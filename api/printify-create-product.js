@@ -7,15 +7,15 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { shopId, imageUrl, title, description, tags, productType = 'tshirt' } = req.body;
+        const { shopId, imageId, imageUrl, title, description, tags, productType = 'tshirt' } = req.body;
         const apiKey = process.env.PRINTIFY_API_KEY;
 
         if (!apiKey) {
             return res.status(500).json({ error: 'PRINTIFY_API_KEY is not configured' });
         }
 
-        if (!shopId || !imageUrl || !title) {
-            return res.status(400).json({ error: 'shopId, imageUrl, and title are required' });
+        if (!shopId || (!imageId && !imageUrl) || !title) {
+            return res.status(400).json({ error: 'shopId, (imageId or imageUrl), and title are required' });
         }
 
         // マスター商品IDマッピング（あなたが作成した8つのマスター商品）
@@ -62,31 +62,42 @@ export default async function handler(req, res) {
         const master = await masterResponse.json();
         console.log(`✅ マスター商品取得: ${master.title} (Blueprint ${master.blueprint_id})`);
 
-        // Step 2: 新しい画像をPrintifyにアップロード
-        console.log('📤 画像アップロード中...');
-        const uploadResponse = await fetch(
-            `https://api.printify.com/v1/uploads/images.json`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    file_name: `design_${Date.now()}.png`,
-                    url: imageUrl
-                })
+        // Step 2: 画像IDを取得（既存IDまたは新規アップロード）
+        let newImageId;
+
+        if (imageId) {
+            // 既にアップロード済みの画像IDを使用
+            newImageId = imageId;
+            console.log(`✅ 既存の画像IDを使用: ${newImageId}`);
+        } else if (imageUrl) {
+            // 新しい画像をPrintifyにアップロード
+            console.log('📤 画像アップロード中...');
+            const uploadResponse = await fetch(
+                `https://api.printify.com/v1/uploads/images.json`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file_name: `design_${Date.now()}.png`,
+                        url: imageUrl
+                    })
+                }
+            );
+
+            if (!uploadResponse.ok) {
+                const errorText = await uploadResponse.text();
+                throw new Error(`Image upload failed: ${uploadResponse.status} - ${errorText}`);
             }
-        );
 
-        if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            throw new Error(`Image upload failed: ${uploadResponse.status} - ${errorText}`);
+            const uploadedImage = await uploadResponse.json();
+            newImageId = uploadedImage.id;
+            console.log(`✅ 画像アップロード完了: ${newImageId}`);
+        } else {
+            throw new Error('Either imageId or imageUrl must be provided');
         }
-
-        const uploadedImage = await uploadResponse.json();
-        const newImageId = uploadedImage.id;
-        console.log(`✅ 画像アップロード完了: ${newImageId}`);
 
         // Step 3: マスターの構造をコピーして新しい商品データを作成
         const newProduct = {
