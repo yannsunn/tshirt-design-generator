@@ -31,6 +31,7 @@ export default async function handler(req, res) {
                     character: idea.character,
                     phrase: idea.phrase,
                     font_style: idea.fontStyle,
+                    description: idea.description || null,  // 商品説明を追加
                     product_type: productType
                 });
             }

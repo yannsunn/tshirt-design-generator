@@ -2193,16 +2193,23 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
 
                 progressText.textContent = 'SUZURIに商品を作成中...';
 
+                const suzuriBody = {
+                    imageUrl: imgData.imageData,
+                    title: title,
+                    createTshirt: true,
+                    createHoodie: true,
+                    createSweatshirt: true
+                };
+
+                // 商品説明が生成されている場合は追加
+                if (imgData.idea && imgData.idea.description) {
+                    suzuriBody.description = imgData.idea.description;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageUrl: imgData.imageData,
-                        title: title,
-                        createTshirt: true,
-                        createHoodie: true,
-                        createSweatshirt: true
-                    })
+                    body: JSON.stringify(suzuriBody)
                 });
 
                 if (!response.ok) {
@@ -2381,16 +2388,23 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
                     console.error('❌ Printify出品エラー:', error);
                 }
 
-                // SUZURIへの出品 (Japanese title)
+                // SUZURIへの出品 (Japanese title + description)
                 try {
                     progressText.textContent = 'SUZURI: 商品作成中...';
+                    const suzuriBody = {
+                        imageUrl: compressedImage,  // Use compressed image to avoid 413 error
+                        title: suzuriTitle
+                    };
+
+                    // 商品説明が生成されている場合は追加
+                    if (imgData.idea && imgData.idea.description) {
+                        suzuriBody.description = imgData.idea.description;
+                    }
+
                     const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            imageUrl: compressedImage,  // Use compressed image to avoid 413 error
-                            title: suzuriTitle
-                        })
+                        body: JSON.stringify(suzuriBody)
                     });
 
                     if (suzuriResponse.ok) {

@@ -9,7 +9,7 @@ async function handler(req, res) {
 
     validateEnv(['SUZURI_ACCESS_TOKEN']);
 
-    const { imageUrl, title, createTshirt = true, createHoodie = true, createSweatshirt = true, published = false } = req.body;
+    const { imageUrl, title, description = null, createTshirt = true, createHoodie = true, createSweatshirt = true, published = false } = req.body;
 
     if (!imageUrl || !title) {
         return res.status(400).json({ error: 'imageUrl and title are required' });
@@ -22,16 +22,23 @@ async function handler(req, res) {
 
         // Step 1: Create Material (画像アップロード)
         console.log('📤 Material作成中...');
+        const materialBody = {
+            texture: imageUrl,
+            title: title
+        };
+
+        // 商品説明が提供されている場合は追加
+        if (description) {
+            materialBody.description = description;
+        }
+
         const materialResponse = await fetch('https://suzuri.jp/api/v1/materials', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                texture: imageUrl,
-                title: title
-            })
+            body: JSON.stringify(materialBody)
         });
 
         if (!materialResponse.ok) {
