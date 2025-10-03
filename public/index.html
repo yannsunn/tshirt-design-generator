@@ -529,6 +529,50 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Recreate Products from Masters Section -->
+                <div class="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-lg shadow-md border-2 border-orange-200 mt-6">
+                    <h2 class="text-2xl font-bold text-orange-800 mb-4 flex items-center gap-2">
+                        <span>🔄</span>
+                        <span>既存商品をマスターベースで再作成</span>
+                    </h2>
+                    <p class="text-sm text-gray-600 mb-4">
+                        既存のPrintify商品を、マスター商品をベースに再作成します。モックアップ・配送設定が自動的に適用されます。
+                    </p>
+
+                    <div class="mb-4 p-4 bg-white rounded-lg border border-orange-200">
+                        <div class="flex items-center gap-2 mb-2">
+                            <input type="checkbox" id="delete-old-products" class="w-4 h-4">
+                            <label for="delete-old-products" class="text-sm font-semibold text-gray-700">
+                                再作成成功後、古い商品を自動削除
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 ml-6">
+                            ⚠️ 削除する場合は慎重に。バックアップとして残す場合はチェックを外してください。
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button
+                            id="recreate-storefront-btn"
+                            class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🏪</span>
+                            <span>Storefront商品を再作成</span>
+                        </button>
+                        <button
+                            id="recreate-etsy-btn"
+                            class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🛍️</span>
+                            <span>Etsy商品を再作成</span>
+                        </button>
+                        <button
+                            id="recreate-ebay-btn"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🏷️</span>
+                            <span>eBay商品を再作成</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Global POD Integration Section -->
@@ -2818,6 +2862,115 @@ ${result.rawResponse ? '\n📡 生レスポンス:\n' + result.rawResponse : ''}
             }
         };
 
+        // Recreate products from masters (batch processing)
+        const handleRecreateFromMasters = async (shopId, shopName, buttonId) => {
+            const deleteOld = document.getElementById('delete-old-products').checked;
+
+            const confirmed = confirm(
+                `${shopName}の既存商品をマスターベースで再作成しますか？\n\n` +
+                `⚠️ この処理は時間がかかる場合があります\n` +
+                `${deleteOld ? '✅ 再作成成功後、古い商品を削除します' : 'ℹ️ 古い商品は削除せず残します'}\n\n` +
+                `処理対象:\n` +
+                `• [MASTER]商品はスキップ\n` +
+                `• Blueprint 6, 26, 36, 145, 157, 80, 49, 77の商品のみ\n` +
+                `• 5商品ずつバッチ処理`
+            );
+
+            if (!confirmed) return;
+
+            console.log(`🔄 ${shopName}商品再作成開始`);
+            const recreateBtn = document.getElementById(buttonId);
+            recreateBtn.disabled = true;
+            recreateBtn.innerHTML = '<span>⏳</span><span>再作成中...</span>';
+            hideError();
+
+            let offset = 0;
+            const limit = 5;
+            let totalRecreated = 0;
+            let totalSkipped = 0;
+            let totalErrors = 0;
+            let hasMore = true;
+
+            try {
+                while (hasMore) {
+                    progressText.textContent = `🔄 ${shopName}商品を再作成中... (処理済み: ${totalRecreated}商品)`;
+
+                    const response = await fetch(`${API_BASE_URL}/recreate-from-masters-batch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            shopId: shopId,
+                            offset: offset,
+                            limit: limit,
+                            deleteOld: deleteOld
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ error: '再作成に失敗しました' }));
+                        throw new Error(error.error || '再作成に失敗しました');
+                    }
+
+                    const result = await response.json();
+                    console.log(`✅ バッチ完了 (Offset ${offset}):`, result);
+
+                    totalRecreated += result.recreated;
+                    totalSkipped += result.skipped;
+                    totalErrors += result.errors;
+
+                    // 結果の詳細をログに出力
+                    if (result.results && result.results.length > 0) {
+                        result.results.forEach(r => {
+                            if (r.status === 'success') {
+                                console.log(`  ✅ ${r.title}: ${r.oldProductId} → ${r.newProductId}${r.deleted ? ' (削除済み)' : ''}`);
+                            } else if (r.status === 'skipped') {
+                                console.log(`  ⏭️ ${r.title}: ${r.reason}`);
+                            } else if (r.status === 'error') {
+                                console.error(`  ❌ ${r.title}: ${r.error}`);
+                            }
+                        });
+                    }
+
+                    hasMore = result.hasMore;
+                    offset = result.nextOffset;
+
+                    // 次のバッチ前に少し待機
+                    if (hasMore) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+
+                progressText.textContent = `✅ ${shopName}商品再作成完了: ${totalRecreated}商品`;
+
+                const message = `
+🎉 ${shopName}商品再作成完了！
+
+📊 結果:
+• 再作成成功: ${totalRecreated}商品
+• スキップ: ${totalSkipped}商品
+• エラー: ${totalErrors}件
+
+${deleteOld ? '🗑️ 古い商品は削除されました' : 'ℹ️ 古い商品は残っています'}
+
+${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error(`${shopName}商品再作成エラー:`, error);
+                showError(`再作成エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                recreateBtn.disabled = false;
+                recreateBtn.innerHTML = recreateBtn.id.includes('storefront')
+                    ? '<span>🏪</span><span>Storefront商品を再作成</span>'
+                    : recreateBtn.id.includes('etsy')
+                    ? '<span>🛍️</span><span>Etsy商品を再作成</span>'
+                    : '<span>🏷️</span><span>eBay商品を再作成</span>';
+            }
+        };
+
         // Check Printify connected stores (Etsy, eBay, etc.)
         const handleCheckStores = async () => {
             console.log('🔌 販売チャネル連携確認開始');
@@ -3354,6 +3507,17 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         document.getElementById('check-master-btn').addEventListener('click', handleCheckMaster);
         document.getElementById('create-missing-masters-btn').addEventListener('click', handleCreateMissingMasters);
+
+        // Recreate from masters event listeners
+        document.getElementById('recreate-storefront-btn').addEventListener('click', () =>
+            handleRecreateFromMasters('24565480', 'Storefront', 'recreate-storefront-btn')
+        );
+        document.getElementById('recreate-etsy-btn').addEventListener('click', () =>
+            handleRecreateFromMasters('24566474', 'Etsy', 'recreate-etsy-btn')
+        );
+        document.getElementById('recreate-ebay-btn').addEventListener('click', () =>
+            handleRecreateFromMasters('24566516', 'eBay', 'recreate-ebay-btn')
+        );
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
         printifyOnlyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
