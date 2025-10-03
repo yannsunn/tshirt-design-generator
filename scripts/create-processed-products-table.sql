@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS processed_products (
   process_type TEXT NOT NULL,
 
   -- 処理詳細（JSON形式で柔軟に保存）
-  details JSONB,
+  metadata JSONB,
 
   -- ユニーク制約：同じ商品+処理タイプは1回のみ
   CONSTRAINT unique_product_process UNIQUE (product_id, shop_id, process_type)

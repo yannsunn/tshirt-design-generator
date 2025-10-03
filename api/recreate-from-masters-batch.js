@@ -1,6 +1,7 @@
 // 既存Printify商品をマスターベースで再作成（バッチ処理）
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateEnv } from '../lib/errorHandler.js';
+import { isProductProcessed, markProductAsProcessed } from '../lib/processedProductsTracker.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -68,6 +69,20 @@ async function handler(req, res) {
 
         for (const product of targetProducts) {
             try {
+                // 既に処理済みかチェック
+                const alreadyProcessed = await isProductProcessed(product.id, shopId, 'recreate_from_master');
+                if (alreadyProcessed) {
+                    console.log(`⏭️ スキップ（処理済み）: ${product.title}`);
+                    skippedCount++;
+                    results.push({
+                        oldProductId: product.id,
+                        title: product.title,
+                        status: 'skipped',
+                        reason: 'Already processed'
+                    });
+                    continue;
+                }
+
                 // [MASTER]商品はスキップ
                 if (product.title && product.title.includes('[MASTER]')) {
                     console.log(`⏭️ スキップ（マスター商品）: ${product.title}`);
@@ -218,6 +233,21 @@ async function handler(req, res) {
 
                 const createdProduct = JSON.parse(createResponseText);
                 console.log(`✅ 再作成成功: ${createdProduct.title} (New ID: ${createdProduct.id})`);
+
+                // 処理済みとして記録
+                await markProductAsProcessed(
+                    product.id,
+                    shopId,
+                    'recreate_from_master',
+                    detail.title,
+                    {
+                        oldProductId: product.id,
+                        newProductId: createdProduct.id,
+                        blueprintId: blueprintId,
+                        masterProductId: masterProductId,
+                        recreatedAt: new Date().toISOString()
+                    }
+                );
 
                 // Step 4: 古い商品を削除（オプション）
                 let deleted = false;

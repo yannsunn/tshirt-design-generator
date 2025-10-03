@@ -575,6 +575,72 @@
                 </div>
             </div>
 
+            <!-- Processed Products Tracking Section -->
+            <div class="mt-8 bg-gradient-to-r from-cyan-900 to-teal-900 rounded-lg p-6 border-2 border-cyan-500">
+                <h2 class="text-xl font-bold mb-2 text-white flex items-center gap-2">
+                    <span>📊</span>
+                    <span>処理済み商品トラッキング</span>
+                </h2>
+                <p class="text-sm text-gray-300 mb-4">
+                    再作成や価格更新で処理済みの商品を記録・管理します
+                </p>
+
+                <div class="bg-gray-900 rounded-lg p-4 mb-4">
+                    <h3 class="text-md font-semibold text-white mb-3">処理済み統計</h3>
+                    <div id="processed-stats-container" class="space-y-2 text-sm">
+                        <div class="text-gray-400">統計を表示するにはショップを選択してください</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <button
+                        id="view-storefront-stats-btn"
+                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>📈</span>
+                        <span>Storefront統計</span>
+                    </button>
+                    <button
+                        id="view-etsy-stats-btn"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>📈</span>
+                        <span>Etsy統計</span>
+                    </button>
+                    <button
+                        id="view-ebay-stats-btn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>📈</span>
+                        <span>eBay統計</span>
+                    </button>
+                </div>
+
+                <div class="border-t border-cyan-700 pt-4">
+                    <h3 class="text-md font-semibold text-white mb-3">処理済み記録をリセット</h3>
+                    <p class="text-xs text-gray-400 mb-3">
+                        ⚠️ リセットすると、同じ商品を再度処理できるようになります
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button
+                            id="reset-storefront-btn"
+                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🔄</span>
+                            <span>Storefrontリセット</span>
+                        </button>
+                        <button
+                            id="reset-etsy-btn"
+                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🔄</span>
+                            <span>Etsyリセット</span>
+                        </button>
+                        <button
+                            id="reset-ebay-btn"
+                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🔄</span>
+                            <span>eBayリセット</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Global POD Integration Section -->
             <div class="mt-8 bg-gray-800 rounded-lg p-6 border-2 border-purple-700">
                 <h2 class="text-xl font-bold mb-2 text-purple-300 flex items-center gap-2">
@@ -2971,6 +3037,98 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             }
         };
 
+        // View processed products stats
+        const handleViewProcessedStats = async (shopId, shopName) => {
+            console.log(`📊 ${shopName}処理済み統計を取得中`);
+            const statsContainer = document.getElementById('processed-stats-container');
+            statsContainer.innerHTML = '<div class="text-gray-400">統計を取得中...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/get-processed-stats?shopId=${shopId}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('統計取得に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 処理済み統計:', result);
+
+                const stats = result.stats;
+
+                if (stats.total === 0) {
+                    statsContainer.innerHTML = `
+                        <div class="text-yellow-400">
+                            ${shopName}: 処理済み商品はありません
+                        </div>
+                    `;
+                } else {
+                    let html = `<div class="text-white font-semibold mb-2">${shopName} 処理済み統計</div>`;
+                    html += `<div class="text-gray-300 mb-2">合計: ${stats.total}商品</div>`;
+
+                    if (Object.keys(stats.byType).length > 0) {
+                        html += '<div class="space-y-1">';
+                        for (const [type, count] of Object.entries(stats.byType)) {
+                            const typeLabel = type === 'recreate_from_master' ? '🔄 マスター再作成' :
+                                            type === 'price_update' ? '💰 価格更新' :
+                                            type === 'express_shipping' ? '🚚 エキスプレス配送' : type;
+                            html += `<div class="text-gray-400">• ${typeLabel}: ${count}件</div>`;
+                        }
+                        html += '</div>';
+                    }
+
+                    statsContainer.innerHTML = html;
+                }
+
+            } catch (error) {
+                console.error('統計取得エラー:', error);
+                statsContainer.innerHTML = `
+                    <div class="text-red-400">
+                        エラー: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // Reset processed products records
+        const handleResetProcessedProducts = async (shopId, shopName) => {
+            const confirmed = confirm(
+                `⚠️ ${shopName}の処理済み記録をリセットしますか？\n\n` +
+                `リセットすると、同じ商品を再度処理できるようになります。\n\n` +
+                `この操作は取り消せません。`
+            );
+
+            if (!confirmed) return;
+
+            console.log(`🔄 ${shopName}処理済み記録をリセット中`);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/reset-processed-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shopId: shopId })
+                });
+
+                if (!response.ok) {
+                    throw new Error('リセットに失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ リセット完了:', result);
+
+                alert(`✅ ${shopName}の処理済み記録をリセットしました\n削除件数: ${result.deleted}件`);
+
+                // 統計を再表示
+                handleViewProcessedStats(shopId, shopName);
+
+            } catch (error) {
+                console.error('リセットエラー:', error);
+                alert(`❌ リセットエラー: ${error.message}`);
+            }
+        };
+
         // Check Printify connected stores (Etsy, eBay, etc.)
         const handleCheckStores = async () => {
             console.log('🔌 販売チャネル連携確認開始');
@@ -3518,6 +3676,27 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         document.getElementById('recreate-ebay-btn').addEventListener('click', () =>
             handleRecreateFromMasters('24566516', 'eBay', 'recreate-ebay-btn')
         );
+
+        // Processed products tracking event listeners
+        document.getElementById('view-storefront-stats-btn').addEventListener('click', () =>
+            handleViewProcessedStats('24565480', 'Storefront')
+        );
+        document.getElementById('view-etsy-stats-btn').addEventListener('click', () =>
+            handleViewProcessedStats('24566474', 'Etsy')
+        );
+        document.getElementById('view-ebay-stats-btn').addEventListener('click', () =>
+            handleViewProcessedStats('24566516', 'eBay')
+        );
+        document.getElementById('reset-storefront-btn').addEventListener('click', () =>
+            handleResetProcessedProducts('24565480', 'Storefront')
+        );
+        document.getElementById('reset-etsy-btn').addEventListener('click', () =>
+            handleResetProcessedProducts('24566474', 'Etsy')
+        );
+        document.getElementById('reset-ebay-btn').addEventListener('click', () =>
+            handleResetProcessedProducts('24566516', 'eBay')
+        );
+
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
         printifyOnlyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
