@@ -445,6 +445,12 @@
                         <span>既存商品の価格一括更新</span>
                     </button>
                     <button
+                        id="update-all-shops-btn"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                        <span>🌍</span>
+                        <span>全ショップ価格一括更新</span>
+                    </button>
+                    <button
                         id="reset-processed-btn"
                         class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
                         <span>🔄</span>
@@ -2125,6 +2131,117 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             }
         };
 
+        // Update prices for all shops (Storefront, Etsy, eBay)
+        const handleUpdateAllShops = async () => {
+            const confirmMessage = `全ショップ（Storefront、Etsy、eBay）の価格を38%利益率に更新しますか？
+
+🏪 対象ショップ:
+• AwakeInc (Storefront): 約2,600商品
+• My Etsy Store (Etsy): 約1,200商品
+• Awake (eBay): 約1,200商品
+
+⚠️ 重要: Etsy/eBayは現在$25で赤字です。$45.99に更新します。
+
+💡 8商品ずつ × 3ショップを自動処理します
+
+⚠️ 注意: この操作は元に戻せません。`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            console.log('🌍 全ショップ価格一括更新開始');
+            const updateAllShopsBtn = document.getElementById('update-all-shops-btn');
+            updateAllShopsBtn.disabled = true;
+            updateAllShopsBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
+            hideError();
+
+            try {
+                let offset = 0;
+                const limit = 8;
+                let hasMore = true;
+                let batchCount = 0;
+                let totalUpdated = 0;
+                let totalSkipped = 0;
+                let totalErrors = 0;
+
+                while (hasMore && batchCount < 50) {  // 最大50バッチ（安全のため）
+                    batchCount++;
+                    console.log(`🌍 バッチ${batchCount}開始 (offset: ${offset})`);
+
+                    const response = await fetch(`${API_BASE_URL}/update-all-shops-prices`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            targetMargin: 38,
+                            offset: offset,
+                            limit: limit
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ error: '全ショップ価格更新に失敗しました' }));
+                        throw new Error(error.error || '全ショップ価格更新に失敗しました');
+                    }
+
+                    const result = await response.json();
+                    console.log(`✅ バッチ${batchCount}完了:`, result);
+
+                    totalUpdated += result.totalUpdated || 0;
+                    totalSkipped += result.totalSkipped || 0;
+                    totalErrors += result.totalErrors || 0;
+
+                    // Progress display
+                    progressText.textContent = `🌍 全ショップ更新中... バッチ${batchCount} (更新: ${totalUpdated}件、スキップ: ${totalSkipped}件)`;
+
+                    // すべてのショップでスキップされた場合は終了
+                    const allSkipped = result.results.every(shop => shop.updated === 0);
+                    if (allSkipped) {
+                        console.log('全ショップでスキップされました。処理を終了します。');
+                        hasMore = false;
+                    } else {
+                        offset += limit;
+                        // Wait 1 second before next batch
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+
+                console.log('✅ 全ショップ価格更新完了');
+                console.log(`📊 最終結果: 更新${totalUpdated}件、スキップ${totalSkipped}件、エラー${totalErrors}件`);
+
+                // Show detailed results
+                progressText.textContent = `✅ 全ショップ価格更新完了: ${totalUpdated}件を更新`;
+
+                const message = `
+🎉 全ショップの価格更新が完了しました！
+
+📊 結果:
+• 更新: ${totalUpdated}件
+• スキップ: ${totalSkipped}件
+• エラー: ${totalErrors}件
+• バッチ処理: ${batchCount}回
+
+💰 新価格（38%利益率）:
+• Tシャツ (S-XL): $19.99
+• Tシャツ (2XL): $25.99
+• スウェット (S-XL): $36.99
+• フーディ (S-XL): $46.99
+
+${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error('全ショップ価格更新エラー:', error);
+                showError(`全ショップ価格更新エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                updateAllShopsBtn.disabled = false;
+                updateAllShopsBtn.innerHTML = '<span>🌍</span><span>全ショップ価格一括更新</span>';
+            }
+        };
+
         // Reset processed products records
         const handleResetProcessed = async () => {
             if (!printifyShopId) {
@@ -2601,6 +2718,7 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
         createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
         enableExpressBtn.addEventListener('click', handleEnableExpress);
         document.getElementById('update-prices-btn').addEventListener('click', handleUpdatePrices);
+        document.getElementById('update-all-shops-btn').addEventListener('click', handleUpdateAllShops);
         document.getElementById('reset-processed-btn').addEventListener('click', handleResetProcessed);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
