@@ -2,6 +2,9 @@
 // Etsy商品選定ツール
 // 市場リサーチに基づき、Storefront商品から最適な50商品を選定
 
+// .envファイルを読み込み
+require('dotenv').config();
+
 const fs = require('fs');
 const path = require('path');
 

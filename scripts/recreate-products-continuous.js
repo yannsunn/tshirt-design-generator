@@ -2,6 +2,9 @@
 // 既存商品をマスターベースで再作成（継続実行）
 // 9秒に1回、5商品ずつ処理してタイムアウトを回避
 
+// .envファイルを読み込み
+require('dotenv').config();
+
 const API_BASE_URL = 'https://design-generator-puce.vercel.app/api';
 const BATCH_SIZE = 5;
 const INTERVAL_MS = 9000; // 9秒

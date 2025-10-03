@@ -3,6 +3,9 @@
 // 1. 全商品IDを取得
 // 2. 未公開商品を公開
 
+// .envファイルを読み込み
+require('dotenv').config();
+
 const API_BASE_URL = 'https://design-generator-puce.vercel.app/api';
 const EBAY_SHOP_ID = '24566516';
 const BATCH_SIZE = 10; // 一度に公開する商品数

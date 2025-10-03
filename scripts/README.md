@@ -22,6 +22,8 @@ cd /mnt/c/Users/march/デザインドロップシッピング
 node scripts/recreate-products-continuous.js
 ```
 
+> 💡 `.env`ファイルから自動的にAPIキーを読み込みます。環境変数の設定は不要です。
+
 **出力例:**
 ```
 🔄 [Storefront] バッチ処理開始 (Offset: 0)
@@ -45,9 +47,10 @@ node scripts/recreate-products-continuous.js
 
 **使用方法:**
 ```bash
-export PRINTIFY_API_KEY="your_api_key"
 node scripts/publish-ebay-products.js
 ```
+
+> 💡 `.env`ファイルから自動的にAPIキーを読み込みます。環境変数の設定は不要です。
 
 **出力例:**
 ```
@@ -112,9 +115,10 @@ node scripts/market-research-japan-tshirts.js
 
 **使用方法:**
 ```bash
-export PRINTIFY_API_KEY="your_api_key"
 node scripts/select-etsy-products.js
 ```
+
+> 💡 `.env`ファイルから自動的にAPIキーを読み込みます。環境変数の設定は不要です。
 
 **出力:**
 - `product-selections/etsy-selection-[timestamp].json` - 詳細レポート
@@ -132,18 +136,23 @@ node scripts/select-etsy-products.js
 
 ### 環境変数設定
 
-```bash
-export PRINTIFY_API_KEY="your_printify_api_key"
-```
+✅ **既に設定済みです！**
 
-または`.env`ファイルに追加：
-```
-PRINTIFY_API_KEY=your_printify_api_key
-```
+プロジェクトルートの`.env`ファイルに以下のAPIキーが設定されています：
+- `PRINTIFY_API_KEY`
+- `GEMINI_API_KEY`
+- `SUPABASE_URL` / `SUPABASE_ANON_KEY`
+- その他
+
+各スクリプトは自動的に`.env`ファイルを読み込むため、**追加の環境変数設定は不要**です。
 
 ### 依存関係
 
-これらのスクリプトは標準的なNode.js環境で動作します。追加のnpmパッケージは不要です。
+必要なパッケージ：
+- `dotenv` - ✅ インストール済み
+- 標準Node.js環境
+
+追加インストール不要で、すぐに実行できます。
 
 ---
 
@@ -244,7 +253,8 @@ const TARGET_COUNT = 100; // 100商品に変更
 **よくある問題:**
 
 1. **PRINTIFY_API_KEY not set**
-   → 環境変数を設定してください
+   → `.env`ファイルにAPIキーが設定されているか確認してください
+   → ✅ 通常は既に設定済みです
 
 2. **Timeout errors**
    → インターバルを長くしてください（12秒など）
