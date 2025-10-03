@@ -1867,22 +1867,40 @@
                 progressText.textContent = `✅ 完了: ${successCount}商品を作成しました (${generatedImages.length}デザイン × ${selectedProductTypes.length}タイプ)`;
             }
 
-            // Auto-update prices for all created products (38% profit margin)
+            // Auto-update prices for newly created products only (38% profit margin)
             if (successCount > 0) {
                 try {
-                    console.log('💰 価格自動更新を開始...');
+                    console.log('💰 新規作成商品の価格自動更新を開始...');
                     progressText.textContent = '💰 価格を最適化中（38%利益率）...';
-                    const priceUpdateResponse = await fetch(`${API_BASE_URL}/printify-update-prices`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ shopId: printifyShopId })
-                    });
-                    if (priceUpdateResponse.ok) {
-                        const priceResult = await priceUpdateResponse.json();
-                        console.log('✅ 価格自動更新完了:', priceResult.updatedCount, '商品');
-                        progressText.textContent = `✅ 完了: ${successCount}商品作成 + 価格最適化済み（38%利益率）`;
-                    } else {
-                        console.warn('⚠️ 価格自動更新に失敗しました。手動で「💰 既存商品の価格一括更新」を実行してください。');
+
+                    // Collect all created product IDs
+                    const createdProductIds = results
+                        .filter(r => r.success && r.url)
+                        .map(r => {
+                            // Extract product ID from URL: https://printify.com/app/products/PRODUCT_ID
+                            const match = r.url.match(/products\/([a-f0-9]+)/);
+                            return match ? match[1] : null;
+                        })
+                        .filter(id => id !== null);
+
+                    console.log(`🎯 新規作成商品ID: ${createdProductIds.length}件`, createdProductIds);
+
+                    if (createdProductIds.length > 0) {
+                        const priceUpdateResponse = await fetch(`${API_BASE_URL}/printify-update-prices`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                shopId: printifyShopId,
+                                productIds: createdProductIds
+                            })
+                        });
+                        if (priceUpdateResponse.ok) {
+                            const priceResult = await priceUpdateResponse.json();
+                            console.log('✅ 価格自動更新完了:', priceResult.updated, '商品');
+                            progressText.textContent = `✅ 完了: ${successCount}商品作成 + 価格最適化済み（38%利益率）`;
+                        } else {
+                            console.warn('⚠️ 価格自動更新に失敗しました。');
+                        }
                     }
                 } catch (error) {
                     console.error('❌ 価格自動更新エラー:', error);
@@ -1983,12 +2001,14 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 return showError('Printify Shop IDが設定されていません');
             }
 
-            const confirmMessage = `既存の全商品の価格を以下の設定に更新しますか？
+            const confirmMessage = `既存の全商品の価格を38%利益率に更新しますか？
 
-📋 価格設定:
-• Tシャツ (Gildan 5000): ¥2,500
-• スウェット (Gildan 18000): ¥4,000
-• フーディ (Gildan 18500): ¥4,500
+📋 価格設定例:
+• Tシャツ (S-XL): $9.99 (利益率39.9%)
+• Tシャツ (2XL): $12.99 (利益率38.4%)
+• スウェット (S-XL): $22.99 (利益率39.1%)
+
+💡 8商品ずつ自動処理します（Vercel制限対応）
 
 ⚠️ 注意: この操作は元に戻せません。`;
 
@@ -1996,76 +2016,86 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 return;
             }
 
-            console.log('💰 価格一括更新開始');
+            console.log('💰 価格一括更新開始（8商品ずつバッチ処理）');
             const updatePricesBtn = document.getElementById('update-prices-btn');
             updatePricesBtn.disabled = true;
             updatePricesBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
             hideError();
 
-            // 進捗アニメーション用の変数
-            let progressDots = 0;
-            let progressInterval = null;
-
             try {
-                // 推定時間を表示
-                progressText.textContent = '💰 商品価格を更新中... (推定: 1-3分)';
+                let offset = 0;
+                let hasMore = true;
+                let totalUpdated = 0;
+                let totalSkipped = 0;
+                let totalErrors = 0;
+                let batchCount = 0;
 
-                // 進捗アニメーション開始
-                progressInterval = setInterval(() => {
-                    progressDots = (progressDots + 1) % 4;
-                    progressText.textContent = `💰 商品価格を更新中${'.'.repeat(progressDots)} (推定: 1-3分、商品数により変動)`;
-                }, 500);
+                while (hasMore) {
+                    batchCount++;
+                    console.log(`📦 バッチ${batchCount}開始 (offset: ${offset})`);
 
-                const response = await fetch(`${API_BASE_URL}/printify-update-prices`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shopId: printifyShopId })
-                });
+                    progressText.textContent = `💰 商品価格を更新中... バッチ${batchCount} (更新済み: ${totalUpdated}件)`;
 
-                clearInterval(progressInterval);
+                    const response = await fetch(`${API_BASE_URL}/printify-update-prices-batch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            shopId: printifyShopId,
+                            offset: offset,
+                            limit: 8
+                        })
+                    });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || '価格更新に失敗しました');
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ error: '価格更新に失敗しました' }));
+                        throw new Error(error.error || '価格更新に失敗しました');
+                    }
+
+                    const result = await response.json();
+                    console.log(`✅ バッチ${batchCount}完了:`, result);
+
+                    totalUpdated += result.updated;
+                    totalSkipped += result.skipped;
+                    totalErrors += result.errors;
+                    hasMore = result.hasMore;
+                    offset = result.nextOffset;
+
+                    // Progress display
+                    progressText.textContent = `💰 更新中... ${result.progress} (更新: ${totalUpdated}件、スキップ: ${totalSkipped}件)`;
+
+                    // Wait 1 second before next batch
+                    if (hasMore) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
                 }
 
-                const result = await response.json();
-                console.log('✅ 価格更新完了:', result);
+                console.log('✅ 全バッチ価格更新完了');
+                console.log(`📊 最終結果: 更新${totalUpdated}件、スキップ${totalSkipped}件、エラー${totalErrors}件`);
 
                 // Show detailed results
-                progressText.textContent = `✅ 価格更新完了: ${result.updated}件を更新`;
+                progressText.textContent = `✅ 価格更新完了: ${totalUpdated}件を更新`;
 
                 const message = `
 🎉 価格更新が完了しました！
 
 📊 結果:
-• 更新: ${result.updated}件
-• スキップ: ${result.skipped}件 (既に正しい価格または対象外)
-• エラー: ${result.errors}件
-• 合計: ${result.total}件
+• 更新: ${totalUpdated}件
+• スキップ: ${totalSkipped}件 (既に正しい価格または対象外)
+• エラー: ${totalErrors}件
+• バッチ処理: ${batchCount}回
 
 💰 適用された価格:
-${Object.entries(result.priceConfig).map(([type, price]) => `• ${type}: ${price}`).join('\n')}
+• Tシャツ (S-XL): $9.99 (39.9%)
+• Tシャツ (2XL): $12.99 (38.4%)
+• スウェット (S-XL): $22.99 (39.1%)
+• フーディ (S-XL): $27.99 (39.3%)
 
-${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
                 `.trim();
 
                 alert(message);
 
-                // Log detailed results
-                console.log('📋 詳細結果:');
-                result.details.forEach((item, index) => {
-                    if (item.status === 'updated') {
-                        console.log(`${index + 1}. ✅ ${item.title} (${item.productType}) → ${item.newPrice}`);
-                    } else if (item.status === 'skipped') {
-                        console.log(`${index + 1}. ⏭️  ${item.title} - ${item.reason}`);
-                    } else if (item.status === 'error') {
-                        console.log(`${index + 1}. ❌ ${item.title} - ${item.reason}`);
-                    }
-                });
-
             } catch (error) {
-                if (progressInterval) clearInterval(progressInterval);
                 console.error('価格更新エラー:', error);
                 showError(`価格更新エラー: ${error.message}`);
                 progressText.textContent = 'エラーが発生しました';
@@ -2396,7 +2426,7 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
 
                 // 各APIを並列に直接呼び出し
                 const results = {
-                    printify: { success: false, error: null, count: 0 },
+                    printify: { success: false, error: null, count: 0, productIds: [] },
                     suzuri: { success: false, error: null }
                 };
 
@@ -2445,7 +2475,11 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                             });
 
                             if (productResponse.ok) {
+                                const productResult = await productResponse.json();
                                 results.printify.count++;
+                                if (productResult.productId) {
+                                    results.printify.productIds.push(productResult.productId);
+                                }
                             }
                         } catch (error) {
                             console.error(`商品作成エラー (${productType}):`, error);
@@ -2504,18 +2538,22 @@ ${result.results.summary.errorCount > 0 ? `⚠️ エラー: ${result.results.su
                 }
 
                 // Auto-update prices if Printify succeeded (38% profit margin)
-                if (results.printify.success && results.printify.count > 0) {
+                if (results.printify.success && results.printify.productIds.length > 0) {
                     try {
                         console.log('💰 Printify価格自動更新を開始...');
+                        console.log(`🎯 新規作成商品ID: ${results.printify.productIds.length}件`, results.printify.productIds);
                         progressText.textContent = '💰 Printify価格を最適化中（38%利益率）...';
                         const priceUpdateResponse = await fetch(`${API_BASE_URL}/printify-update-prices`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ shopId: printifyShopId })
+                            body: JSON.stringify({
+                                shopId: printifyShopId,
+                                productIds: results.printify.productIds
+                            })
                         });
                         if (priceUpdateResponse.ok) {
                             const priceResult = await priceUpdateResponse.json();
-                            console.log('✅ Printify価格自動更新完了:', priceResult.updatedCount, '商品');
+                            console.log('✅ Printify価格自動更新完了:', priceResult.updated, '商品');
                             successMessage += `\n💰 Printify価格最適化完了（38%利益率）`;
                         }
                     } catch (error) {

@@ -10,7 +10,7 @@ async function handler(req, res) {
     validateEnv(['PRINTIFY_API_KEY']);
     validateRequired(req.body, ['shopId']);
 
-    const { shopId, targetMargin = 38, dryRun = false } = req.body;
+    const { shopId, targetMargin = 38, dryRun = false, productIds = null } = req.body;
     const apiKey = process.env.PRINTIFY_API_KEY;
 
     // Blueprint IDごとの原価マッピング
@@ -43,45 +43,57 @@ async function handler(req, res) {
         if (dryRun) {
             console.log('⚠️ DRY RUNモード: 実際の更新は行いません');
         }
-
-        // 全商品を取得（ページネーション対応）
-        let allProducts = [];
-        let currentPage = 1;
-        let hasMorePages = true;
-
-        while (hasMorePages) {
-            const productsResponse = await fetch(
-                `https://api.printify.com/v1/shops/${shopId}/products.json?limit=50&page=${currentPage}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            if (!productsResponse.ok) {
-                const errorText = await productsResponse.text();
-                throw new ExternalAPIError('Printify', `Failed to fetch products (${productsResponse.status})`, errorText);
-            }
-
-            const productsData = await productsResponse.json();
-            const pageProducts = productsData.data || [];
-            allProducts = allProducts.concat(pageProducts);
-
-            console.log(`📄 ページ${currentPage}: ${pageProducts.length}件取得`);
-
-            hasMorePages = pageProducts.length === 50;
-            currentPage++;
-
-            if (hasMorePages) {
-                await new Promise(resolve => setTimeout(resolve, 300));
-            }
+        if (productIds) {
+            console.log(`🎯 特定商品のみ更新: ${productIds.length}商品`);
         }
 
-        const products = allProducts;
-        console.log(`📋 ${products.length}商品を取得`);
+        let products = [];
+
+        // 特定商品IDが指定されている場合は、それらのみ処理
+        if (productIds && Array.isArray(productIds) && productIds.length > 0) {
+            // productIds から商品情報を直接作成（詳細取得は後で行う）
+            products = productIds.map(id => ({ id }));
+            console.log(`📋 ${products.length}商品を対象に設定`);
+        } else {
+            // 全商品を取得（ページネーション対応）
+            let allProducts = [];
+            let currentPage = 1;
+            let hasMorePages = true;
+
+            while (hasMorePages) {
+                const productsResponse = await fetch(
+                    `https://api.printify.com/v1/shops/${shopId}/products.json?limit=50&page=${currentPage}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!productsResponse.ok) {
+                    const errorText = await productsResponse.text();
+                    throw new ExternalAPIError('Printify', `Failed to fetch products (${productsResponse.status})`, errorText);
+                }
+
+                const productsData = await productsResponse.json();
+                const pageProducts = productsData.data || [];
+                allProducts = allProducts.concat(pageProducts);
+
+                console.log(`📄 ページ${currentPage}: ${pageProducts.length}件取得`);
+
+                hasMorePages = pageProducts.length === 50;
+                currentPage++;
+
+                if (hasMorePages) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            }
+
+            products = allProducts;
+            console.log(`📋 ${products.length}商品を取得`);
+        }
 
         let updatedCount = 0;
         let skippedCount = 0;
