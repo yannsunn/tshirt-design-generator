@@ -60,21 +60,26 @@ async function getAllStorefrontProducts() {
         let hasMore = true;
 
         while (hasMore) {
-            const response = await fetch(
-                `https://design-generator-puce.vercel.app/api/printify-list-products?shopId=${STOREFRONT_SHOP_ID}&page=${page}&limit=100`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+            const url = `https://design-generator-puce.vercel.app/api/printify-list-products?shopId=${STOREFRONT_SHOP_ID}&page=${page}&limit=50`;
+            console.log(`  🔗 Fetching: ${url}`);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            );
+            });
+
+            console.log(`  📡 Response status: ${response.status}`);
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`  ❌ Error response: ${errorText.substring(0, 200)}`);
                 throw new Error(`商品取得失敗: HTTP ${response.status}`);
             }
 
             const data = await response.json();
+            console.log(`  ✅ Data received: products=${data.products?.length}, currentPage=${data.currentPage}, lastPage=${data.lastPage}`);
             const pageProducts = data.products || [];
 
             products.push(...pageProducts);

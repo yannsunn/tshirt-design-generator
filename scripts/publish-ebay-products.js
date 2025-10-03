@@ -20,7 +20,7 @@ async function getAllProducts(shopId) {
 
         while (hasMore) {
             const response = await fetch(
-                `https://design-generator-puce.vercel.app/api/printify-list-products?shopId=${shopId}&page=${page}&limit=100`,
+                `https://design-generator-puce.vercel.app/api/printify-list-products?shopId=${shopId}&page=${page}&limit=50`,
                 {
                     method: 'GET',
                     headers: {
