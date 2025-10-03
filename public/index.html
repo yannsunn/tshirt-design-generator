@@ -445,6 +445,12 @@
                         <span>既存商品の価格一括更新</span>
                     </button>
                     <button
+                        id="reset-processed-btn"
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
+                        <span>🔄</span>
+                        <span>処理済み記録をリセット</span>
+                    </button>
+                    <button
                         id="enable-express-btn"
                         class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
                         <span>⚡</span>
@@ -1911,75 +1917,91 @@
                 return showError('Printify Shop IDが設定されていません');
             }
 
-            if (!confirm('既存の全商品（Express対応商品のみ）でExpress配送を有効化しますか？\n\n注意: この操作は元に戻せません。')) {
+            const confirmMessage = `既存の全商品（Express対応商品のみ）でExpress配送を有効化しますか？
+
+💡 8商品ずつ自動処理します（Vercel制限対応）
+
+⚠️ 注意: この操作は元に戻せません。`;
+
+            if (!confirm(confirmMessage)) {
                 return;
             }
 
-            console.log('⚡ Express一括設定開始');
+            console.log('⚡ Express一括設定開始（8商品ずつバッチ処理）');
             enableExpressBtn.disabled = true;
             enableExpressBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
             hideError();
 
-            // 進捗アニメーション用の変数
-            let progressDots = 0;
-            let progressInterval = null;
-
             try {
-                // 推定時間を表示
-                progressText.textContent = '⚡ Express設定を確認中... (推定: 1-3分)';
+                let offset = 0;
+                const limit = 8;
+                let hasMore = true;
+                let totalEnabled = 0;
+                let totalSkipped = 0;
+                let totalAlreadyProcessed = 0;
+                let totalErrors = 0;
+                let batchCount = 0;
 
-                // 進捗アニメーション開始
-                progressInterval = setInterval(() => {
-                    progressDots = (progressDots + 1) % 4;
-                    progressText.textContent = `⚡ Express設定を更新中${'.'.repeat(progressDots)} (推定: 1-3分、商品数により変動)`;
-                }, 500);
+                while (hasMore) {
+                    batchCount++;
+                    console.log(`⚡ バッチ${batchCount}開始 (offset: ${offset})`);
 
-                const response = await fetch(`${API_BASE_URL}/printify-enable-express`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shopId: printifyShopId })
-                });
+                    const response = await fetch(`${API_BASE_URL}/printify-enable-express-batch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            shopId: printifyShopId,
+                            offset: offset,
+                            limit: limit
+                        })
+                    });
 
-                clearInterval(progressInterval);
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ error: 'Express設定に失敗しました' }));
+                        throw new Error(error.error || 'Express設定に失敗しました');
+                    }
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Express設定に失敗しました');
+                    const result = await response.json();
+                    console.log(`✅ バッチ${batchCount}完了:`, result);
+
+                    totalEnabled += result.enabled;
+                    totalSkipped += result.skipped;
+                    totalAlreadyProcessed += (result.alreadyProcessed || 0);
+                    totalErrors += result.errors;
+                    hasMore = result.hasMore;
+                    offset = result.nextOffset;
+
+                    // Progress display
+                    progressText.textContent = `⚡ Express設定中... ${result.progress} (有効化: ${totalEnabled}件、既処理: ${totalAlreadyProcessed}件、スキップ: ${totalSkipped}件)`;
+
+                    // Wait 1 second before next batch
+                    if (hasMore) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
                 }
 
-                const result = await response.json();
-                console.log('✅ Express設定完了:', result);
+                console.log('✅ 全バッチExpress設定完了');
+                console.log(`📊 最終結果: 有効化${totalEnabled}件、既処理スキップ${totalAlreadyProcessed}件、条件外スキップ${totalSkipped}件、エラー${totalErrors}件`);
 
                 // Show detailed results
-                progressText.textContent = `✅ Express設定完了: ${result.enabled}件を有効化`;
+                progressText.textContent = `✅ Express設定完了: ${totalEnabled}件を有効化`;
 
                 const message = `
 🎉 Express設定が完了しました！
 
 📊 結果:
-• 有効化: ${result.enabled}件
-• スキップ: ${result.skipped}件 (非対応または既に有効)
-• エラー: ${result.errors}件
+• 有効化: ${totalEnabled}件
+• 既処理スキップ: ${totalAlreadyProcessed}件 (前回処理済み)
+• 条件外スキップ: ${totalSkipped}件 (非対応または既に有効)
+• エラー: ${totalErrors}件
+• バッチ処理: ${batchCount}回
 
-${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
                 `.trim();
 
                 alert(message);
 
-                // Log detailed results
-                console.log('📋 詳細結果:');
-                result.results.forEach((item, index) => {
-                    if (item.status === 'enabled') {
-                        console.log(`${index + 1}. ✅ ${item.title} (ID: ${item.id})`);
-                    } else if (item.status === 'skipped') {
-                        console.log(`${index + 1}. ⏭️  ${item.title} - ${item.reason}`);
-                    } else if (item.status === 'error') {
-                        console.log(`${index + 1}. ❌ ${item.title} - ${item.error}`);
-                    }
-                });
-
             } catch (error) {
-                if (progressInterval) clearInterval(progressInterval);
                 console.error('Express設定エラー:', error);
                 showError(`Express設定エラー: ${error.message}`);
                 progressText.textContent = 'エラーが発生しました';
@@ -2021,6 +2043,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 let hasMore = true;
                 let totalUpdated = 0;
                 let totalSkipped = 0;
+                let totalAlreadyProcessed = 0;
                 let totalErrors = 0;
                 let batchCount = 0;
 
@@ -2050,12 +2073,13 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                     totalUpdated += result.updated;
                     totalSkipped += result.skipped;
+                    totalAlreadyProcessed += (result.alreadyProcessed || 0);
                     totalErrors += result.errors;
                     hasMore = result.hasMore;
                     offset = result.nextOffset;
 
                     // Progress display
-                    progressText.textContent = `💰 更新中... ${result.progress} (更新: ${totalUpdated}件、スキップ: ${totalSkipped}件)`;
+                    progressText.textContent = `💰 更新中... ${result.progress} (更新: ${totalUpdated}件、既処理: ${totalAlreadyProcessed}件、スキップ: ${totalSkipped}件)`;
 
                     // Wait 1 second before next batch
                     if (hasMore) {
@@ -2064,7 +2088,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 }
 
                 console.log('✅ 全バッチ価格更新完了');
-                console.log(`📊 最終結果: 更新${totalUpdated}件、スキップ${totalSkipped}件、エラー${totalErrors}件`);
+                console.log(`📊 最終結果: 更新${totalUpdated}件、既処理スキップ${totalAlreadyProcessed}件、価格最適スキップ${totalSkipped}件、エラー${totalErrors}件`);
 
                 // Show detailed results
                 progressText.textContent = `✅ 価格更新完了: ${totalUpdated}件を更新`;
@@ -2074,7 +2098,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
 📊 結果:
 • 更新: ${totalUpdated}件
-• スキップ: ${totalSkipped}件 (既に正しい価格または対象外)
+• 既処理スキップ: ${totalAlreadyProcessed}件 (前回処理済み)
+• 価格最適スキップ: ${totalSkipped}件 (既に正しい価格または対象外)
 • エラー: ${totalErrors}件
 • バッチ処理: ${batchCount}回
 
@@ -2096,6 +2121,88 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             } finally {
                 updatePricesBtn.disabled = false;
                 updatePricesBtn.innerHTML = '<span>💰</span><span>既存商品の価格一括更新</span>';
+            }
+        };
+
+        // Reset processed products records
+        const handleResetProcessed = async () => {
+            const printifyShopId = shopIdInput.value.trim();
+            if (!printifyShopId) {
+                alert('ショップIDを入力してください');
+                return;
+            }
+
+            // ユーザーに処理タイプを選択させる
+            const processTypeChoice = prompt(
+                '処理済み記録をリセットする対象を選択してください:\n\n' +
+                '1 = 価格更新のみ\n' +
+                '2 = Express設定のみ\n' +
+                '3 = すべて\n\n' +
+                '数字を入力してください (1, 2, または 3):',
+                '3'
+            );
+
+            if (!processTypeChoice) return; // キャンセル
+
+            let processType = null;
+            let resetMessage = '';
+
+            switch (processTypeChoice.trim()) {
+                case '1':
+                    processType = 'price_update';
+                    resetMessage = '価格更新の処理済み記録';
+                    break;
+                case '2':
+                    processType = 'express_enable';
+                    resetMessage = 'Express設定の処理済み記録';
+                    break;
+                case '3':
+                    processType = null; // すべて
+                    resetMessage = 'すべての処理済み記録';
+                    break;
+                default:
+                    alert('無効な入力です。1, 2, または 3 を入力してください。');
+                    return;
+            }
+
+            const confirmed = confirm(
+                `${resetMessage}をリセットしますか？\n\n` +
+                'リセット後は、該当する商品が再処理の対象となります。'
+            );
+            if (!confirmed) return;
+
+            console.log(`🔄 処理済み記録リセット開始 (${resetMessage})`);
+            const resetBtn = document.getElementById('reset-processed-btn');
+            resetBtn.disabled = true;
+            resetBtn.innerHTML = '<span>⏳</span><span>リセット中...</span>';
+            hideError();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/reset-processed-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        shopId: printifyShopId,
+                        processType: processType
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'リセットに失敗しました' }));
+                    throw new Error(error.error || 'リセットに失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ リセット完了:', result);
+
+                alert(`✅ ${resetMessage}をリセットしました\n\n削除件数: ${result.deleted}件`);
+
+            } catch (error) {
+                console.error('リセットエラー:', error);
+                showError(`リセットエラー: ${error.message}`);
+            } finally {
+                resetBtn.disabled = false;
+                resetBtn.innerHTML = '<span>🔄</span><span>処理済み記録をリセット</span>';
             }
         };
 
@@ -2495,6 +2602,7 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
         createAllPrintifyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
         enableExpressBtn.addEventListener('click', handleEnableExpress);
         document.getElementById('update-prices-btn').addEventListener('click', handleUpdatePrices);
+        document.getElementById('reset-processed-btn').addEventListener('click', handleResetProcessed);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);

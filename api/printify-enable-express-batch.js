@@ -1,4 +1,4 @@
-// Printifyサイズ別価格バッチ更新（8商品ずつ処理、Vercel 10秒制限対応）
+// Printify Express設定バッチ有効化（8商品ずつ処理、Vercel 10秒制限対応）
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateRequired, validateEnv, ExternalAPIError } from '../lib/errorHandler.js';
 import { isProductProcessed, markProductAsProcessed } from '../lib/processedProductsTracker.js';
@@ -11,32 +11,11 @@ async function handler(req, res) {
     validateEnv(['PRINTIFY_API_KEY']);
     validateRequired(req.body, ['shopId']);
 
-    const { shopId, offset = 0, limit = 8, targetMargin = 38 } = req.body;
+    const { shopId, offset = 0, limit = 8 } = req.body;
     const apiKey = process.env.PRINTIFY_API_KEY;
 
-    // Blueprint IDごとの原価マッピング
-    const blueprintCosts = {
-        6: { baseCost: 900, extraCost: { '2XL': 1200, '3XL': 1500 }, name: 'Gildan 5000 T-Shirt' },
-        26: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 980 Lightweight Tee' },
-        36: { baseCost: 1200, extraCost: { '2XL': 1500, '3XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
-        145: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 64000 Softstyle T-Shirt' },
-        157: { baseCost: 750, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
-        80: { baseCost: 1350, extraCost: { '2XL': 1650, '3XL': 1950 }, name: 'Gildan 2400 Long Sleeve Tee' },
-        49: { baseCost: 2100, extraCost: { '2XL': 2550, '3XL': 3000 }, name: 'Gildan 18000 Sweatshirt' },
-        77: { baseCost: 2550, extraCost: { '2XL': 3000, '3XL': 3450 }, name: 'Gildan 18500 Hoodie' }
-    };
-
-    // USD $X.99 価格計算関数
-    const JPY_TO_USD = 150;
-    const calculateOptimalPrice = (costJpy, targetMargin) => {
-        const costUsd = costJpy / JPY_TO_USD;
-        const exactPriceUsd = costUsd / (1 - targetMargin / 100);
-        const priceUsd = Math.ceil(exactPriceUsd) - 0.01;
-        return Math.round(priceUsd * 100);
-    };
-
     try {
-        console.log(`📊 バッチ価格更新開始: offset=${offset}, limit=${limit}`);
+        console.log(`📊 バッチExpress有効化開始: offset=${offset}, limit=${limit}`);
 
         // 商品リストを取得（limit件のみ）
         const page = Math.floor(offset / 50) + 1;
@@ -66,7 +45,7 @@ async function handler(req, res) {
 
         console.log(`📋 ${products.length}商品を処理 (全体: 約${totalProducts}商品)`);
 
-        let updatedCount = 0;
+        let enabledCount = 0;
         let skippedCount = 0;
         let errorCount = 0;
         let alreadyProcessedCount = 0;
@@ -80,7 +59,7 @@ async function handler(req, res) {
                 const alreadyProcessed = await isProductProcessed(
                     product.id,
                     shopId,
-                    'price_update'
+                    'express_enable'
                 );
 
                 if (alreadyProcessed) {
@@ -107,49 +86,43 @@ async function handler(req, res) {
                     continue;
                 }
 
-                const detail = await detailResponse.json();
-                const blueprintId = detail.blueprint_id;
-                const variants = detail.variants || [];
+                const productDetail = await detailResponse.json();
 
-                const costInfo = blueprintCosts[blueprintId];
-                if (!costInfo) {
-                    console.log(`Unknown blueprint ${blueprintId}, skipping`);
+                // Express対象外の場合はスキップ（処理済みとして記録）
+                if (!productDetail.is_printify_express_eligible) {
+                    console.log(`⏭️ スキップ (Express非対応): ${product.title}`);
+
+                    // 非対応商品も記録して次回スキップ
+                    await markProductAsProcessed(
+                        product.id,
+                        shopId,
+                        'express_enable',
+                        product.title,
+                        { reason: 'not_eligible' }
+                    );
+
                     skippedCount++;
                     continue;
                 }
 
-                // 各variantに最適価格を設定
-                const updatedVariants = variants.map(variant => {
-                    const variantTitle = variant.title || '';
-                    let cost = costInfo.baseCost;
+                // 既に有効の場合もスキップ（処理済みとして記録）
+                if (productDetail.is_printify_express_enabled) {
+                    console.log(`⏭️ スキップ (既に有効): ${product.title}`);
 
-                    if (variantTitle.includes('2XL')) {
-                        cost = costInfo.extraCost['2XL'] || costInfo.baseCost * 1.33;
-                    } else if (variantTitle.includes('3XL')) {
-                        cost = costInfo.extraCost['3XL'] || costInfo.baseCost * 1.67;
-                    }
+                    await markProductAsProcessed(
+                        product.id,
+                        shopId,
+                        'express_enable',
+                        product.title,
+                        { reason: 'already_enabled' }
+                    );
 
-                    const optimalPrice = calculateOptimalPrice(cost, targetMargin);
-
-                    return {
-                        id: variant.id,
-                        price: optimalPrice,
-                        is_enabled: variant.is_enabled
-                    };
-                });
-
-                // 価格が変更されたか確認
-                const hasChanges = updatedVariants.some((updatedVariant, index) => {
-                    return updatedVariant.price !== variants[index].price;
-                });
-
-                if (!hasChanges) {
-                    console.log(`✓ 価格は既に最適です`);
                     skippedCount++;
                     continue;
                 }
 
-                // 商品を更新
+                // Express設定を有効化
+                console.log(`⚡ Express有効化中: ${product.title}`);
                 const updateResponse = await fetch(
                     `https://api.printify.com/v1/shops/${shopId}/products/${product.id}.json`,
                     {
@@ -159,32 +132,30 @@ async function handler(req, res) {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            variants: updatedVariants
+                            is_printify_express_enabled: true
                         })
                     }
                 );
 
                 if (!updateResponse.ok) {
-                    const errorText = await updateResponse.text();
-                    console.error(`Failed to update product ${product.id}: ${errorText}`);
+                    const errorData = await updateResponse.json().catch(() => ({ error: 'Unknown error' }));
+                    console.error(`Express設定失敗: ${errorData.error || updateResponse.statusText}`);
                     errorCount++;
                     continue;
                 }
 
-                console.log(`✅ 更新成功: ${costInfo.name}`);
-                updatedCount++;
+                console.log(`✅ Express有効化成功: ${product.title}`);
+                enabledCount++;
 
                 // 📝 処理済みとして記録
                 await markProductAsProcessed(
                     product.id,
                     shopId,
-                    'price_update',
+                    'express_enable',
                     product.title,
                     {
-                        blueprint_id: blueprintId,
-                        blueprint_name: costInfo.name,
-                        target_margin: targetMargin,
-                        variants_updated: updatedVariants.length
+                        enabled: true,
+                        blueprint_id: productDetail.blueprint_id
                     }
                 );
 
@@ -199,11 +170,11 @@ async function handler(req, res) {
 
         const hasMore = offset + limit < totalProducts;
 
-        console.log(`📊 バッチ処理完了: 更新${updatedCount}件、既処理スキップ${alreadyProcessedCount}件、価格最適スキップ${skippedCount}件、エラー${errorCount}件`);
+        console.log(`📊 バッチ処理完了: 有効化${enabledCount}件、既処理スキップ${alreadyProcessedCount}件、条件外スキップ${skippedCount}件、エラー${errorCount}件`);
 
         res.status(200).json({
             success: true,
-            updated: updatedCount,
+            enabled: enabledCount,
             skipped: skippedCount,
             alreadyProcessed: alreadyProcessedCount,
             errors: errorCount,
@@ -216,7 +187,7 @@ async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error('❌ バッチ価格更新エラー:', error);
+        console.error('❌ バッチExpress有効化エラー:', error);
         throw error;
     }
 }
