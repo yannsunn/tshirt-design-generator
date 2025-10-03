@@ -14,22 +14,22 @@ async function handler(req, res) {
     const { shopId, offset = 0, limit = 8, targetMargin = 38 } = req.body;
     const apiKey = process.env.PRINTIFY_API_KEY;
 
-    // Blueprint IDごとの原価マッピング
+    // Blueprint IDごとの原価マッピング (実際のPrintify原価、セント単位)
+    // 2025年10月時点の実測値
     const blueprintCosts = {
-        6: { baseCost: 900, extraCost: { '2XL': 1200, '3XL': 1500 }, name: 'Gildan 5000 T-Shirt' },
-        26: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 980 Lightweight Tee' },
-        36: { baseCost: 1200, extraCost: { '2XL': 1500, '3XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
-        145: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 64000 Softstyle T-Shirt' },
-        157: { baseCost: 750, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
-        80: { baseCost: 1350, extraCost: { '2XL': 1650, '3XL': 1950 }, name: 'Gildan 2400 Long Sleeve Tee' },
-        49: { baseCost: 2100, extraCost: { '2XL': 2550, '3XL': 3000 }, name: 'Gildan 18000 Sweatshirt' },
-        77: { baseCost: 2550, extraCost: { '2XL': 3000, '3XL': 3450 }, name: 'Gildan 18500 Hoodie' }
+        6: { baseCost: 1167, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 }, name: 'Gildan 5000 T-Shirt' },
+        26: { baseCost: 1480, extraCost: { '2XL': 1987, '3XL': 2414 }, name: 'Gildan 980 Lightweight Tee' },
+        36: { baseCost: 1195, extraCost: { '2XL': 1557, '3XL': 1810, '4XL': 1802, '5XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
+        145: { baseCost: 1192, extraCost: { '2XL': 1457, '3XL': 1743 }, name: 'Gildan 64000 Softstyle T-Shirt' },
+        157: { baseCost: 1093, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
+        80: { baseCost: 2089, extraCost: {}, name: 'Gildan 2400 Long Sleeve Tee' },
+        49: { baseCost: 2230, extraCost: {}, name: 'Gildan 18000 Sweatshirt' },
+        77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 }, name: 'Gildan 18500 Hoodie' }
     };
 
     // USD $X.99 価格計算関数
-    const JPY_TO_USD = 150;
-    const calculateOptimalPrice = (costJpy, targetMargin) => {
-        const costUsd = costJpy / JPY_TO_USD;
+    const calculateOptimalPrice = (costCents, targetMargin) => {
+        const costUsd = costCents / 100;
         const exactPriceUsd = costUsd / (1 - targetMargin / 100);
         const priceUsd = Math.ceil(exactPriceUsd) - 0.01;
         return Math.round(priceUsd * 100);
@@ -123,10 +123,15 @@ async function handler(req, res) {
                     const variantTitle = variant.title || '';
                     let cost = costInfo.baseCost;
 
-                    if (variantTitle.includes('2XL')) {
-                        cost = costInfo.extraCost['2XL'] || costInfo.baseCost * 1.33;
+                    // サイズ別の原価を適用（5XL → 4XL → 3XL → 2XL の順でチェック）
+                    if (variantTitle.includes('5XL')) {
+                        cost = costInfo.extraCost['5XL'] || costInfo.extraCost['4XL'] || costInfo.extraCost['3XL'] || Math.round(costInfo.baseCost * 1.67);
+                    } else if (variantTitle.includes('4XL')) {
+                        cost = costInfo.extraCost['4XL'] || costInfo.extraCost['3XL'] || Math.round(costInfo.baseCost * 1.67);
                     } else if (variantTitle.includes('3XL')) {
-                        cost = costInfo.extraCost['3XL'] || costInfo.baseCost * 1.67;
+                        cost = costInfo.extraCost['3XL'] || Math.round(costInfo.baseCost * 1.67);
+                    } else if (variantTitle.includes('2XL')) {
+                        cost = costInfo.extraCost['2XL'] || Math.round(costInfo.baseCost * 1.33);
                     }
 
                     const optimalPrice = calculateOptimalPrice(cost, targetMargin);
