@@ -20,11 +20,10 @@ async function getAllProducts(shopId) {
 
         while (hasMore) {
             const response = await fetch(
-                `https://api.printify.com/v1/shops/${shopId}/products.json?limit=100&page=${page}`,
+                `https://design-generator-puce.vercel.app/api/printify-list-products?shopId=${shopId}&page=${page}&limit=100`,
                 {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${process.env.PRINTIFY_API_KEY}`,
                         'Content-Type': 'application/json'
                     }
                 }
@@ -35,17 +34,17 @@ async function getAllProducts(shopId) {
             }
 
             const data = await response.json();
-            const pageProducts = data.data || [];
+            const pageProducts = data.products || [];
 
             products.push(...pageProducts);
 
             console.log(`  📄 ページ${page}: ${pageProducts.length}商品取得`);
 
-            hasMore = data.current_page < data.last_page;
+            hasMore = data.currentPage < data.lastPage;
             page++;
 
             // レート制限対策
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         console.log(`✅ 合計 ${products.length}商品を取得しました\n`);
