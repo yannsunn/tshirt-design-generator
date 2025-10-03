@@ -31,11 +31,18 @@ async function handler(req, res) {
         );
 
         if (!existingWebhooksResponse.ok) {
-            throw new Error('Failed to fetch existing webhooks');
+            const errorText = await existingWebhooksResponse.text();
+            console.error('❌ Webhook取得エラー:', existingWebhooksResponse.status, errorText);
+            throw new Error(`Failed to fetch existing webhooks: ${existingWebhooksResponse.status}`);
         }
 
-        const existingWebhooks = await existingWebhooksResponse.json();
-        console.log('📋 既存のWebhook:', existingWebhooks);
+        const existingWebhooksData = await existingWebhooksResponse.json();
+        console.log('📋 既存のWebhook:', existingWebhooksData);
+
+        // レスポンスが配列か、dataプロパティに配列があるか確認
+        const existingWebhooks = Array.isArray(existingWebhooksData)
+            ? existingWebhooksData
+            : (existingWebhooksData.data || []);
 
         // 同じURLのWebhookが既に存在するかチェック
         const existingWebhook = existingWebhooks.find(w => w.url === webhookUrl);
@@ -50,6 +57,14 @@ async function handler(req, res) {
         }
 
         // 新しいWebhookを登録
+        // Printify APIのWebhookフォーマットをいくつか試す
+        const webhookPayload = {
+            topic: 'product:updated',
+            url: webhookUrl
+        };
+
+        console.log('🔗 Webhook登録リクエスト:', webhookPayload);
+
         const createWebhookResponse = await fetch(
             `https://api.printify.com/v1/shops/${storefrontShopId}/webhooks.json`,
             {
@@ -58,20 +73,25 @@ async function handler(req, res) {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    topic: 'product:updated',
-                    url: webhookUrl
-                })
+                body: JSON.stringify(webhookPayload)
             }
         );
 
+        const responseText = await createWebhookResponse.text();
+        console.log('📡 Webhook作成レスポンス:', createWebhookResponse.status, responseText);
+
         if (!createWebhookResponse.ok) {
-            const errorData = await createWebhookResponse.json().catch(() => ({}));
-            console.error('❌ Webhook登録失敗:', errorData);
-            throw new Error(errorData.message || 'Failed to create webhook');
+            let errorData;
+            try {
+                errorData = JSON.parse(responseText);
+            } catch {
+                errorData = { message: responseText };
+            }
+            console.error('❌ Webhook登録失敗:', createWebhookResponse.status, errorData);
+            throw new Error(errorData.message || `Failed to create webhook: ${createWebhookResponse.status} - ${responseText}`);
         }
 
-        const newWebhook = await createWebhookResponse.json();
+        const newWebhook = JSON.parse(responseText);
         console.log('✅ Webhook登録成功:', newWebhook);
 
         res.status(200).json({
