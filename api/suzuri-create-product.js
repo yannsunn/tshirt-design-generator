@@ -10,7 +10,7 @@ async function handler(req, res) {
     validateEnv(['SUZURI_ACCESS_TOKEN']);
     validateRequired(req.body, ['materialId', 'itemId']);
 
-    const { materialId, itemId, published = true } = req.body;
+    const { materialId, itemId, published = false } = req.body;  // デフォルト: 下書き
     const accessToken = process.env.SUZURI_ACCESS_TOKEN;
 
     try {

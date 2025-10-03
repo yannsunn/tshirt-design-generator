@@ -9,7 +9,7 @@ async function handler(req, res) {
 
     validateEnv(['SUZURI_ACCESS_TOKEN']);
 
-    const { imageUrl, title, createTshirt = true, createHoodie = true, createSweatshirt = true } = req.body;
+    const { imageUrl, title, createTshirt = true, createHoodie = true, createSweatshirt = true, published = false } = req.body;
 
     if (!imageUrl || !title) {
         return res.status(400).json({ error: 'imageUrl and title are required' });
@@ -65,7 +65,7 @@ async function handler(req, res) {
                     },
                     body: JSON.stringify({
                         itemId: itemType.id,
-                        published: true
+                        published: published  // デフォルト: false（下書き状態）
                     })
                 });
 
@@ -102,7 +102,12 @@ async function handler(req, res) {
             productsCreated: successCount,
             productsTotal: itemTypes.length,
             products: products,
-            message: `SUZURI商品を${successCount}件作成しました`,
+            message: published
+                ? `SUZURI商品を${successCount}件作成・公開しました`
+                : `SUZURI商品を${successCount}件作成しました（下書き状態）`,
+            note: published
+                ? null
+                : 'トリブン（利益）を設定してから、SUZURI管理画面で公開してください',
             suzuriUrl: `https://suzuri.jp/`
         });
 
