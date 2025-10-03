@@ -516,6 +516,18 @@
                             <span>SUZURIのみ出品</span>
                         </button>
                         <button
+                            id="etsy-publish-btn"
+                            class="bg-orange-600/80 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
+                            <span>🛍️</span>
+                            <span>Etsy商品公開</span>
+                        </button>
+                        <button
+                            id="ebay-publish-btn"
+                            class="bg-blue-600/80 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
+                            <span>🏷️</span>
+                            <span>eBay商品公開（10件テスト）</span>
+                        </button>
+                        <button
                             id="base-create-btn"
                             class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2 opacity-50"
                             disabled
@@ -2514,6 +2526,137 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             }
         };
 
+        // Publish products to Etsy
+        const handleEtsyPublish = async () => {
+            const productIdsInput = prompt(
+                'Etsyに公開する商品IDを入力してください\n\n' +
+                '複数の場合はカンマ区切りで入力: 例) abc123,def456,ghi789\n' +
+                '※ 1商品ごとに$0.20の出品料がかかります'
+            );
+
+            if (!productIdsInput) return;
+
+            const productIds = productIdsInput.split(',').map(id => id.trim()).filter(id => id);
+
+            if (productIds.length === 0) {
+                alert('商品IDが入力されていません');
+                return;
+            }
+
+            const confirmed = confirm(
+                `${productIds.length}商品をEtsyに公開しますか？\n\n` +
+                `出品料: $${(productIds.length * 0.20).toFixed(2)} (Etsyにより課金されます)\n\n` +
+                `商品ID:\n${productIds.join('\n')}`
+            );
+
+            if (!confirmed) return;
+
+            console.log('🛍️ Etsy商品公開開始');
+            const etsyPublishBtn = document.getElementById('etsy-publish-btn');
+            etsyPublishBtn.disabled = true;
+            etsyPublishBtn.innerHTML = '<span>⏳</span><span>公開中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = `🛍️ Etsyに${productIds.length}商品を公開中...`;
+
+                const response = await fetch(`${API_BASE_URL}/etsy-publish-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productIds })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'Etsy公開に失敗しました' }));
+                    throw new Error(error.error || 'Etsy公開に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ Etsy公開完了:', result);
+
+                progressText.textContent = `✅ Etsy公開完了: ${result.published}/${result.total}件`;
+
+                const message = `
+🎉 Etsy商品公開完了！
+
+📊 結果:
+• 公開成功: ${result.published}件
+• エラー: ${result.errors}件
+• 合計: ${result.total}件
+
+${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error('Etsy公開エラー:', error);
+                showError(`Etsy公開エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                etsyPublishBtn.disabled = false;
+                etsyPublishBtn.innerHTML = '<span>🛍️</span><span>Etsy商品公開</span>';
+            }
+        };
+
+        // Publish products to eBay (Test: first 10 products)
+        const handleEbayPublish = async () => {
+            const confirmed = confirm(
+                'eBayに最初の10商品をテスト公開しますか？\n\n' +
+                '⚠️ この操作はeBayに実際に商品を出品します。\n' +
+                '商品は自動的に選択されます（最初の10商品）'
+            );
+
+            if (!confirmed) return;
+
+            console.log('🏷️ eBay商品公開開始（10商品テスト）');
+            const ebayPublishBtn = document.getElementById('ebay-publish-btn');
+            ebayPublishBtn.disabled = true;
+            ebayPublishBtn.innerHTML = '<span>⏳</span><span>公開中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = '🏷️ eBayに10商品を公開中...';
+
+                const response = await fetch(`${API_BASE_URL}/ebay-publish-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ limit: 10 })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'eBay公開に失敗しました' }));
+                    throw new Error(error.error || 'eBay公開に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ eBay公開完了:', result);
+
+                progressText.textContent = `✅ eBay公開完了: ${result.published}/${result.total}件`;
+
+                const message = `
+🎉 eBay商品公開完了！
+
+📊 結果:
+• 公開成功: ${result.published}件
+• エラー: ${result.errors}件
+• 合計: ${result.total}件
+
+${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確認してください。' : ''}
+                `.trim();
+
+                alert(message);
+
+            } catch (error) {
+                console.error('eBay公開エラー:', error);
+                showError(`eBay公開エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                ebayPublishBtn.disabled = false;
+                ebayPublishBtn.innerHTML = '<span>🏷️</span><span>eBay商品公開（10件テスト）</span>';
+            }
+        };
+
         // Publish to all platforms (Printify + SUZURI)
         const handlePublishAll = async () => {
             if (generatedImages.length === 0) {
@@ -2725,6 +2868,8 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
         printifyOnlyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
         baseCreateBtn.addEventListener('click', handleBASECreate);
+        document.getElementById('etsy-publish-btn').addEventListener('click', handleEtsyPublish);
+        document.getElementById('ebay-publish-btn').addEventListener('click', handleEbayPublish);
         publishAllBtn.addEventListener('click', handlePublishAll);
 
         // --- App Initialization ---
