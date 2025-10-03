@@ -487,6 +487,48 @@
                         <span>既存商品のExpress一括設定</span>
                     </button>
                 </div>
+
+                <!-- Master Products Management Section -->
+                <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg shadow-md border-2 border-purple-200">
+                    <h2 class="text-2xl font-bold text-purple-800 mb-4 flex items-center gap-2">
+                        <span>🎯</span>
+                        <span>マスター商品管理</span>
+                    </h2>
+                    <p class="text-sm text-gray-600 mb-4">
+                        マスター商品を使用すると、モックアップ・配送設定を毎回設定せずに商品を作成できます。
+                    </p>
+
+                    <div class="mb-4 p-4 bg-white rounded-lg border border-purple-200">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            既存マスター商品ID（カンマ区切り）
+                        </label>
+                        <input
+                            type="text"
+                            id="existing-master-ids"
+                            value="68de7ec862f65250be09018c, 68de7b78ee534e0ae20d9a6d"
+                            placeholder="68de7ec862f65250be09018c, 68de7b78ee534e0ae20d9a6d"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">
+                            既に作成したマスター商品のIDを入力してください
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button
+                            id="check-master-btn"
+                            class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🔍</span>
+                            <span>マスター商品確認</span>
+                        </button>
+                        <button
+                            id="create-missing-masters-btn"
+                            class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                            <span>🔨</span>
+                            <span>不足マスター自動作成</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Global POD Integration Section -->
@@ -2594,6 +2636,188 @@ ${result.rawResponse ? '\n📡 生レスポンス:\n' + result.rawResponse : ''}
             }
         };
 
+        // Check Master Products Blueprint
+        const handleCheckMaster = async () => {
+            const masterIdsInput = document.getElementById('existing-master-ids').value.trim();
+
+            if (!masterIdsInput) {
+                alert('⚠️ マスター商品IDを入力してください');
+                return;
+            }
+
+            if (!printifyShopId) {
+                return showError('Printify Shop IDが設定されていません');
+            }
+
+            const productIds = masterIdsInput.split(',').map(id => id.trim()).filter(id => id);
+
+            console.log('🔍 マスター商品確認開始:', productIds);
+            const checkMasterBtn = document.getElementById('check-master-btn');
+            checkMasterBtn.disabled = true;
+            checkMasterBtn.innerHTML = '<span>⏳</span><span>確認中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = `🔍 ${productIds.length}個のマスター商品を確認中...`;
+
+                const response = await fetch(`${API_BASE_URL}/check-master-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productIds: productIds,
+                        shopId: printifyShopId
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: '確認に失敗しました' }));
+                    throw new Error(error.error || '確認に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 確認結果:', result);
+
+                progressText.textContent = `✅ 確認完了`;
+
+                // 結果を整形
+                let message = '📋 マスター商品確認結果:\n\n';
+                result.products.forEach(product => {
+                    if (product.success) {
+                        message += `✅ ${product.blueprintName}\n`;
+                        message += `   • ID: ${product.productId}\n`;
+                        message += `   • Blueprint: ${product.blueprintId}\n`;
+                        message += `   • バリアント数: ${product.variants}\n\n`;
+                    } else {
+                        message += `❌ ID: ${product.productId}\n`;
+                        message += `   • エラー: ${product.error}\n\n`;
+                    }
+                });
+
+                // 不足しているBlueprintを確認
+                const allBlueprints = [6, 26, 36, 145, 157, 80, 49, 77];
+                const existingBlueprints = result.products
+                    .filter(p => p.success)
+                    .map(p => p.blueprintId);
+                const missingBlueprints = allBlueprints.filter(id => !existingBlueprints.includes(id));
+
+                if (missingBlueprints.length > 0) {
+                    const blueprintNames = {
+                        6: 'Basic T-Shirt',
+                        26: 'Lightweight Tee',
+                        36: 'Ultra Cotton',
+                        145: 'Softstyle',
+                        157: 'Kids Tee',
+                        80: 'Long Sleeve',
+                        49: 'Sweatshirt',
+                        77: 'Hoodie'
+                    };
+                    message += '\n⚠️ 不足しているBlueprint:\n';
+                    missingBlueprints.forEach(id => {
+                        message += `   • ${blueprintNames[id]} (ID: ${id})\n`;
+                    });
+                    message += '\n「🔨 不足マスター自動作成」ボタンで作成できます。';
+                }
+
+                alert(message);
+
+            } catch (error) {
+                console.error('マスター商品確認エラー:', error);
+                showError(`確認エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                checkMasterBtn.disabled = false;
+                checkMasterBtn.innerHTML = '<span>🔍</span><span>マスター商品確認</span>';
+            }
+        };
+
+        // Create Missing Master Products
+        const handleCreateMissingMasters = async () => {
+            const masterIdsInput = document.getElementById('existing-master-ids').value.trim();
+
+            if (!masterIdsInput) {
+                alert('⚠️ テンプレートとなるマスター商品IDを入力してください');
+                return;
+            }
+
+            if (!printifyShopId) {
+                return showError('Printify Shop IDが設定されていません');
+            }
+
+            const productIds = masterIdsInput.split(',').map(id => id.trim()).filter(id => id);
+            const templateProductId = productIds[0]; // 最初のIDをテンプレートとして使用
+
+            const confirmed = confirm(
+                `マスター商品を自動作成しますか？\n\n` +
+                `テンプレート: ${templateProductId}\n` +
+                `対象: 不足している全Blueprintタイプ\n\n` +
+                `⚠️ この処理には数分かかる場合があります。`
+            );
+
+            if (!confirmed) return;
+
+            console.log('🔨 不足マスター自動作成開始');
+            const createBtn = document.getElementById('create-missing-masters-btn');
+            createBtn.disabled = true;
+            createBtn.innerHTML = '<span>⏳</span><span>作成中...</span>';
+            hideError();
+
+            try {
+                progressText.textContent = '🔨 不足しているマスター商品を作成中...';
+
+                const response = await fetch(`${API_BASE_URL}/create-master-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        templateProductId: templateProductId,
+                        shopId: printifyShopId
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: '作成に失敗しました' }));
+                    throw new Error(error.error || '作成に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log('✅ 作成結果:', result);
+
+                progressText.textContent = `✅ 作成完了: ${result.created}個`;
+
+                let message = `🎉 マスター商品作成完了！\n\n`;
+                message += `📊 結果:\n`;
+                message += `• 作成成功: ${result.created}個\n`;
+                message += `• スキップ: ${result.skipped}個\n`;
+                message += `• 合計: ${result.total}個\n\n`;
+
+                if (result.createdProducts && result.createdProducts.length > 0) {
+                    message += '✅ 作成された商品:\n';
+                    result.createdProducts.forEach(product => {
+                        message += `   • ${product.blueprintName}\n`;
+                        message += `     ID: ${product.productId}\n\n`;
+                    });
+                }
+
+                // エラーがあれば表示
+                const errors = result.results.filter(r => !r.success && !r.skipped);
+                if (errors.length > 0) {
+                    message += '⚠️ エラー:\n';
+                    errors.forEach(error => {
+                        message += `   • ${error.blueprintName}: ${error.error}\n`;
+                    });
+                }
+
+                alert(message);
+
+            } catch (error) {
+                console.error('マスター商品作成エラー:', error);
+                showError(`作成エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            } finally {
+                createBtn.disabled = false;
+                createBtn.innerHTML = '<span>🔨</span><span>不足マスター自動作成</span>';
+            }
+        };
+
         // Check Printify connected stores (Etsy, eBay, etc.)
         const handleCheckStores = async () => {
             console.log('🔌 販売チャネル連携確認開始');
@@ -3128,6 +3352,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         document.getElementById('test-webhook-api-btn').addEventListener('click', handleTestWebhookApi);
         document.getElementById('reset-processed-btn').addEventListener('click', handleResetProcessed);
         document.getElementById('check-stores-btn').addEventListener('click', handleCheckStores);
+        document.getElementById('check-master-btn').addEventListener('click', handleCheckMaster);
+        document.getElementById('create-missing-masters-btn').addEventListener('click', handleCreateMissingMasters);
         testSupabaseBtn.addEventListener('click', testSupabaseConnection);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
         printifyOnlyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
