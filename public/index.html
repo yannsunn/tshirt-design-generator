@@ -2126,10 +2126,8 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
 
         // Reset processed products records
         const handleResetProcessed = async () => {
-            const printifyShopId = shopIdInput.value.trim();
             if (!printifyShopId) {
-                alert('ショップIDを入力してください');
-                return;
+                return showError('Printify Shop IDが設定されていません');
             }
 
             // ユーザーに処理タイプを選択させる
