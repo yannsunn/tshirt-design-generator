@@ -473,14 +473,6 @@
                             <span>🏷️</span>
                             <span>eBay商品公開（10件テスト）</span>
                         </button>
-                        <button
-                            id="base-create-btn"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-lg transition duration-300 flex items-center justify-center gap-2 opacity-50"
-                            disabled
-                            style="display: none;">
-                            <span>🛒</span>
-                            <span>BASEに出品（手動設定必要）</span>
-                        </button>
                     </div>
                 </details>
 
@@ -531,7 +523,6 @@
         const imagesGrid = document.getElementById('images-grid');
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
         const suzuriCreateBtn = document.getElementById('suzuri-create-btn');
-        const baseCreateBtn = document.getElementById('base-create-btn');
         const publishAllBtn = document.getElementById('publish-all-btn');
         const printifyOnlyBtn = document.getElementById('printify-only-btn');
 
@@ -2964,7 +2955,7 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
         };
 
         // ========================================
-        // Japan POD Functions (SUZURI / BASE)
+        // Japan POD Functions (SUZURI)
         // ========================================
 
         // Create products on SUZURI
@@ -3031,62 +3022,6 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             }
         };
 
-        // Create products on BASE
-        const handleBASECreate = async () => {
-            if (generatedImages.length === 0) {
-                return showError('先にデザインを生成してください');
-            }
-
-            if (!confirm('現在のデザインをBASEに出品しますか？\n\n※ オリジナルプリント.jpアプリで印刷設定が別途必要です')) {
-                return;
-            }
-
-            console.log('🛒 BASE商品作成開始');
-            baseCreateBtn.disabled = true;
-            baseCreateBtn.textContent = '処理中...';
-            hideError();
-
-            try {
-                const imgData = generatedImages[0];
-                // IMPORTANT: Title MUST be in English only (no Japanese/Hiragana)
-                const title = generateSEOTitle(imgData.idea);
-
-                progressText.textContent = 'BASEに商品を作成中...';
-
-                const response = await fetch(`${API_BASE_URL}/base-create-product`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: title,
-                        price: 2500, // ¥2,500
-                        imageUrl: imgData.imageData,
-                        detail: `オリジナルデザインのTシャツです。\n\nデザイン: ${title}`,
-                        stock: 100,
-                        visible: 1
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'BASE商品作成に失敗しました');
-                }
-
-                const result = await response.json();
-                console.log('✅ BASE商品作成完了:', result);
-
-                progressText.textContent = `✅ BASE商品作成完了`;
-
-                alert(`🎉 BASE商品を作成しました！\n\n次のステップ:\n1. BASEダッシュボードにログイン\n2. オリジナルプリント.jpアプリを開く\n3. 作成した商品に印刷設定を行う\n4. 公開`);
-
-            } catch (error) {
-                console.error('BASE商品作成エラー:', error);
-                showError(`BASE商品作成エラー: ${error.message}\n\nセットアップガイドを確認してOAuth認証を完了してください。`);
-                progressText.textContent = 'エラーが発生しました';
-            } finally {
-                baseCreateBtn.disabled = false;
-                baseCreateBtn.textContent = '🛒 BASEに出品';
-            }
-        };
 
         // Publish products to Etsy
         const handleEtsyPublish = async () => {
@@ -3410,7 +3345,6 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             suzuriCreateBtn.disabled = !hasImages;
             printifyOnlyBtn.disabled = !hasImages;
             publishAllBtn.disabled = !hasImages;
-            // BASEは手動設定が必要なため常に非表示
         }
 
         // ========================================
@@ -3422,7 +3356,6 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         generateAllBtn.addEventListener('click', handleGenerateAllImages);
         suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
         printifyOnlyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
-        baseCreateBtn.addEventListener('click', handleBASECreate);
         document.getElementById('etsy-publish-btn').addEventListener('click', handleEtsyPublish);
         document.getElementById('ebay-publish-btn').addEventListener('click', handleEbayPublish);
         publishAllBtn.addEventListener('click', handlePublishAll);
