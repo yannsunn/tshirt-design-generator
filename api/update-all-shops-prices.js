@@ -34,7 +34,20 @@ async function handler(req, res) {
         157: { baseCost: 1093, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
         80: { baseCost: 2089, extraCost: {}, name: 'Gildan 2400 Long Sleeve Tee' },
         49: { baseCost: 2230, extraCost: {}, name: 'Gildan 18000 Sweatshirt' },
-        77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 }, name: 'Gildan 18500 Hoodie' }
+        77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 }, name: 'Gildan 18500 Hoodie' },
+
+        // Bella+Canvas
+        5: { baseCost: 1233, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636 }, name: 'Bella+Canvas 3001 Unisex Jersey Short Sleeve Tee' },
+        384: { baseCost: 2587, extraCost: { '2XL': 3193, '3XL': 3592 }, name: 'Bella+Canvas 3719 Unisex Fleece Pullover Hooded Sweatshirt' },
+
+        // Comfort Colors
+        903: { baseCost: 1636, extraCost: { '2XL': 2039, '3XL': 2131 }, name: 'Comfort Colors 1717 Garment-Dyed Heavyweight T-Shirt' },
+
+        // Next Level
+        12: { baseCost: 1636, extraCost: { '2XL': 2039 }, name: 'Next Level 6210 Unisex Tri-Blend T-Shirt' },
+
+        // District
+        380: { baseCost: 1233, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636 }, name: 'District DT6000 Very Important Tee' }
     };
 
     const calculateOptimalPrice = (costCents, targetMargin) => {
