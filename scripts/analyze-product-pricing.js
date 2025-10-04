@@ -21,28 +21,27 @@ const blueprintCosts = {
     706: { baseCost: 1241, extraCost: { '2XL': 1367, '3XL': 1571, '4XL': 1766 }, name: 'Custom T-Shirt' },
     1296: { baseCost: 3064, extraCost: { '2XL': 3548, '3XL': 4181 }, name: 'Custom Sweatshirt' },
 
-    // Gildan 64000 - Unisex Softstyle T-Shirt
-    6: { baseCost: 1167, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 }, name: 'Gildan 64000 Unisex Softstyle T-Shirt' },
+    // Standard Blueprints (実測値、2025年10月時点)
+    6: { baseCost: 1167, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 }, name: 'Gildan 5000 T-Shirt' },
+    26: { baseCost: 1480, extraCost: { '2XL': 1987, '3XL': 2414 }, name: 'Gildan 980 Lightweight Tee' },
+    36: { baseCost: 1195, extraCost: { '2XL': 1557, '3XL': 1810, '4XL': 1802, '5XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
+    145: { baseCost: 1192, extraCost: { '2XL': 1457, '3XL': 1743 }, name: 'Gildan 64000 Softstyle T-Shirt' },
+    157: { baseCost: 1093, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
+    80: { baseCost: 2089, extraCost: {}, name: 'Gildan 2400 Long Sleeve Tee' },
+    49: { baseCost: 2230, extraCost: {}, name: 'Gildan 18000 Sweatshirt' },
+    77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 }, name: 'Gildan 18500 Hoodie' },
 
-    // Bella+Canvas 3001 - Unisex Jersey Short Sleeve Tee
+    // Bella+Canvas
     5: { baseCost: 1233, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636 }, name: 'Bella+Canvas 3001 Unisex Jersey Short Sleeve Tee' },
-
-    // Comfort Colors 1717 - Garment-Dyed Heavyweight T-Shirt
-    903: { baseCost: 1636, extraCost: { '2XL': 2039, '3XL': 2131 }, name: 'Comfort Colors 1717 Garment-Dyed Heavyweight T-Shirt' },
-
-    // Gildan 18000 - Heavy Blend™ Crewneck Sweatshirt
-    26: { baseCost: 1480, extraCost: { '2XL': 1987, '3XL': 2414 }, name: 'Gildan 18000 Heavy Blend Crewneck Sweatshirt' },
-
-    // Gildan 18500 - Heavy Blend™ Hooded Sweatshirt
-    77: { baseCost: 2164, extraCost: { '2XL': 2689, '3XL': 3193 }, name: 'Gildan 18500 Heavy Blend Hooded Sweatshirt' },
-
-    // Bella+Canvas 3719 - Unisex Fleece Pullover Hooded Sweatshirt
     384: { baseCost: 2587, extraCost: { '2XL': 3193, '3XL': 3592 }, name: 'Bella+Canvas 3719 Unisex Fleece Pullover Hooded Sweatshirt' },
 
-    // Next Level 6210 - Unisex Tri-Blend T-Shirt
+    // Comfort Colors
+    903: { baseCost: 1636, extraCost: { '2XL': 2039, '3XL': 2131 }, name: 'Comfort Colors 1717 Garment-Dyed Heavyweight T-Shirt' },
+
+    // Next Level
     12: { baseCost: 1636, extraCost: { '2XL': 2039 }, name: 'Next Level 6210 Unisex Tri-Blend T-Shirt' },
 
-    // District DT6000 - Very Important Tee
+    // District
     380: { baseCost: 1233, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636 }, name: 'District DT6000 Very Important Tee' }
 };
 
