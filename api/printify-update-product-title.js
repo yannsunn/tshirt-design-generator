@@ -10,7 +10,7 @@ async function handler(req, res) {
     validateEnv(['PRINTIFY_API_KEY']);
     validateRequired(req.body, ['shopId', 'productId', 'newTitle']);
 
-    const { shopId, productId, newTitle } = req.body;
+    const { shopId, productId, newTitle, newDescription } = req.body;
     const apiKey = process.env.PRINTIFY_API_KEY;
 
     // タイトル長チェック
@@ -48,7 +48,12 @@ async function handler(req, res) {
 
         const product = await getResponse.json();
 
-        // タイトルのみを更新（他のフィールドはそのまま）
+        // タイトルと説明文を更新（他のフィールドはそのまま）
+        const updatePayload = { title: newTitle };
+        if (newDescription !== undefined) {
+            updatePayload.description = newDescription;
+        }
+
         const updateResponse = await fetch(
             `https://api.printify.com/v1/shops/${shopId}/products/${productId}.json`,
             {
@@ -57,9 +62,7 @@ async function handler(req, res) {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    title: newTitle
-                })
+                body: JSON.stringify(updatePayload)
             }
         );
 
