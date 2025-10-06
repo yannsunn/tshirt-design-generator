@@ -2,6 +2,7 @@
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateRequired, validateEnv, ExternalAPIError } from '../lib/errorHandler.js';
 import { isProductProcessed, markProductAsProcessed } from '../lib/processedProductsTracker.js';
+import { logPriceChange, logBatchUpdate, logError } from '../lib/pricingLogger.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -199,6 +200,15 @@ async function handler(req, res) {
                 console.log(`✅ 更新成功: ${costInfo.name}`);
                 updatedCount++;
 
+                // 価格変更ログを記録
+                logPriceChange(product.id, shopId, {
+                    oldPrice: variants[0]?.price,
+                    newPrice: updatedVariants[0]?.price,
+                    blueprint: blueprintId,
+                    margin: targetMargin,
+                    reason: 'batch_update'
+                });
+
                 // 📝 処理済みとして記録
                 await markProductAsProcessed(
                     product.id,
@@ -217,6 +227,11 @@ async function handler(req, res) {
                 await new Promise(resolve => setTimeout(resolve, 500));
 
             } catch (error) {
+                logError('printify-update-prices-batch', error, {
+                    shopId,
+                    productId: product.id,
+                    targetMargin
+                });
                 console.error(`Error processing product ${product.id}:`, error);
                 errorCount++;
             }
@@ -225,6 +240,17 @@ async function handler(req, res) {
         const hasMore = offset + limit < totalProducts;
 
         console.log(`📊 バッチ処理完了: 更新${updatedCount}件、既処理スキップ${alreadyProcessedCount}件、価格最適スキップ${skippedCount}件、エラー${errorCount}件`);
+
+        // バッチ更新ログを記録
+        const logEntry = logBatchUpdate({
+            totalUpdated: updatedCount,
+            totalSkipped: skippedCount + alreadyProcessedCount,
+            totalErrors: errorCount,
+            shopId,
+            targetMargin,
+            offset,
+            limit
+        });
 
         res.status(200).json({
             success: true,
@@ -237,10 +263,17 @@ async function handler(req, res) {
             nextOffset: offset + limit,
             hasMore: hasMore,
             totalEstimate: totalProducts,
-            progress: `${Math.min(offset + limit, totalProducts)}/${totalProducts}`
+            progress: `${Math.min(offset + limit, totalProducts)}/${totalProducts}`,
+            log: logEntry
         });
 
     } catch (error) {
+        logError('printify-update-prices-batch', error, {
+            shopId,
+            targetMargin,
+            offset,
+            limit
+        });
         console.error('❌ バッチ価格更新エラー:', error);
         throw error;
     }

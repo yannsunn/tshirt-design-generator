@@ -1,212 +1,236 @@
-# 🎨 Tシャツデザインジェネレーター セットアップガイド
+# セットアップガイド
 
-## 📋 概要
+## 前提条件
 
-このツールは、AIを活用してPrintify向けのTシャツデザインを自動生成するWebアプリケーションです。
+- Node.js 18以上
+- Git
+- Printify API Key
+- Vercelアカウント（デプロイ用）
+- GitHubアカウント（GitHub Actions用）
 
-### 主な機能
+## 環境変数の設定
 
-✅ **2つのAI画像生成エンジン対応**
-- Gemini 2.5 Flash Image (Nano Banana) - $0.039/画像
-- FAL AI SeeDream v4 - 高速生成
+### ローカル開発
 
-✅ **完全自動化されたデザインプロセス**
-1. テーマ入力 → AIが3つのデザインコンセプトを提案
-2. キャラクター生成 → AIが可愛いイラストを描画
-3. 背景除去 → プログラムが100%透過処理
-4. テキスト合成 → 推奨フォントで日本語フレーズを配置
+`.env.local` ファイルを作成:
 
-✅ **SNS投稿文自動生成**
-- 生成したデザインのプロモーション文を自動作成
-- ハッシュタグも自動生成
+```bash
+# Printify API
+PRINTIFY_API_KEY=your_printify_api_key_here
 
-✅ **Printify完全対応**
-- PNG形式、背景透過
-- 推奨サイズ: 3951 x 4800 px (300 DPI)
-
----
-
-## 🚀 クイックスタート
-
-### 1. APIキーの取得
-
-#### 【推奨】Gemini 2.5 Flash Image を使う場合
-
-1. [Google AI Studio](https://aistudio.google.com/apikey) にアクセス
-2. 「Create API Key」をクリック
-3. APIキーをコピー
-
-**料金**: $0.039/画像 (1画像=1290トークン)
-
-#### FAL AI を使う場合
-
-1. [FAL AI Dashboard](https://fal.ai/dashboard/keys) にアクセス
-2. アカウント作成後、APIキーを取得
-
-**料金**: 従量課金制
-
----
-
-### 2. ツールの起動
-
-1. `tshirt-generator.html` をブラウザで開く
-2. 上部の「画像生成API選択」で使用するAPIを選択
-3. 「APIキーを入力」欄に取得したAPIキーをペースト
-4. 「アイディアを生成」ボタンが有効になります
-
----
-
-### 3. デザイン作成フロー
-
-#### ステップ1: テーマ入力
-```
-例：
-- ハロウィン
-- クリスマス
-- 日本の和柄
-- サイバーパンク
-- 宇宙を旅する猫
-- レトロな喫茶店
+# Supabase (オプション)
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-#### ステップ2: アイデア選択
-AIが3つのデザインコンセプトを提案します。各コンセプトには：
-- **モチーフ**: キャラクターの説明
-- **フレーズ**: ひらがな中心のキャッチコピー
-- **推奨フォント**: pop/horror/retro/modern
+### Vercel
 
-気に入ったアイデアの「このアイディアで画像を生成」をクリック
+Vercelダッシュボードで設定:
 
-#### ステップ3: 画像生成（自動）
-1. **キャラクター生成** (20-40秒)
-2. **背景除去** (10-15秒)
-3. **テキスト合成** (1-2秒)
+1. プロジェクト設定 → Environment Variables
+2. 以下を追加:
+   - `PRINTIFY_API_KEY` = あなたのPrintify APIキー
 
-完成した画像をダウンロード！
+### GitHub Secrets（GitHub Actions用）
 
-#### ステップ4: SNS投稿文生成（オプション）
-「SNS投稿文を生成 ✨」をクリックすると、商品のプロモーション文が自動作成されます。
+リポジトリ設定で追加:
 
----
+1. Settings → Secrets and variables → Actions
+2. New repository secret:
+   - `PRINTIFY_API_KEY` = あなたのPrintify APIキー
+   - `VERCEL_URL` = `design-generator-puce.vercel.app` （あなたのVercel URL）
 
-## 🎯 Printifyでの商品化手順
+## インストール
 
-### 1. Printifyアカウント準備
-- [Printify](https://printify.com/) でアカウント作成
-- EtsyまたはShopifyと連携
+```bash
+# 依存関係をインストール
+npm install
 
-### 2. 商品登録
-1. カタログから「Unisex Garment-Dyed T-Shirt (ComfortColors 1717)」を選択
-2. 「Start designing」をクリック
-3. 生成したデザイン画像をアップロード
-4. Center Chest や Left Sleeve など印刷位置を調整
-
-### 3. モックアップと価格設定
-- Printifyが自動生成するモックアップを確認
-- Tシャツの色を数種類選択
-- 価格設定: 原価 + 送料 + 手数料 + 利益
-
-### 4. ストアに公開
-- 商品説明を記入
-- タグ設定
-- 公開して販売開始！
-
----
-
-## 💡 使い方のコツ
-
-### テーマ選定のポイント
-✅ **具体的な組み合わせが効果的**
-```
-良い例：
-- 和風 x サイバーパンク
-- 恐竜 x 宇宙飛行士
-- 猫 x バリスタ
-
-避けるべき：
-- 単純すぎる（例: 花、犬）
-- 抽象的すぎる（例: 幸せ、平和）
+# 価格チェックスクリプトをテスト
+npm run pricing:check
 ```
 
-### デザインの量産戦略
-1. **1テーマで複数バリエーション**: 同じテーマで3-5回実行し、ベストを選ぶ
-2. **季節イベントを先取り**: クリスマス、ハロウィン、バレンタインなど
-3. **ニッチな趣味**: e-sports、アニメ、特定の職業など
+## デプロイ
 
-### SNS活用
-- Instagram: モックアップ画像 + 生成された投稿文
-- X (Twitter): 短縮版の投稿 + ストアリンク
-- Pinterest: デザインカタログとして活用
+### Vercelへのデプロイ
 
----
+```bash
+# Vercel CLIをインストール（初回のみ）
+npm i -g vercel
 
-## 🔧 トラブルシューティング
+# デプロイ
+vercel
 
-### 画像生成が失敗する
-- **APIキーの確認**: 正しいキーが入力されているか
-- **クォータ超過**: Geminiの無料枠を使い切っていないか確認
-- **ネットワーク**: インターネット接続を確認
-
-### 背景が完全に透過されない
-- 本ツールは `@imgly/background-removal` を使用し、プログラム的に100%透過処理を実行します
-- 万が一不完全な場合は、別のアイデアで再生成してください
-
-### フォントが正しく表示されない
-- Google Fontsから自動読み込みしています
-- ブラウザのキャッシュをクリアして再読み込み
-
----
-
-## 📊 コスト試算
-
-### Gemini 2.5 Flash Image 使用時
-- **デザイン1つあたり**: 約$0.04
-- **100デザイン作成**: 約$4
-- **1000デザイン作成**: 約$40
-
-### ビジネスモデル例
-```
-販売価格: $25/枚
-原価: $12 (Printify)
-デザインコスト: $0.04
-利益: $13/枚
-
-10枚販売で$130の利益
-50枚販売で$650の利益
+# 本番環境へデプロイ
+vercel --prod
 ```
 
----
+### 自動デプロイ
 
-## 🛡️ 注意事項
+GitHubリポジトリにpushすると自動的にVercelへデプロイされます。
 
-### 著作権・商標
-- 生成されたデザインは商用利用可能
-- ただし、既存キャラクターの模倣は避けること
-- 商標登録されている単語の使用に注意
+## GitHub Actionsの有効化
 
-### APIの利用規約
-- Gemini API: [Google AI Terms](https://ai.google.dev/terms)
-- FAL AI: [FAL AI Terms](https://fal.ai/terms)
+`.github/workflows/pricing-check.yml` がすでに存在するため、自動実行が有効です。
 
----
+### 動作確認
 
-## 📚 参考リンク
+1. GitHub リポジトリ → Actions タブ
+2. "Auto Pricing Check" ワークフローを確認
+3. "Run workflow" で手動実行可能
 
-- [Printify ヘルプセンター](https://help.printify.com/)
-- [Google AI Studio](https://aistudio.google.com/)
-- [FAL AI Documentation](https://docs.fal.ai/)
-- [完全版スタートアップガイド](./完全版AIデザインツールを活用したPrintifyオリジナル商品販売スタートアップガイド.md)
+### スケジュール
 
----
+- 毎日午前9時（UTC）= 日本時間 午後6時 に自動実行
+- `--analyze` モードで実行（修正なし）
+- `--auto-fix` は手動実行時のみ
 
-## 🎓 次のステップ
+## 使用方法
 
-1. ✅ まずは5-10デザインを作成
-2. ✅ Printifyで1-2商品をテスト登録
-3. ✅ SNSで反応を見る
-4. ✅ 人気デザインを他の商品（パーカー、マグカップ等）に展開
-5. ✅ 定期的に新デザインを追加
+### 価格チェック（分析のみ）
 
----
+```bash
+npm run pricing:check
+```
 
-**🚀 あなたのブランドの成功を願っています！**
+### 自動修正
+
+```bash
+npm run pricing:fix
+```
+
+### API経由での更新
+
+#### 単一商品
+
+```bash
+curl -X POST https://design-generator-puce.vercel.app/api/printify-update-single-product \
+  -H "Content-Type: application/json" \
+  -d '{
+    "shopId": "24566516",
+    "productId": "abc123",
+    "targetMargin": 38
+  }'
+```
+
+#### バッチ更新
+
+```bash
+curl -X POST https://design-generator-puce.vercel.app/api/batch-update-products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "products": [
+      {"shopId": "24566516", "productId": "abc123"},
+      {"shopId": "24566474", "productId": "def456"}
+    ],
+    "targetMargin": 38
+  }'
+```
+
+## ログの確認
+
+### Vercel環境
+
+Vercelダッシュボード → Logs で確認
+
+### ローカル環境
+
+```bash
+# エラーログ
+cat pricing-reports/error-log.json
+
+# 価格変更ログ
+cat pricing-reports/pricing-change-log.json
+
+# 分析レポート
+ls pricing-reports/pricing-analysis-*.json
+```
+
+### GitHub Actions環境
+
+GitHub → Actions → ワークフロー実行 → ログを確認
+
+## トラブルシューティング
+
+### Printify API接続エラー
+
+```
+Error: Unauthenticated
+```
+
+**解決方法:**
+1. `PRINTIFY_API_KEY` が正しく設定されているか確認
+2. Vercel環境変数を再確認
+3. APIキーの有効期限を確認
+
+### レート制限エラー
+
+```
+Error Code: 429 - Too Many Requests
+```
+
+**解決方法:**
+- `limit` パラメータを減らす（推奨: 8以下）
+- リトライ間隔を長くする
+
+### GitHub Actions失敗
+
+**確認項目:**
+1. GitHub Secrets が正しく設定されているか
+2. `PRINTIFY_API_KEY` の値が正しいか
+3. ワークフローログでエラー詳細を確認
+
+### ファイルが見つからない
+
+```
+Error: Cannot find module '../lib/pricingLogger.js'
+```
+
+**解決方法:**
+1. `git pull` で最新コードを取得
+2. `npm install` を再実行
+3. Vercelに再デプロイ
+
+## 開発者向け
+
+### 新しいBlueprintの追加
+
+`api/*-update-*.js` ファイルの `blueprintCosts` に追加:
+
+```javascript
+const blueprintCosts = {
+    // ...既存のエントリ
+    999: {
+        baseCost: 1500,
+        extraCost: { '2XL': 1800, '3XL': 2100 },
+        name: 'New Blueprint Name'
+    }
+};
+```
+
+### ログシステムのカスタマイズ
+
+`lib/pricingLogger.js` を編集してログ形式を変更できます。
+
+### テスト
+
+```bash
+# APIヘルスチェック
+curl https://design-generator-puce.vercel.app/api/health
+
+# 価格分析テスト
+npm run pricing:check
+```
+
+## サポート
+
+問題が発生した場合:
+1. このドキュメントを確認
+2. `PRICING_SYSTEM.md` でシステム詳細を確認
+3. GitHub Issues で報告
+
+## セキュリティ
+
+- APIキーは **絶対に** コミットしない
+- `.env.local` は `.gitignore` に含まれている
+- GitHub Secretsを使用して機密情報を管理

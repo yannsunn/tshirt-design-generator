@@ -225,9 +225,25 @@ Error: Unknown blueprint ID
 4. ダッシュボードUI（Next.js）
 5. 売上データとの連携
 
+## セットアップ
+
+詳細なセットアップ手順は `SETUP.md` を参照してください。
+
+## 主要な価格更新API
+
+| API | 用途 | ログ統合 |
+|-----|------|----------|
+| `update-all-shops-prices.js` | 全ショップ一括更新 | ✅ |
+| `printify-update-single-product.js` | 単一商品更新 | ✅ |
+| `printify-update-product-title.js` | タイトル・説明文更新 | ✅ |
+| `batch-update-products.js` | バッチ更新（推奨） | ✅ |
+| `printify-update-prices-batch.js` | 旧バッチAPI | ✅ |
+| `auto-sync-prices.js` | 自動価格同期 | ✅ |
+
 ## サポート
 
 問題が発生した場合:
-1. Vercelログを確認
-2. `pricing-reports/`のエラーログを確認
-3. GitHub Issuesで報告
+1. `SETUP.md` のトラブルシューティングを確認
+2. Vercelログを確認
+3. `pricing-reports/`のエラーログを確認
+4. GitHub Issuesで報告

@@ -1,6 +1,7 @@
 // 自動価格同期：Storefrontの価格をEtsy/eBayに自動反映
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateEnv } from '../lib/errorHandler.js';
+import { logBatchUpdate, logError } from '../lib/pricingLogger.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -143,6 +144,7 @@ async function handler(req, res) {
                 await new Promise(resolve => setTimeout(resolve, 500));
 
             } catch (error) {
+                logError('auto-sync-prices', error, { productId });
                 console.error(`Error processing product ${productId}:`, error.message);
                 results.push({
                     productId,
@@ -155,16 +157,27 @@ async function handler(req, res) {
 
         console.log(`📊 自動価格同期完了: ${syncedCount}件同期、${errorCount}件エラー`);
 
+        // バッチ更新ログを記録
+        const logEntry = logBatchUpdate({
+            totalUpdated: syncedCount,
+            totalSkipped: 0,
+            totalErrors: errorCount,
+            reason: 'auto_sync',
+            productCount: targetProducts.length
+        });
+
         res.status(200).json({
             success: true,
             synced: syncedCount,
             errors: errorCount,
             total: targetProducts.length,
             results,
-            message: `✅ 自動価格同期完了: ${syncedCount}商品の価格を同期しました`
+            message: `✅ 自動価格同期完了: ${syncedCount}商品の価格を同期しました`,
+            log: logEntry
         });
 
     } catch (error) {
+        logError('auto-sync-prices', error, { productIds });
         console.error('❌ 自動価格同期エラー:', error);
         throw error;
     }

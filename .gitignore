@@ -9,6 +9,10 @@ node_modules/
 *.log
 npm-debug.log*
 
+# Pricing reports (ローカル生成ファイル)
+pricing-reports/*.json
+!pricing-reports/.gitkeep
+
 # OS files
 .DS_Store
 Thumbs.db

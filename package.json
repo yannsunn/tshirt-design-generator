@@ -2,6 +2,12 @@
   "name": "tshirt-design-generator",
   "version": "1.0.0",
   "description": "Tシャツデザインジェネレーター with Vercel Serverless Functions",
+  "type": "module",
+  "scripts": {
+    "pricing:check": "node scripts/auto-pricing-check.js --analyze",
+    "pricing:fix": "node scripts/auto-pricing-check.js --auto-fix",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
   "keywords": [
     "tshirt",
     "design",
