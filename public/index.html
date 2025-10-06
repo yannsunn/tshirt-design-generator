@@ -3272,7 +3272,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                         progressText.textContent = `[${i + 1}/${imageCount}] SUZURI: 商品作成中...`;
                         const suzuriBody = {
                             imageUrl: compressedImage,
-                            title: suzuriTitle
+                            title: suzuriTitle,
+                            published: true  // 自動公開（トリブンはデフォルト0%）
                         };
 
                         if (imgData.idea && imgData.idea.description) {

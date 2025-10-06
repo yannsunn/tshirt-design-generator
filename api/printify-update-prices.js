@@ -1,6 +1,7 @@
 // Printifyサイズ別価格一括更新（2XL/3XL対応、38%利益率達成）
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateRequired, validateEnv, ExternalAPIError } from '../lib/errorHandler.js';
+import { blueprintCosts, calculateVariantPrice } from '../lib/blueprintCosts.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -12,38 +13,6 @@ async function handler(req, res) {
 
     const { shopId, targetMargin = 38, dryRun = false, productIds = null } = req.body;
     const apiKey = process.env.PRINTIFY_API_KEY;
-
-    // Blueprint IDごとの原価マッピング（セント単位のUSD）
-    const blueprintCosts = {
-        // Gildan 5000: $11.67 base, $15.44 (2XL), $16.36 (3XL)
-        6: { baseCost: 1167, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 }, name: 'Gildan 5000 T-Shirt' },
-        // Gildan 980 Lightweight: $14.80 base
-        26: { baseCost: 1480, extraCost: { '2XL': 1987, '3XL': 2414 }, name: 'Gildan 980 Lightweight Tee' },
-        // Gildan 2000 Ultra Cotton: $11.95 base
-        36: { baseCost: 1195, extraCost: { '2XL': 1557, '3XL': 1810, '4XL': 1802, '5XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
-        // Gildan 64000 Softstyle: $11.92 base
-        145: { baseCost: 1192, extraCost: { '2XL': 1457, '3XL': 1743 }, name: 'Gildan 64000 Softstyle T-Shirt' },
-        // Gildan 5000B Kids: $10.93 base
-        157: { baseCost: 1093, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
-        // Gildan 2400 Long Sleeve: $20.89 base
-        80: { baseCost: 2089, extraCost: {}, name: 'Gildan 2400 Long Sleeve Tee' },
-        // Gildan 18000 Sweatshirt: $22.30 base
-        49: { baseCost: 2230, extraCost: {}, name: 'Gildan 18000 Sweatshirt' },
-        // Gildan 18500 Hoodie: $28.47 base
-        77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 }, name: 'Gildan 18500 Hoodie' }
-    };
-
-    // USD $X.99 価格計算関数（38%前後の利益率）
-    const calculateOptimalPrice = (costCents, targetMargin) => {
-        // セント→ドル変換
-        const costUsd = costCents / 100;
-        // 目標価格を計算
-        const exactPriceUsd = costUsd / (1 - targetMargin / 100);
-        // 次の$X.99に切り上げ
-        const priceUsd = Math.ceil(exactPriceUsd) - 0.01;
-        // Printify APIはセント単位（整数）で価格を受け取る
-        return Math.round(priceUsd * 100);
-    };
 
     try {
         console.log(`📊 サイズ別価格一括更新開始: 目標利益率${targetMargin}%`);
@@ -147,19 +116,9 @@ async function handler(req, res) {
                     continue;
                 }
 
-                // 各variantに最適価格を設定
+                // 各variantに最適価格を設定（共通モジュールを使用）
                 const updatedVariants = variants.map(variant => {
-                    const variantTitle = variant.title || '';
-                    let cost = costInfo.baseCost;
-
-                    // サイズを検出
-                    if (variantTitle.includes('2XL')) {
-                        cost = costInfo.extraCost['2XL'] || costInfo.baseCost * 1.33;
-                    } else if (variantTitle.includes('3XL')) {
-                        cost = costInfo.extraCost['3XL'] || costInfo.baseCost * 1.67;
-                    }
-
-                    const optimalPrice = calculateOptimalPrice(cost, targetMargin);
+                    const optimalPrice = calculateVariantPrice(blueprintId, variant.title || '', targetMargin);
 
                     return {
                         id: variant.id,

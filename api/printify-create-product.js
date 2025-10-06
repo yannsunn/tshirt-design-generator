@@ -1,6 +1,8 @@
 // Printify商品作成（マスター複製方式）
 // モックアップ・配送設定を保持したまま、画像・タイトル・説明だけを差し替え
 
+import { calculateVariantPrice } from '../lib/blueprintCosts.js';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -119,11 +121,15 @@ export default async function handler(req, res) {
             description: description || master.description || 'Japanese-inspired design',
             blueprint_id: master.blueprint_id,
             print_provider_id: master.print_provider_id,
-            variants: master.variants.map(v => ({
-                id: v.id,
-                price: v.price, // マスターの価格を継承（後で価格自動計算APIで更新可能）
-                is_enabled: v.is_enabled
-            })),
+            variants: master.variants.map(v => {
+                // 正しい価格を自動計算（38%利益率）
+                const optimalPrice = calculateVariantPrice(master.blueprint_id, v.title || '', 38);
+                return {
+                    id: v.id,
+                    price: optimalPrice || v.price, // 計算できない場合のみマスター価格を使用
+                    is_enabled: v.is_enabled
+                };
+            }),
             print_areas: master.print_areas.map(area => ({
                 variant_ids: area.variant_ids,
                 placeholders: area.placeholders
