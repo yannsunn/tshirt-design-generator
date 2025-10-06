@@ -3162,7 +3162,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
 
             const imageCount = generatedImages.length;
-            if (!confirm(`${imageCount}つのデザインをPrintify + SUZURIに一括出品しますか？\n\n出品先:\n• Printify Storefront (自動)\n• Printify eBay (自動)\n• SUZURI (Tシャツ/パーカー/スウェット)\n\n※ Etsyは手動選択で出品できます`)) {
+            if (!confirm(`${imageCount}つのデザインをPrintify + SUZURIに一括出品しますか？\n\n出品先:\n• Printify Storefront (自動)\n• SUZURI (Tシャツ/パーカー/スウェット)\n\n※ eBay・Etsyは手動選択で出品できます`)) {
                 return;
             }
 
@@ -3172,9 +3172,11 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             hideError();
 
             // Storefront と eBay のショップID
+            // eBayショップはマスター商品未設定のため一時的に無効化
             const autoPublishShops = [
-                { id: '24565480', name: 'Storefront' },
-                { id: '24566516', name: 'eBay' }
+                { id: '24565480', name: 'Storefront' }
+                // TODO: eBayショップのマスター商品作成後に有効化
+                // { id: '24566516', name: 'eBay' }
             ];
 
             try {
