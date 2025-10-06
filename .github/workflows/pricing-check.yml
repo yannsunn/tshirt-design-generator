@@ -1,0 +1,61 @@
+# 定期的な価格チェックと自動修正
+name: Auto Pricing Check
+
+on:
+  # 毎日午前9時（UTC）に実行
+  schedule:
+    - cron: '0 9 * * *'
+
+  # 手動実行も可能
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: '自動修正を実行 (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  pricing-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run pricing analysis
+        run: |
+          if [ "${{ github.event.inputs.auto_fix }}" == "true" ]; then
+            node scripts/auto-pricing-check.js --auto-fix
+          else
+            node scripts/auto-pricing-check.js --analyze
+          fi
+        env:
+          PRINTIFY_API_KEY: ${{ secrets.PRINTIFY_API_KEY }}
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+
+      - name: Commit pricing reports
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add pricing-reports/
+          git diff --staged --quiet || git commit -m "Auto: Daily pricing analysis report $(date +'%Y-%m-%d')"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - name: Send notification on failure
+        if: failure()
+        run: |
+          echo "⚠️ Pricing check failed! Check workflow logs."
+          # オプション: Slack/Discord通知をここに追加

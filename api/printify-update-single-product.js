@@ -1,6 +1,7 @@
 // 特定商品の価格を強制更新（Blueprint ID 12対応）
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateRequired, validateEnv } from '../lib/errorHandler.js';
+import { logPriceChange, logError } from '../lib/pricingLogger.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -123,16 +124,33 @@ async function handler(req, res) {
 
         console.log(`✅ 更新成功: ${product.title}`);
 
+        // 価格変更ログを記録
+        const oldPrices = variants.map(v => v.price);
+        const newPrices = updatedVariants.map(v => v.price);
+        const logEntry = logPriceChange(productId, shopId, {
+            oldPrice: oldPrices[0], // 代表価格
+            newPrice: newPrices[0],
+            blueprint: blueprintId,
+            margin: targetMargin,
+            reason: 'manual_single_update'
+        });
+
         res.status(200).json({
             success: true,
             productId: productId,
             title: product.title,
             blueprintId: blueprintId,
             blueprintName: costInfo.name,
-            variantsUpdated: updatedVariants.length
+            variantsUpdated: updatedVariants.length,
+            log: logEntry
         });
 
     } catch (error) {
+        const errorLog = logError('printify-update-single-product', error, {
+            shopId,
+            productId,
+            targetMargin
+        });
         console.error('❌ 商品更新エラー:', error);
         throw error;
     }

@@ -1,6 +1,7 @@
 // Printify商品のタイトルを更新
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateRequired, validateEnv } from '../lib/errorHandler.js';
+import { logError } from '../lib/pricingLogger.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -19,6 +20,16 @@ async function handler(req, res) {
             error: 'Title too long',
             message: `Title must be 80 characters or less (current: ${newTitle.length})`,
             newTitle: newTitle
+        });
+    }
+
+    // 説明文長チェック
+    if (newDescription && newDescription.length > 1000) {
+        return res.status(400).json({
+            error: 'Description too long',
+            message: `Description must be 1000 characters or less (current: ${newDescription.length})`,
+            maxLength: 1000,
+            currentLength: newDescription.length
         });
     }
 
@@ -90,6 +101,11 @@ async function handler(req, res) {
         });
 
     } catch (error) {
+        logError('printify-update-product-title', error, {
+            shopId,
+            productId,
+            newTitle
+        });
         console.error('❌ タイトル更新エラー:', error);
         throw error;
     }

@@ -1,6 +1,7 @@
 // 全ショップ（Storefront、Etsy、eBay）の価格を一括更新
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { asyncHandler, validateRequired, validateEnv } from '../lib/errorHandler.js';
+import { logBatchUpdate, logPriceChange, logError } from '../lib/pricingLogger.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -186,6 +187,15 @@ async function handler(req, res) {
                     console.log(`✅ 更新: ${product.title.substring(0, 40)}`);
                     updatedCount++;
 
+                    // 価格変更ログを記録
+                    logPriceChange(product.id, shop.id, {
+                        oldPrice: variants[0]?.price,
+                        newPrice: updatedVariants[0]?.price,
+                        blueprint: blueprintId,
+                        margin: targetMargin,
+                        reason: 'batch_update'
+                    });
+
                     await new Promise(resolve => setTimeout(resolve, 500));
 
                 } catch (error) {
@@ -210,16 +220,33 @@ async function handler(req, res) {
         const totalSkipped = results.shops.reduce((sum, s) => sum + (s.skipped || 0), 0);
         const totalErrors = results.shops.reduce((sum, s) => sum + (s.errors || 0), 0);
 
+        // バッチ更新ログを記録
+        const logEntry = logBatchUpdate({
+            totalUpdated,
+            totalSkipped,
+            totalErrors,
+            shops: results.shops,
+            targetMargin,
+            offset,
+            limit
+        });
+
         res.status(200).json({
             success: true,
             totalUpdated,
             totalSkipped,
             totalErrors,
             results: results.shops,
-            message: `✅ 全ショップ価格更新完了: ${totalUpdated}件を更新`
+            message: `✅ 全ショップ価格更新完了: ${totalUpdated}件を更新`,
+            log: logEntry
         });
 
     } catch (error) {
+        logError('update-all-shops-prices', error, {
+            targetMargin,
+            offset,
+            limit
+        });
         console.error('❌ 全ショップ価格更新エラー:', error);
         throw error;
     }
