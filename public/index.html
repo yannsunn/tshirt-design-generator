@@ -3160,174 +3160,192 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 return showError('先にデザインを生成してください');
             }
 
-            if (!confirm('Printify + SUZURIに一括出品しますか？\n\n出品先:\n• Printify (Etsy/eBay/Storefront)\n• SUZURI (Tシャツ/パーカー/スウェット)')) {
+            const imageCount = generatedImages.length;
+            if (!confirm(`${imageCount}つのデザインをPrintify + SUZURIに一括出品しますか？\n\n出品先:\n• Printify Storefront (自動)\n• Printify eBay (自動)\n• SUZURI (Tシャツ/パーカー/スウェット)\n\n※ Etsyは手動選択で出品できます`)) {
                 return;
             }
 
-            console.log('🌐 Printify + SUZURI一括出品開始');
+            console.log(`🌐 Printify + SUZURI一括出品開始: ${imageCount}商品`);
             publishAllBtn.disabled = true;
             publishAllBtn.innerHTML = '<span>⏳</span><span>処理中...</span>';
             hideError();
 
+            // Storefront と eBay のショップID
+            const autoPublishShops = [
+                { id: '24565480', name: 'Storefront' },
+                { id: '24566516', name: 'eBay' }
+            ];
+
             try {
-                const imgData = generatedImages[0];
+                let totalPrintifyCount = 0;
+                let totalSuzuriCount = 0;
+                const allProductIds = [];
 
-                // IMPORTANT: Different titles for different markets
-                // Printify (international): English only
-                const printifyTitle = generateSEOTitle(imgData.idea);
-                const printifyDescription = getEnglishDescription(imgData.idea);
+                // 全画像を処理
+                for (let i = 0; i < generatedImages.length; i++) {
+                    const imgData = generatedImages[i];
+                    progressText.textContent = `処理中: ${i + 1}/${imageCount} - ${imgData.idea.title || 'デザイン'}`;
+                    console.log(`\n📦 処理中 [${i + 1}/${imageCount}]: ${imgData.idea.title}`);
 
-                // SUZURI (domestic Japan): Japanese
-                const suzuriTitle = generateJapaneseTitle(imgData.idea);
+                    // IMPORTANT: Different titles for different markets
+                    // Printify (international): English only
+                    const printifyTitle = generateSEOTitle(imgData.idea);
+                    const printifyDescription = getEnglishDescription(imgData.idea);
 
-                progressText.textContent = 'Printify + SUZURIに並列出品中...';
+                    // SUZURI (domestic Japan): Japanese
+                    const suzuriTitle = generateJapaneseTitle(imgData.idea);
 
-                // 各APIを並列に直接呼び出し
-                const results = {
-                    printify: { success: false, error: null, count: 0, productIds: [] },
-                    suzuri: { success: false, error: null }
-                };
+                    // Step 1: Compress image
+                    const compressedImage = await compressImage(imgData.imageData, 4000);
 
-                // Printifyへの出品 (English title/description)
-                // Step 1: Compress image
-                const compressedImage = await compressImage(imgData.imageData, 4000);
-
-                // Step 2: Upload to Printify
-                let printifyImageId = null;
-                try {
-                    progressText.textContent = 'Printify: 画像アップロード中...';
-                    const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            imageData: compressedImage,
-                            fileName: `design-${Date.now()}.png`
-                        })
-                    });
-
-                    if (!uploadResponse.ok) {
-                        throw new Error(`画像アップロード失敗: ${uploadResponse.status}`);
-                    }
-
-                    const uploadResult = await uploadResponse.json();
-                    printifyImageId = uploadResult.imageId;
-                    console.log('✅ Printify画像アップロード成功:', printifyImageId);
-
-                    // Step 3: Create products for selected types
-                    progressText.textContent = 'Printify: 商品作成中...';
-                    const selectedProductTypes = getSelectedProductTypes();
-
-                    for (const productType of selectedProductTypes) {
-                        try {
-                            const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    shopId: printifyShopId,
-                                    imageId: printifyImageId,
-                                    title: printifyTitle,
-                                    description: printifyDescription,
-                                    tags: ['Japanese Culture', 'AI Generated', 'Tourist Souvenir'],
-                                    productType: productType
-                                })
-                            });
-
-                            if (productResponse.ok) {
-                                const productResult = await productResponse.json();
-                                results.printify.count++;
-                                if (productResult.productId) {
-                                    results.printify.productIds.push(productResult.productId);
-                                }
-                            }
-                        } catch (error) {
-                            console.error(`商品作成エラー (${productType}):`, error);
-                        }
-                    }
-
-                    results.printify.success = results.printify.count > 0;
-                    console.log(`✅ Printify出品完了: ${results.printify.count}商品`);
-                } catch (error) {
-                    results.printify.error = error.message;
-                    console.error('❌ Printify出品エラー:', error);
-                }
-
-                // SUZURIへの出品 (Japanese title + description)
-                try {
-                    progressText.textContent = 'SUZURI: 商品作成中...';
-                    const suzuriBody = {
-                        imageUrl: compressedImage,  // Use compressed image to avoid 413 error
-                        title: suzuriTitle
-                    };
-
-                    // 商品説明が生成されている場合は追加
-                    if (imgData.idea && imgData.idea.description) {
-                        suzuriBody.description = imgData.idea.description;
-                    }
-
-                    const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(suzuriBody)
-                    });
-
-                    if (suzuriResponse.ok) {
-                        results.suzuri.success = true;
-                        console.log('✅ SUZURI出品成功');
-                    } else {
-                        const error = await suzuriResponse.json();
-                        results.suzuri.error = error.error || 'SUZURI出品失敗';
-                        console.log('❌ SUZURI出品失敗:', results.suzuri.error);
-                    }
-                } catch (error) {
-                    results.suzuri.error = error.message;
-                    console.error('❌ SUZURI出品エラー:', error);
-                }
-
-                // 結果表示
-                const successCount = Object.values(results).filter(r => r.success).length;
-                const totalCount = Object.keys(results).length;
-
-                let successMessage = `🎉 一括出品完了！\n\n`;
-                successMessage += `成功: ${successCount}/${totalCount}プラットフォーム\n\n`;
-
-                if (results.printify.success) {
-                    successMessage += `✅ Printify: 出品成功\n`;
-                } else {
-                    successMessage += `❌ Printify: ${results.printify.error}\n`;
-                }
-
-                if (results.suzuri.success) {
-                    successMessage += `✅ SUZURI: 出品成功\n`;
-                } else {
-                    successMessage += `❌ SUZURI: ${results.suzuri.error}\n`;
-                }
-
-                // Auto-update prices if Printify succeeded (38% profit margin)
-                if (results.printify.success && results.printify.productIds.length > 0) {
+                    // Step 2: Upload to Printify
+                    let printifyImageId = null;
                     try {
-                        console.log('💰 Printify価格自動更新を開始...');
-                        console.log(`🎯 新規作成商品ID: ${results.printify.productIds.length}件`, results.printify.productIds);
-                        progressText.textContent = '💰 Printify価格を最適化中（38%利益率）...';
-                        const priceUpdateResponse = await fetch(`${API_BASE_URL}/printify-update-prices`, {
+                        progressText.textContent = `[${i + 1}/${imageCount}] Printify: 画像アップロード中...`;
+                        const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                shopId: printifyShopId,
-                                productIds: results.printify.productIds
+                                imageData: compressedImage,
+                                fileName: `design-${Date.now()}-${i}.png`
                             })
                         });
-                        if (priceUpdateResponse.ok) {
-                            const priceResult = await priceUpdateResponse.json();
-                            console.log('✅ Printify価格自動更新完了:', priceResult.updated, '商品');
-                            successMessage += `\n💰 Printify価格最適化完了（38%利益率）`;
+
+                        if (!uploadResponse.ok) {
+                            throw new Error(`画像アップロード失敗: ${uploadResponse.status}`);
                         }
+
+                        const uploadResult = await uploadResponse.json();
+                        printifyImageId = uploadResult.imageId;
+                        console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId);
+
+                        // Step 3: Create products for ALL auto-publish shops (Storefront + eBay)
+                        progressText.textContent = `[${i + 1}/${imageCount}] Printify: 商品作成中...`;
+                        const selectedProductTypes = getSelectedProductTypes();
+
+                        for (const shop of autoPublishShops) {
+                            console.log(`   📍 ${shop.name} に出品中...`);
+
+                            for (const productType of selectedProductTypes) {
+                                try {
+                                    const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            shopId: shop.id,
+                                            imageId: printifyImageId,
+                                            title: printifyTitle,
+                                            description: printifyDescription,
+                                            tags: ['Japanese Culture', 'AI Generated', 'Tourist Souvenir'],
+                                            productType: productType
+                                        })
+                                    });
+
+                                    if (productResponse.ok) {
+                                        const productResult = await productResponse.json();
+                                        totalPrintifyCount++;
+                                        if (productResult.productId) {
+                                            allProductIds.push({ shopId: shop.id, productId: productResult.productId });
+                                        }
+                                        console.log(`   ✅ ${shop.name} ${productType} 出品成功`);
+                                    }
+                                } catch (error) {
+                                    console.error(`   ❌ ${shop.name} ${productType} 出品エラー:`, error);
+                                }
+                            }
+                        }
+
+                    } catch (error) {
+                        console.error(`❌ [${i + 1}/${imageCount}] Printify出品エラー:`, error);
+                    }
+
+                    // Step 4: SUZURIへの出品 (Japanese title + description)
+                    try {
+                        progressText.textContent = `[${i + 1}/${imageCount}] SUZURI: 商品作成中...`;
+                        const suzuriBody = {
+                            imageUrl: compressedImage,
+                            title: suzuriTitle
+                        };
+
+                        if (imgData.idea && imgData.idea.description) {
+                            suzuriBody.description = imgData.idea.description;
+                        }
+
+                        const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(suzuriBody)
+                        });
+
+                        if (suzuriResponse.ok) {
+                            totalSuzuriCount++;
+                            console.log(`✅ [${i + 1}/${imageCount}] SUZURI出品成功`);
+                        } else {
+                            const error = await suzuriResponse.json();
+                            console.log(`❌ [${i + 1}/${imageCount}] SUZURI出品失敗:`, error.error);
+                        }
+                    } catch (error) {
+                        console.error(`❌ [${i + 1}/${imageCount}] SUZURI出品エラー:`, error);
+                    }
+
+                    // 次の画像処理前に少し待機（レート制限対策）
+                    if (i < generatedImages.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+
+                // 結果表示
+                console.log(`\n🎉 一括出品完了！`);
+                console.log(`   Printify: ${totalPrintifyCount}商品`);
+                console.log(`   SUZURI: ${totalSuzuriCount}商品`);
+                console.log(`   合計: ${totalPrintifyCount + totalSuzuriCount}商品`);
+
+                let successMessage = `🎉 ${imageCount}デザインの一括出品完了！\n\n`;
+                successMessage += `✅ Printify: ${totalPrintifyCount}商品\n`;
+                successMessage += `   • Storefront: ${Math.floor(totalPrintifyCount / 2)}商品\n`;
+                successMessage += `   • eBay: ${Math.floor(totalPrintifyCount / 2)}商品\n`;
+                successMessage += `✅ SUZURI: ${totalSuzuriCount}商品\n`;
+                successMessage += `\n合計: ${totalPrintifyCount + totalSuzuriCount}商品`;
+
+                // Auto-update prices if Printify succeeded (38% profit margin)
+                if (allProductIds.length > 0) {
+                    try {
+                        console.log('\n💰 Printify価格自動更新を開始...');
+                        console.log(`🎯 新規作成商品: ${allProductIds.length}件`);
+                        progressText.textContent = '💰 Printify価格を最適化中（38%利益率）...';
+
+                        // ショップごとに価格更新
+                        const shopGroups = {};
+                        allProductIds.forEach(item => {
+                            if (!shopGroups[item.shopId]) {
+                                shopGroups[item.shopId] = [];
+                            }
+                            shopGroups[item.shopId].push(item.productId);
+                        });
+
+                        for (const [shopId, productIds] of Object.entries(shopGroups)) {
+                            const priceUpdateResponse = await fetch(`${API_BASE_URL}/printify-update-prices`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    shopId: shopId,
+                                    productIds: productIds
+                                })
+                            });
+                            if (priceUpdateResponse.ok) {
+                                const priceResult = await priceUpdateResponse.json();
+                                console.log(`✅ Shop ${shopId} 価格更新完了:`, priceResult.updated, '商品');
+                            }
+                        }
+
+                        successMessage += `\n\n💰 価格最適化完了（38%利益率）`;
                     } catch (error) {
                         console.error('❌ 価格自動更新エラー:', error);
                     }
                 }
 
                 alert(successMessage);
-                progressText.textContent = `✅ ${successCount}/${totalCount}プラットフォームに出品完了`;
+                progressText.textContent = `✅ ${totalPrintifyCount + totalSuzuriCount}商品の出品完了`;
 
             } catch (error) {
                 console.error('一括出品エラー:', error);
