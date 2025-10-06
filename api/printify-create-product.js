@@ -126,18 +126,21 @@ export default async function handler(req, res) {
             })),
             print_areas: master.print_areas.map(area => ({
                 variant_ids: area.variant_ids,
-                placeholders: area.placeholders.map(placeholder => ({
-                    position: placeholder.position,
-                    images: [
-                        {
-                            id: newImageId, // 新しい画像に差し替え
-                            x: placeholder.images[0]?.x || 0.5,
-                            y: placeholder.images[0]?.y || 0.5,
-                            scale: placeholder.images[0]?.scale || 1,
-                            angle: placeholder.images[0]?.angle || 0
-                        }
-                    ]
-                }))
+                placeholders: area.placeholders
+                    // 前面（front）のみにプリント
+                    .filter(placeholder => placeholder.position === 'front')
+                    .map(placeholder => ({
+                        position: placeholder.position,
+                        images: [
+                            {
+                                id: newImageId, // 新しい画像に差し替え
+                                x: placeholder.images[0]?.x || 0.5,
+                                y: placeholder.images[0]?.y || 0.5,
+                                scale: placeholder.images[0]?.scale || 1,
+                                angle: placeholder.images[0]?.angle || 0
+                            }
+                        ]
+                    }))
             }))
         };
 
