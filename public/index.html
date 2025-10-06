@@ -3172,11 +3172,9 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             hideError();
 
             // Storefront と eBay のショップID
-            // eBayショップはマスター商品未設定のため一時的に無効化
             const autoPublishShops = [
-                { id: '24565480', name: 'Storefront' }
-                // TODO: eBayショップのマスター商品作成後に有効化
-                // { id: '24566516', name: 'eBay' }
+                { id: '24565480', name: 'Storefront' },
+                { id: '24566516', name: 'eBay' }
             ];
 
             try {
