@@ -13,23 +13,30 @@ async function handler(req, res) {
     const { shopId, targetMargin = 38, dryRun = false, productIds = null } = req.body;
     const apiKey = process.env.PRINTIFY_API_KEY;
 
-    // Blueprint IDごとの原価マッピング
+    // Blueprint IDごとの原価マッピング（セント単位のUSD）
     const blueprintCosts = {
-        6: { baseCost: 900, extraCost: { '2XL': 1200, '3XL': 1500 }, name: 'Gildan 5000 T-Shirt' },
-        26: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 980 Lightweight Tee' },
-        36: { baseCost: 1200, extraCost: { '2XL': 1500, '3XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
-        145: { baseCost: 1050, extraCost: { '2XL': 1350, '3XL': 1650 }, name: 'Gildan 64000 Softstyle T-Shirt' },
-        157: { baseCost: 750, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
-        80: { baseCost: 1350, extraCost: { '2XL': 1650, '3XL': 1950 }, name: 'Gildan 2400 Long Sleeve Tee' },
-        49: { baseCost: 2100, extraCost: { '2XL': 2550, '3XL': 3000 }, name: 'Gildan 18000 Sweatshirt' },
-        77: { baseCost: 2550, extraCost: { '2XL': 3000, '3XL': 3450 }, name: 'Gildan 18500 Hoodie' }
+        // Gildan 5000: $11.67 base, $15.44 (2XL), $16.36 (3XL)
+        6: { baseCost: 1167, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 }, name: 'Gildan 5000 T-Shirt' },
+        // Gildan 980 Lightweight: $14.80 base
+        26: { baseCost: 1480, extraCost: { '2XL': 1987, '3XL': 2414 }, name: 'Gildan 980 Lightweight Tee' },
+        // Gildan 2000 Ultra Cotton: $11.95 base
+        36: { baseCost: 1195, extraCost: { '2XL': 1557, '3XL': 1810, '4XL': 1802, '5XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
+        // Gildan 64000 Softstyle: $11.92 base
+        145: { baseCost: 1192, extraCost: { '2XL': 1457, '3XL': 1743 }, name: 'Gildan 64000 Softstyle T-Shirt' },
+        // Gildan 5000B Kids: $10.93 base
+        157: { baseCost: 1093, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
+        // Gildan 2400 Long Sleeve: $20.89 base
+        80: { baseCost: 2089, extraCost: {}, name: 'Gildan 2400 Long Sleeve Tee' },
+        // Gildan 18000 Sweatshirt: $22.30 base
+        49: { baseCost: 2230, extraCost: {}, name: 'Gildan 18000 Sweatshirt' },
+        // Gildan 18500 Hoodie: $28.47 base
+        77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 }, name: 'Gildan 18500 Hoodie' }
     };
 
     // USD $X.99 価格計算関数（38%前後の利益率）
-    const JPY_TO_USD = 150; // 1 USD = 150 JPY
-    const calculateOptimalPrice = (costJpy, targetMargin) => {
-        // 円→ドル変換
-        const costUsd = costJpy / JPY_TO_USD;
+    const calculateOptimalPrice = (costCents, targetMargin) => {
+        // セント→ドル変換
+        const costUsd = costCents / 100;
         // 目標価格を計算
         const exactPriceUsd = costUsd / (1 - targetMargin / 100);
         // 次の$X.99に切り上げ
@@ -264,19 +271,19 @@ async function handler(req, res) {
             details: updateDetails,
             priceConfig: {
                 'Tシャツ (Gildan 5000)': {
-                    'S-XL': '$9.99 (39.9%)',
-                    '2XL': '$12.99 (38.4%)',
-                    '3XL': '$16.99 (41.1%)'
+                    'S-XL': '$18.99 (原価$11.67, 38.5%利益)',
+                    '2XL': '$25.99 (原価$15.44, 40.6%利益)',
+                    '3XL': '$26.99 (原価$16.36, 39.4%利益)'
                 },
                 'スウェット (Gildan 18000)': {
-                    'S-XL': '$22.99 (39.1%)',
-                    '2XL': '$27.99 (39.3%)',
-                    '3XL': '$32.99 (39.4%)'
+                    'S-XL': '$36.99 (原価$22.30, 39.7%利益)',
+                    '2XL': '$44.99 (原価$26.80, 40.4%利益)',
+                    '3XL': '$51.99 (原価$31.30, 39.8%利益)'
                 },
                 'フーディ (Gildan 18500)': {
-                    'S-XL': '$27.99 (39.3%)',
-                    '2XL': '$32.99 (39.4%)',
-                    '3XL': '$37.99 (39.5%)'
+                    'S-XL': '$44.99 (原価$27.00, 40.0%利益)',
+                    '2XL': '$52.99 (原価$31.50, 40.5%利益)',
+                    '3XL': '$59.99 (原価$36.00, 40.0%利益)'
                 }
             },
             note: dryRun ? 'DRY RUNモードです。実際の更新を行うにはdryRun=falseで再実行してください。' : 'サイズ別価格を$X.99形式で最適化しました（利益率38〜41%）。'
