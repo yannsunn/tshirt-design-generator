@@ -29,13 +29,13 @@ async function handler(req, res) {
 
         // 標準Blueprint（参考用）
         6: { baseCost: 1167, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 }, name: 'Gildan 5000 T-Shirt' },
-        26: { baseCost: 1480, extraCost: { '2XL': 1987, '3XL': 2414 }, name: 'Gildan 980 Lightweight Tee' },
-        36: { baseCost: 1195, extraCost: { '2XL': 1557, '3XL': 1810, '4XL': 1802, '5XL': 1800 }, name: 'Gildan 2000 Ultra Cotton Tee' },
-        145: { baseCost: 1192, extraCost: { '2XL': 1457, '3XL': 1743 }, name: 'Gildan 64000 Softstyle T-Shirt' },
-        157: { baseCost: 1093, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
-        80: { baseCost: 2089, extraCost: {}, name: 'Gildan 2400 Long Sleeve Tee' },
-        49: { baseCost: 2230, extraCost: {}, name: 'Gildan 18000 Sweatshirt' },
-        77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 }, name: 'Gildan 18500 Hoodie' },
+        26: { baseCost: 1029, extraCost: { '2XL': 1406, '3XL': 1498 }, name: 'Gildan 980 Lightweight Tee' },
+        36: { baseCost: 1231, extraCost: { '2XL': 1608, '3XL': 1700 }, name: 'Gildan 2000 Ultra Cotton Tee' },
+        145: { baseCost: 1096, extraCost: { '2XL': 1473, '3XL': 1565 }, name: 'Gildan 64000 Softstyle T-Shirt' },
+        157: { baseCost: 1071, extraCost: {}, name: 'Gildan 5000B Kids Tee' },
+        80: { baseCost: 1398, extraCost: { '2XL': 1775, '3XL': 1867 }, name: 'Gildan 2400 Long Sleeve Tee' },
+        49: { baseCost: 2230, extraCost: { '2XL': 2680, '3XL': 3130 }, name: 'Gildan 18000 Sweatshirt' },
+        77: { baseCost: 2700, extraCost: { '2XL': 3150, '3XL': 3600 }, name: 'Gildan 18500 Hoodie' },
 
         // Bella+Canvas
         5: { baseCost: 1233, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636 }, name: 'Bella+Canvas 3001 Unisex Jersey Short Sleeve Tee' },
