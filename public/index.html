@@ -440,48 +440,6 @@
                     </p>
                 </div>
 
-                <!-- 個別出品ボタン（上級者向け） -->
-                <details class="mt-6">
-                    <summary class="cursor-pointer text-sm text-gray-400 hover:text-gray-300 select-none flex items-center gap-2 mb-3">
-                        <span>▶</span>
-                        <span>個別出品オプション（上級者向け）</span>
-                    </summary>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pl-4">
-                        <button
-                            id="printify-only-btn"
-                            class="bg-green-600/80 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm"
-                            disabled>
-                            <span>🛒</span>
-                            <span>Printifyのみ出品</span>
-                        </button>
-                        <button
-                            id="suzuri-create-btn"
-                            class="bg-pink-600/80 hover:bg-pink-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm"
-                            disabled>
-                            <span>🎨</span>
-                            <span>SUZURIのみ出品</span>
-                        </button>
-                        <button
-                            id="publish-individual-btn"
-                            class="col-span-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm shadow-md"
-                            disabled>
-                            <span>🚀</span>
-                            <span>1商品ずつ全プラットフォーム出品（Printify + SUZURI + Etsy）</span>
-                        </button>
-                        <button
-                            id="etsy-publish-btn"
-                            class="bg-orange-600/80 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
-                            <span>🛍️</span>
-                            <span>Etsy商品公開</span>
-                        </button>
-                        <button
-                            id="ebay-publish-btn"
-                            class="bg-blue-600/80 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2 text-sm">
-                            <span>🏷️</span>
-                            <span>eBay商品公開（10件テスト）</span>
-                        </button>
-                    </div>
-                </details>
 
                 <div class="text-xs text-gray-500 mt-4 border-t border-gray-700 pt-3 flex items-center gap-2">
                     <span>💡</span>
@@ -529,10 +487,7 @@
         const generateAllBtn = document.getElementById('generate-all-btn');
         const imagesGrid = document.getElementById('images-grid');
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
-        const suzuriCreateBtn = document.getElementById('suzuri-create-btn');
         const publishAllBtn = document.getElementById('publish-all-btn');
-        const printifyOnlyBtn = document.getElementById('printify-only-btn');
-        const publishIndividualBtn = document.getElementById('publish-individual-btn');
 
         // Helper function: Get selected product types from checkboxes
         function getSelectedProductTypes() {
@@ -1686,11 +1641,22 @@
                     </div>
                     <p class="text-xs text-gray-400 mb-1">${imgData.idea.phrase}</p>
                     <p class="text-xs text-purple-300">${imgData.api === 'gemini' ? 'Gemini' : 'Seedream 4.0'}</p>
+                    <button class="mt-2 text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-2 rounded text-center manual-publish-btn" data-index="${index}">
+                        🚀 手動出品（全プラットフォーム）
+                    </button>
                     <a href="${imgData.imageData}" download="design-${index + 1}.png" class="mt-2 text-xs bg-pink-600 hover:bg-pink-700 text-white py-1 px-2 rounded text-center">
                         ダウンロード
                     </a>
                 `;
                 imagesGrid.appendChild(card);
+            });
+
+            // Add event listeners to manual publish buttons
+            document.querySelectorAll('.manual-publish-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    await handleManualPublishSingle(index);
+                });
             });
         };
 
@@ -3601,13 +3567,218 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
         };
 
-        // Enable SUZURI and Printify buttons when images are generated
+        // Manual publish single design to all platforms (Printify Storefront + eBay + SUZURI + Etsy)
+        const handleManualPublishSingle = async (index) => {
+            const imgData = generatedImages[index];
+            if (!imgData) {
+                return showError('デザインが見つかりません');
+            }
+
+            const productTypes = getSelectedProductTypes();
+            if (!confirm(`「${imgData.idea.phrase}」を全プラットフォームに出品しますか？\n\n出品先:\n• Printify Storefront (${productTypes.join(', ')})\n• Printify eBay (${productTypes.join(', ')})\n• SUZURI (Tシャツ/パーカー/スウェット)\n• Etsy (${productTypes.join(', ')})\n\n処理時間: 約1-2分`)) {
+                return;
+            }
+
+            console.log(`🚀 手動出品開始: ${imgData.idea.phrase}`);
+
+            const autoPublishShops = [
+                { id: '24565480', name: 'Storefront' },
+                { id: '24566516', name: 'eBay' }
+            ];
+
+            try {
+                let totalPrintifyCount = 0;
+                let totalSuzuriCount = 0;
+                let totalEtsyCount = 0;
+                const allProductIds = [];
+
+                progressText.textContent = `処理中: ${imgData.idea.title || 'デザイン'}`;
+                console.log(`\n📦 処理中: ${imgData.idea.title}`);
+
+                const printifyTitle = generateSEOTitle(imgData.idea);
+                const printifyDescription = getEnglishDescription(imgData.idea);
+                const suzuriTitle = generateJapaneseTitle(imgData.idea);
+                const compressedImage = await compressImage(imgData.imageData, 2000);
+
+                // Step 1: Upload to Printify
+                let printifyImageId = null;
+                try {
+                    progressText.textContent = `Printify: 画像アップロード中...`;
+                    const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            imageData: compressedImage,
+                            fileName: `design-${Date.now()}-manual.png`
+                        })
+                    });
+
+                    if (!uploadResponse.ok) throw new Error(`画像アップロード失敗: ${uploadResponse.status}`);
+
+                    const uploadResult = await uploadResponse.json();
+                    printifyImageId = uploadResult.imageId;
+                    console.log(`✅ Printify画像アップロード成功:`, printifyImageId);
+
+                    // Step 2: Create products for Storefront + eBay
+                    progressText.textContent = `Printify: 商品作成中...`;
+                    const selectedProductTypes = getSelectedProductTypes();
+
+                    for (const shop of autoPublishShops) {
+                        console.log(`   📍 ${shop.name} に出品中...`);
+
+                        for (const productType of selectedProductTypes) {
+                            try {
+                                const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        shopId: shop.id,
+                                        imageId: printifyImageId,
+                                        title: printifyTitle,
+                                        description: printifyDescription,
+                                        tags: ['Japanese Culture', 'AI Generated', 'Tourist Souvenir'],
+                                        productType: productType
+                                    })
+                                });
+
+                                if (productResponse.ok) {
+                                    const productResult = await productResponse.json();
+                                    totalPrintifyCount++;
+                                    if (productResult.productId) {
+                                        allProductIds.push({ shopId: shop.id, productId: productResult.productId });
+                                    }
+                                    console.log(`   ✅ ${shop.name} ${productType}: ${productResult.productId}`);
+                                }
+                            } catch (error) {
+                                console.error(`   ❌ ${shop.name} ${productType}エラー:`, error);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ Printifyエラー:`, error);
+                }
+
+                // Step 3: Create SUZURI products
+                try {
+                    progressText.textContent = `SUZURI: 商品作成中...`;
+                    const suzuriBody = {
+                        imageUrl: compressedImage,
+                        title: suzuriTitle,
+                        published: true
+                    };
+
+                    const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-create-products`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(suzuriBody)
+                    });
+
+                    if (suzuriResponse.ok) {
+                        const suzuriResult = await suzuriResponse.json();
+                        totalSuzuriCount += suzuriResult.createdCount || 0;
+                        console.log(`✅ SUZURI出品完了: ${suzuriResult.createdCount}商品`);
+                    }
+                } catch (error) {
+                    console.error(`❌ SUZURIエラー:`, error);
+                }
+
+                // Step 4: Create Etsy products (via Printify)
+                try {
+                    progressText.textContent = `Etsy: 商品作成中...`;
+                    const etsyShopId = '24566474';
+                    const etsyProductIds = [];
+
+                    const selectedProductTypes = getSelectedProductTypes();
+                    for (const productType of selectedProductTypes) {
+                        try {
+                            const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    shopId: etsyShopId,
+                                    imageId: printifyImageId,
+                                    title: printifyTitle,
+                                    description: printifyDescription,
+                                    tags: ['Japanese Culture', 'AI Generated', 'Tourist Souvenir'],
+                                    productType: productType
+                                })
+                            });
+
+                            if (productResponse.ok) {
+                                const productResult = await productResponse.json();
+                                if (productResult.productId) {
+                                    etsyProductIds.push(productResult.productId);
+                                    console.log(`   ✅ Etsy ${productType}: ${productResult.productId}`);
+                                }
+                            }
+                        } catch (error) {
+                            console.error(`   ❌ Etsy ${productType}エラー:`, error);
+                        }
+                    }
+
+                    // Publish to Etsy
+                    if (etsyProductIds.length > 0) {
+                        progressText.textContent = `Etsy: 商品公開中...`;
+                        const publishResponse = await fetch(`${API_BASE_URL}/etsy-publish-products`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ productIds: etsyProductIds })
+                        });
+
+                        if (publishResponse.ok) {
+                            const publishResult = await publishResponse.json();
+                            totalEtsyCount += publishResult.published || 0;
+                            console.log(`✅ Etsy公開完了: ${publishResult.published}商品`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ Etsyエラー:`, error);
+                }
+
+                // Auto-update Printify prices
+                if (allProductIds.length > 0) {
+                    try {
+                        progressText.textContent = '💰 Printify価格を最適化中（38%利益率）...';
+                        const shopGroups = {};
+                        allProductIds.forEach(item => {
+                            if (!shopGroups[item.shopId]) shopGroups[item.shopId] = [];
+                            shopGroups[item.shopId].push(item.productId);
+                        });
+
+                        for (const [shopId, productIds] of Object.entries(shopGroups)) {
+                            await fetch(`${API_BASE_URL}/printify-update-prices`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    shopId: shopId,
+                                    productIds: productIds,
+                                    targetMargin: 38
+                                })
+                            });
+                        }
+                        console.log('✅ Printify価格最適化完了');
+                    } catch (error) {
+                        console.error('⚠️ 価格最適化エラー:', error);
+                    }
+                }
+
+                // 結果表示
+                console.log(`\n🎉 手動出品完了！`);
+                const successMessage = `🎉 「${imgData.idea.phrase}」の出品完了！\n\n✅ Printify: ${totalPrintifyCount}商品\n✅ SUZURI: ${totalSuzuriCount}商品\n✅ Etsy: ${totalEtsyCount}商品\n\n合計: ${totalPrintifyCount + totalSuzuriCount + totalEtsyCount}商品`;
+                progressText.textContent = '✅ 手動出品完了';
+                alert(successMessage);
+
+            } catch (error) {
+                console.error('❌ 手動出品エラー:', error);
+                showError(`手動出品エラー: ${error.message}`);
+                progressText.textContent = 'エラーが発生しました';
+            }
+        };
+
+        // Enable Printify buttons when images are generated
         function updateJPPODButtons() {
             const hasImages = generatedImages.length > 0;
-            suzuriCreateBtn.disabled = !hasImages;
-            printifyOnlyBtn.disabled = !hasImages;
             publishAllBtn.disabled = !hasImages;
-            publishIndividualBtn.disabled = !hasImages;
         }
 
         // ========================================
@@ -3617,12 +3788,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
         // --- Event Listeners ---
         generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
         generateAllBtn.addEventListener('click', handleGenerateAllImages);
-        suzuriCreateBtn.addEventListener('click', handleSUZURICreate);
-        printifyOnlyBtn.addEventListener('click', handleCreateAllPrintifyProducts);
-        document.getElementById('etsy-publish-btn').addEventListener('click', handleEtsyPublish);
-        document.getElementById('ebay-publish-btn').addEventListener('click', handleEbayPublish);
         publishAllBtn.addEventListener('click', handlePublishAll);
-        publishIndividualBtn.addEventListener('click', handlePublishIndividual);
 
         // --- App Initialization ---
         console.log('🚀 Tシャツデザインジェネレーター起動');
