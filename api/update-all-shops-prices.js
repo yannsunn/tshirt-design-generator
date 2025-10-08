@@ -117,10 +117,15 @@ async function handler(req, res) {
 
                     if (!detailResponse.ok) {
                         errorCount++;
+                        // Wait before next request even on error
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         continue;
                     }
 
                     const detail = await detailResponse.json();
+
+                    // Wait 500ms after GET before PUT (rate limit safety)
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     const blueprintId = detail.blueprint_id;
                     const variants = detail.variants || [];
 
@@ -180,7 +185,11 @@ async function handler(req, res) {
                     );
 
                     if (!updateResponse.ok) {
+                        const errorText = await updateResponse.text().catch(() => 'Unknown error');
+                        console.error(`❌ 更新失敗: ${product.title.substring(0, 40)} - ${errorText.substring(0, 100)}`);
                         errorCount++;
+                        // Wait before next request even on error
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         continue;
                     }
 
@@ -196,7 +205,9 @@ async function handler(req, res) {
                         reason: 'batch_update'
                     });
 
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Printify API rate limit: 120 requests/minute = 2 requests/second
+                    // Each product = 2 requests (GET + PUT), so wait 1 second between products
+                    await new Promise(resolve => setTimeout(resolve, 1000));
 
                 } catch (error) {
                     console.error(`Error: ${product.id}`, error.message);
@@ -214,6 +225,9 @@ async function handler(req, res) {
             });
 
             console.log(`📊 ${shop.name}: 更新${updatedCount}件、スキップ${skippedCount}件、エラー${errorCount}件`);
+
+            // Wait 2 seconds between shops to avoid rate limits
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
         const totalUpdated = results.shops.reduce((sum, s) => sum + (s.updated || 0), 0);
