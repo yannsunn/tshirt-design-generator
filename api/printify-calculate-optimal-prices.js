@@ -20,43 +20,35 @@ async function handler(req, res) {
     try {
         console.log(`📊 最適価格計算開始: 目標利益率${targetMargin}%`);
 
-        // Blueprint IDごとの原価マッピング（Printify MyLocker）
-        // 注: これは推定値です。実際の原価はvariant APIから取得できない場合があります
+        // Blueprint IDごとの原価マッピング (実際のPrintify原価、セント単位)
+        // 2025年10月時点の実測値
         const blueprintCosts = {
-            // Tシャツ系（1円 = $0.0067として計算、USD原価を円換算）
-            6: {  // Gildan 5000
-                baseCost: 900,  // S-XL: $6 × 150
-                extraCost: { '2XL': 1200, '3XL': 1500 }  // $8, $10
-            },
-            26: {  // Gildan 980
-                baseCost: 1050,
-                extraCost: { '2XL': 1350, '3XL': 1650 }
-            },
-            36: {  // Gildan 2000
-                baseCost: 1200,
-                extraCost: { '2XL': 1500, '3XL': 1800 }
-            },
-            145: {  // Gildan 64000
-                baseCost: 1050,
-                extraCost: { '2XL': 1350, '3XL': 1650 }
-            },
-            157: {  // Gildan 5000B Kids
-                baseCost: 750,
-                extraCost: {}  // キッズサイズは追加料金なし
-            },
-            // 長袖・スウェット・フーディ
-            80: {  // Long Sleeve
-                baseCost: 1350,
-                extraCost: { '2XL': 1650, '3XL': 1950 }
-            },
-            49: {  // Sweatshirt
-                baseCost: 2100,
-                extraCost: { '2XL': 2550, '3XL': 3000 }
-            },
-            77: {  // Hoodie
-                baseCost: 2550,
-                extraCost: { '2XL': 3000, '3XL': 3450 }
-            }
+            // ユーザーカスタムマスター商品（優先）
+            706: { baseCost: 1241, extraCost: { '2XL': 1367, '3XL': 1571, '4XL': 1766 } },
+            1296: { baseCost: 3064, extraCost: { '2XL': 3548, '3XL': 4181 } },
+
+            // 標準Blueprint（参考用）
+            6: { baseCost: 1167, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 } },
+            26: { baseCost: 1480, extraCost: { '2XL': 1987, '3XL': 2414 } },
+            36: { baseCost: 1195, extraCost: { '2XL': 1557, '3XL': 1810, '4XL': 1802, '5XL': 1800 } },
+            145: { baseCost: 1192, extraCost: { '2XL': 1457, '3XL': 1743 } },
+            157: { baseCost: 1093, extraCost: {} },
+            80: { baseCost: 2089, extraCost: {} },
+            49: { baseCost: 2230, extraCost: {} },
+            77: { baseCost: 2847, extraCost: { '2XL': 3208, '3XL': 3615, '4XL': 3615, '5XL': 3615 } },
+
+            // Bella+Canvas
+            5: { baseCost: 1233, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636 } },
+            384: { baseCost: 2587, extraCost: { '2XL': 3193, '3XL': 3592 } },
+
+            // Comfort Colors
+            903: { baseCost: 1636, extraCost: { '2XL': 2039, '3XL': 2131 } },
+
+            // Next Level
+            12: { baseCost: 1636, extraCost: { '2XL': 2039 } },
+
+            // District
+            380: { baseCost: 1233, extraCost: { '2XL': 1544, '3XL': 1636, '4XL': 1636 } }
         };
 
         // 1. 全商品を取得（ページネーション対応）
@@ -140,25 +132,19 @@ async function handler(req, res) {
                 for (const variant of variants) {
                     // サイズを推定（variant titleから抽出）
                     const variantTitle = variant.title || '';
-                    let size = 'standard';
-                    let cost = costInfo.baseCost;
-
-                    // 2XL/3XLを検出
-                    if (variantTitle.includes('2XL')) {
-                        size = '2XL';
-                        cost = costInfo.extraCost['2XL'] || costInfo.baseCost * 1.33;
-                    } else if (variantTitle.includes('3XL')) {
-                        size = '3XL';
-                        cost = costInfo.extraCost['3XL'] || costInfo.baseCost * 1.67;
-                    }
+                    const size = variantTitle.match(/\b(2XL|3XL|4XL|5XL)\b/)?.[1];
+                    const cost = size && costInfo.extraCost[size]
+                        ? costInfo.extraCost[size]
+                        : costInfo.baseCost;
 
                     const currentPrice = variant.price || 0;
-                    const profit = currentPrice - cost;
-                    const actualMargin = currentPrice > 0 ? (profit / currentPrice) * 100 : 0;
+                    const currentCostUsd = cost / 100;
+                    const currentPriceUsd = currentPrice / 100;
+                    const currentProfit = currentPriceUsd - currentCostUsd;
+                    const actualMargin = currentPrice > 0 ? (currentProfit / currentPriceUsd) * 100 : 0;
 
                     // 目標利益率を達成する最適価格を計算（USD $X.99）
-                    const JPY_TO_USD = 150;
-                    const costUsd = cost / JPY_TO_USD;
+                    const costUsd = cost / 100;
                     const exactPriceUsd = costUsd / (1 - targetMargin / 100);
                     const priceUsd = Math.ceil(exactPriceUsd) - 0.01;
                     const optimalPrice = Math.round(priceUsd * 100); // セント単位
