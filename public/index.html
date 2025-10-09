@@ -3442,10 +3442,32 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                         const suzuriBody = {
                             imageUrl: compressedImage,
                             title: suzuriTitle,
-                            published: true
+                            published: true,
+                            // すべてのアイテムを自動作成（62種類）
+                            // 衣類（16種類）
+                            createTshirt: true, createHoodie: true, createSweatshirt: true, createLongSleeveTshirt: true,
+                            createBigSilhouetteTshirt: true, createFullGraphicTshirt: true, createOversizeTshirt: true,
+                            createHeavyweightTshirt: true, createTankTop: true, createDryTshirt: true, createPoloShirt: true,
+                            createCoach: true, createAnorak: true, createZipHoodie: true, createCardigan: true, createWideSweat: true,
+                            // バッグ・小物（11種類）
+                            createToteBag: true, createSacoche: true, createPouch: true, createBackpack: true, createBodyBag: true,
+                            createKnapSack: true, createFlatPouch: true, createPenCase: true, createTravelPouch: true,
+                            createPassCase: true, createWallet: true,
+                            // 雑貨（20種類）
+                            createMug: true, createSticker: true, createAcrylicKeychain: true, createAcrylicBlock: true,
+                            createCushion: true, createBlanket: true, createCanBadge: true, createBigCanBadge: true,
+                            createCompactMirror: true, createPhoneRing: true, createTowel: true, createHandkerchief: true,
+                            createBandana: true, createWashTowel: true, createMaskingTape: true, createCanCase: true,
+                            createAcrylicStand: true, createJigsawPuzzle: true, createWallClock: true, createNeckPillow: true,
+                            // デジタル・ケース（7種類）
+                            createPhoneCase: true, createNotebook: true, createClearFile: true, createBookCover: true,
+                            createGlassCase: true, createAirPodsCase: true, createPCCase: true,
+                            // ファッション小物（8種類）
+                            createCap: true, createBucketHat: true, createKnitCap: true, createSocks: true,
+                            createCrewSocks: true, createEcoFurBag: true, createBigScarf: true, createBandanaScarf: true
                         };
 
-                        const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-create-products`, {
+                        const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(suzuriBody)
@@ -3453,8 +3475,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                         if (suzuriResponse.ok) {
                             const suzuriResult = await suzuriResponse.json();
-                            totalSuzuriCount += suzuriResult.createdCount || 0;
-                            console.log(`✅ [${i + 1}/${imageCount}] SUZURI出品完了: ${suzuriResult.createdCount}商品`);
+                            totalSuzuriCount += suzuriResult.productsCreated || 0;
+                            console.log(`✅ [${i + 1}/${imageCount}] SUZURI出品完了: ${suzuriResult.productsCreated}商品`);
                         }
                     } catch (error) {
                         console.error(`❌ [${i + 1}/${imageCount}] SUZURIエラー:`, error);
@@ -3664,10 +3686,32 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                     const suzuriBody = {
                         imageUrl: compressedImage,
                         title: suzuriTitle,
-                        published: true
+                        published: true,
+                        // すべてのアイテムを自動作成（62種類）
+                        // 衣類（16種類）
+                        createTshirt: true, createHoodie: true, createSweatshirt: true, createLongSleeveTshirt: true,
+                        createBigSilhouetteTshirt: true, createFullGraphicTshirt: true, createOversizeTshirt: true,
+                        createHeavyweightTshirt: true, createTankTop: true, createDryTshirt: true, createPoloShirt: true,
+                        createCoach: true, createAnorak: true, createZipHoodie: true, createCardigan: true, createWideSweat: true,
+                        // バッグ・小物（11種類）
+                        createToteBag: true, createSacoche: true, createPouch: true, createBackpack: true, createBodyBag: true,
+                        createKnapSack: true, createFlatPouch: true, createPenCase: true, createTravelPouch: true,
+                        createPassCase: true, createWallet: true,
+                        // 雑貨（20種類）
+                        createMug: true, createSticker: true, createAcrylicKeychain: true, createAcrylicBlock: true,
+                        createCushion: true, createBlanket: true, createCanBadge: true, createBigCanBadge: true,
+                        createCompactMirror: true, createPhoneRing: true, createTowel: true, createHandkerchief: true,
+                        createBandana: true, createWashTowel: true, createMaskingTape: true, createCanCase: true,
+                        createAcrylicStand: true, createJigsawPuzzle: true, createWallClock: true, createNeckPillow: true,
+                        // デジタル・ケース（7種類）
+                        createPhoneCase: true, createNotebook: true, createClearFile: true, createBookCover: true,
+                        createGlassCase: true, createAirPodsCase: true, createPCCase: true,
+                        // ファッション小物（8種類）
+                        createCap: true, createBucketHat: true, createKnitCap: true, createSocks: true,
+                        createCrewSocks: true, createEcoFurBag: true, createBigScarf: true, createBandanaScarf: true
                     };
 
-                    const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-create-products`, {
+                    const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(suzuriBody)
@@ -3675,8 +3719,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                     if (suzuriResponse.ok) {
                         const suzuriResult = await suzuriResponse.json();
-                        totalSuzuriCount += suzuriResult.createdCount || 0;
-                        console.log(`✅ SUZURI出品完了: ${suzuriResult.createdCount}商品`);
+                        totalSuzuriCount += suzuriResult.productsCreated || 0;
+                        console.log(`✅ SUZURI出品完了: ${suzuriResult.productsCreated}商品`);
                     }
                 } catch (error) {
                     console.error(`❌ SUZURIエラー:`, error);
