@@ -13,73 +13,68 @@ async function handler(req, res) {
         imageUrl,
         title,
         description = null,
-        // 衣類（16種類）
-        createTshirt = true,
-        createHoodie = true,
-        createSweatshirt = true,
-        createLongSleeveTshirt = true,
-        createBigSilhouetteTshirt = true,
-        createFullGraphicTshirt = true,
-        createOversizeTshirt = true,
-        createHeavyweightTshirt = true,
-        createTankTop = true,
-        createDryTshirt = true,
-        createPoloShirt = true,
-        createCoach = true,
-        createAnorak = true,
-        createZipHoodie = true,
-        createCardigan = true,
-        createWideSweat = true,
-        // バッグ・小物（11種類）
-        createToteBag = true,
-        createSacoche = true,
-        createPouch = true,
-        createBackpack = true,
-        createBodyBag = true,
-        createKnapSack = true,
-        createFlatPouch = true,
-        createPenCase = true,
-        createTravelPouch = true,
-        createPassCase = true,
-        createWallet = true,
-        // 雑貨（20種類）
-        createMug = true,
-        createSticker = true,
-        createAcrylicKeychain = true,
-        createAcrylicBlock = true,
-        createCushion = true,
-        createBlanket = true,
-        createCanBadge = true,
-        createBigCanBadge = true,
-        createCompactMirror = true,
-        createPhoneRing = true,
-        createTowel = true,
-        createHandkerchief = true,
-        createBandana = true,
-        createWashTowel = true,
-        createMaskingTape = true,
-        createCanCase = true,
-        createAcrylicStand = true,
-        createJigsawPuzzle = true,
-        createWallClock = true,
-        createNeckPillow = true,
-        // デジタル・ケース（7種類）
-        createPhoneCase = true,
-        createNotebook = true,
-        createClearFile = true,
-        createBookCover = true,
-        createGlassCase = true,
-        createAirPodsCase = true,
-        createPCCase = true,
-        // ファッション小物（8種類）
-        createCap = true,
-        createBucketHat = true,
-        createKnitCap = true,
-        createSocks = true,
-        createCrewSocks = true,
-        createEcoFurBag = true,
-        createBigScarf = true,
-        createBandanaScarf = true,
+        // SUZURI 全商品タイプ（61種類）
+        createStandardTshirt = true,            // 1: スタンダードTシャツ
+        createToteBag = true,                   // 2: トートバッグ
+        createMug = true,                       // 3: マグカップ
+        createPhoneCase = true,                 // 4: スマホケース（iPhone）
+        createSweatshirt = true,                // 5: スウェット
+        createFullGraphicTshirt = true,         // 8: フルグラフィックTシャツ
+        createHoodie = true,                    // 9: パーカー
+        createNotebook = true,                  // 10: ノート
+        createSticker = true,                   // 11: ステッカー
+        createTowelHandkerchief = true,         // 14: タオルハンカチ
+        createLongSleeveTshirt = true,          // 15: ロングスリーブTシャツ
+        createSacoche = true,                   // 16: サコッシュ
+        createCanBadge = true,                  // 17: 缶バッジ
+        createClearSmartphoneCase = true,       // 18: クリアスマホケース
+        createTarpaulin = true,                 // 20: 吸着ポスター
+        createAcrylicBlock = true,              // 21: アクリルブロック
+        createBookStyleSmartphoneCase = true,   // 23: 手帳型スマホケース
+        createZipHoodie = true,                 // 28: ジップパーカー
+        createKinchaku = true,                  // 61: きんちゃく
+        createBigShoulderBag = true,            // 62: ビッグショルダーバッグ
+        createBigSweat = true,                  // 95: ビッグシルエットスウェット
+        createWaterGlass = true,                // 97: グラス
+        createSoftClearSmartphoneCase = true,   // 98: ソフトクリアスマホケース
+        createFivePanelCap = true,              // 99: ジェットキャップ
+        createBigTshirt = true,                 // 100: ビッグシルエットTシャツ
+        createClearFileFolder = true,           // 101: クリアファイル
+        createBucketHat = true,                 // 102: バケットハット
+        createClearMultiCase = true,            // 103: クリアマルチケース
+        createMiniClearMultiCase = true,        // 104: ミニクリアマルチケース
+        createSandal = true,                    // 105: サンダル
+        createBigLongSleeveTshirt = true,       // 106: ビッグシルエットロングスリーブTシャツ
+        createBandana = true,                   // 107: バンダナ
+        createReusablBag = true,                // 108: エコバッグ
+        createThermoTumbler = true,             // 109: サーモタンブラー
+        createFullGraphicMask = true,           // 110: フルグラフィックマスク
+        createOrganicCottonTshirt = true,       // 111: オーガニックコットンTシャツ
+        createDryTshirt = true,                 // 112: ドライTシャツ
+        createAcrylicKeychain = true,           // 147: アクリルキーホルダー
+        createHeavyweightTshirt = true,         // 148: ヘビーウェイトTシャツ
+        createOversizedTshirt = true,           // 149: オーバーサイズTシャツ
+        createLongSizedWaterGlass = true,       // 150: ロンググラス
+        createCushion = true,                   // 151: クッション
+        createHeavyweightHoodie = true,         // 152: ヘビーウェイトパーカー
+        createHeavyweightZipHoodie = true,      // 153: ヘビーウェイトジップパーカー
+        createHeavyweightSweat = true,          // 154: ヘビーウェイトスウェット
+        createEmbroideredTshirt = true,         // 155: 刺しゅうTシャツ
+        createLunchToteBag = true,              // 158: ランチトートバッグ
+        createAcrylicStand = true,              // 159: アクリルスタンド
+        createAnkleSocks = true,                // 160: くるぶしソックス
+        createSocks = true,                     // 161: ソックス
+        createOnePointTshirt = true,            // 162: ワンポイントTシャツ
+        createSmartphoneStrap = true,           // 195: スマホストラップ
+        createFlatCanCase = true,               // 228: フラット缶ケース
+        createMaskingTape = true,               // 261: マスキングテープ
+        createAndroidSmartphoneCase = true,     // 294: スマホケース（Android）
+        createEmbroideredFleeceJacket = true,   // 327: 刺しゅうフリースジャケット
+        createLightweightTshirt = true,         // 360: ライトウェイトTシャツ
+        createFaceTowel = true,                 // 393: フェイスタオル
+        createFlatPouch = true,                 // 426: フラットポーチ
+        createBlanket = true,                   // 13: ブランケット
+        createBigHoodie = true,                 // 96: ビッグシルエットパーカー
         published = false
     } = req.body;
 
@@ -92,80 +87,71 @@ async function handler(req, res) {
     try {
         console.log(`🚀 SUZURI一括商品作成: ${title}`);
 
-        // 作成する商品の配列を準備（62種類）
+        // 作成する商品の配列を準備（61種類）
         const productsArray = [];
 
-        // 衣類（16種類）
-        if (createTshirt) productsArray.push({ itemId: 1, published: published });
-        if (createHoodie) productsArray.push({ itemId: 2, published: published });
-        if (createSweatshirt) productsArray.push({ itemId: 3, published: published });
-        if (createLongSleeveTshirt) productsArray.push({ itemId: 4, published: published });
-        if (createBigSilhouetteTshirt) productsArray.push({ itemId: 189, published: published });
-        if (createFullGraphicTshirt) productsArray.push({ itemId: 6, published: published });
-        if (createOversizeTshirt) productsArray.push({ itemId: 251, published: published });
-        if (createHeavyweightTshirt) productsArray.push({ itemId: 252, published: published });
-        if (createTankTop) productsArray.push({ itemId: 17, published: published });
-        if (createDryTshirt) productsArray.push({ itemId: 253, published: published });
-        if (createPoloShirt) productsArray.push({ itemId: 254, published: published });
-        if (createCoach) productsArray.push({ itemId: 255, published: published });
-        if (createAnorak) productsArray.push({ itemId: 256, published: published });
-        if (createZipHoodie) productsArray.push({ itemId: 257, published: published });
-        if (createCardigan) productsArray.push({ itemId: 258, published: published });
-        if (createWideSweat) productsArray.push({ itemId: 259, published: published });
-
-        // バッグ・小物（11種類）
-        if (createToteBag) productsArray.push({ itemId: 5, published: published });
-        if (createSacoche) productsArray.push({ itemId: 228, published: published });
-        if (createPouch) productsArray.push({ itemId: 73, published: published });
-        if (createBackpack) productsArray.push({ itemId: 260, published: published });
-        if (createBodyBag) productsArray.push({ itemId: 261, published: published });
-        if (createKnapSack) productsArray.push({ itemId: 262, published: published });
-        if (createFlatPouch) productsArray.push({ itemId: 263, published: published });
-        if (createPenCase) productsArray.push({ itemId: 264, published: published });
-        if (createTravelPouch) productsArray.push({ itemId: 265, published: published });
-        if (createPassCase) productsArray.push({ itemId: 266, published: published });
-        if (createWallet) productsArray.push({ itemId: 267, published: published });
-
-        // 雑貨（20種類）
-        if (createMug) productsArray.push({ itemId: 7, published: published });
-        if (createSticker) productsArray.push({ itemId: 9, published: published });
-        if (createAcrylicKeychain) productsArray.push({ itemId: 83, published: published });
-        if (createAcrylicBlock) productsArray.push({ itemId: 128, published: published });
-        if (createCushion) productsArray.push({ itemId: 49, published: published });
-        if (createBlanket) productsArray.push({ itemId: 407, published: published });
-        if (createCanBadge) productsArray.push({ itemId: 268, published: published });
-        if (createBigCanBadge) productsArray.push({ itemId: 269, published: published });
-        if (createCompactMirror) productsArray.push({ itemId: 270, published: published });
-        if (createPhoneRing) productsArray.push({ itemId: 271, published: published });
-        if (createTowel) productsArray.push({ itemId: 272, published: published });
-        if (createHandkerchief) productsArray.push({ itemId: 273, published: published });
-        if (createBandana) productsArray.push({ itemId: 274, published: published });
-        if (createWashTowel) productsArray.push({ itemId: 275, published: published });
-        if (createMaskingTape) productsArray.push({ itemId: 276, published: published });
-        if (createCanCase) productsArray.push({ itemId: 277, published: published });
-        if (createAcrylicStand) productsArray.push({ itemId: 278, published: published });
-        if (createJigsawPuzzle) productsArray.push({ itemId: 279, published: published });
-        if (createWallClock) productsArray.push({ itemId: 280, published: published });
-        if (createNeckPillow) productsArray.push({ itemId: 281, published: published });
-
-        // デジタル・ケース（7種類）
-        if (createPhoneCase) productsArray.push({ itemId: 8, published: published });
+        // SUZURI 全商品タイプ（実際のAPI IDに基づく）
+        if (createStandardTshirt) productsArray.push({ itemId: 1, published: published });
+        if (createToteBag) productsArray.push({ itemId: 2, published: published });
+        if (createMug) productsArray.push({ itemId: 3, published: published });
+        if (createPhoneCase) productsArray.push({ itemId: 4, published: published });
+        if (createSweatshirt) productsArray.push({ itemId: 5, published: published });
+        if (createFullGraphicTshirt) productsArray.push({ itemId: 8, published: published });
+        if (createHoodie) productsArray.push({ itemId: 9, published: published });
         if (createNotebook) productsArray.push({ itemId: 10, published: published });
-        if (createClearFile) productsArray.push({ itemId: 11, published: published });
-        if (createBookCover) productsArray.push({ itemId: 282, published: published });
-        if (createGlassCase) productsArray.push({ itemId: 283, published: published });
-        if (createAirPodsCase) productsArray.push({ itemId: 284, published: published });
-        if (createPCCase) productsArray.push({ itemId: 285, published: published });
-
-        // ファッション小物（8種類）
-        if (createCap) productsArray.push({ itemId: 286, published: published });
-        if (createBucketHat) productsArray.push({ itemId: 287, published: published });
-        if (createKnitCap) productsArray.push({ itemId: 288, published: published });
-        if (createSocks) productsArray.push({ itemId: 289, published: published });
-        if (createCrewSocks) productsArray.push({ itemId: 290, published: published });
-        if (createEcoFurBag) productsArray.push({ itemId: 291, published: published });
-        if (createBigScarf) productsArray.push({ itemId: 292, published: published });
-        if (createBandanaScarf) productsArray.push({ itemId: 293, published: published });
+        if (createSticker) productsArray.push({ itemId: 11, published: published });
+        if (createBlanket) productsArray.push({ itemId: 13, published: published });
+        if (createTowelHandkerchief) productsArray.push({ itemId: 14, published: published });
+        if (createLongSleeveTshirt) productsArray.push({ itemId: 15, published: published });
+        if (createSacoche) productsArray.push({ itemId: 16, published: published });
+        if (createCanBadge) productsArray.push({ itemId: 17, published: published });
+        if (createClearSmartphoneCase) productsArray.push({ itemId: 18, published: published });
+        if (createTarpaulin) productsArray.push({ itemId: 20, published: published });
+        if (createAcrylicBlock) productsArray.push({ itemId: 21, published: published });
+        if (createBookStyleSmartphoneCase) productsArray.push({ itemId: 23, published: published });
+        if (createZipHoodie) productsArray.push({ itemId: 28, published: published });
+        if (createKinchaku) productsArray.push({ itemId: 61, published: published });
+        if (createBigShoulderBag) productsArray.push({ itemId: 62, published: published });
+        if (createBigSweat) productsArray.push({ itemId: 95, published: published });
+        if (createBigHoodie) productsArray.push({ itemId: 96, published: published });
+        if (createWaterGlass) productsArray.push({ itemId: 97, published: published });
+        if (createSoftClearSmartphoneCase) productsArray.push({ itemId: 98, published: published });
+        if (createFivePanelCap) productsArray.push({ itemId: 99, published: published });
+        if (createBigTshirt) productsArray.push({ itemId: 100, published: published });
+        if (createClearFileFolder) productsArray.push({ itemId: 101, published: published });
+        if (createBucketHat) productsArray.push({ itemId: 102, published: published });
+        if (createClearMultiCase) productsArray.push({ itemId: 103, published: published });
+        if (createMiniClearMultiCase) productsArray.push({ itemId: 104, published: published });
+        if (createSandal) productsArray.push({ itemId: 105, published: published });
+        if (createBigLongSleeveTshirt) productsArray.push({ itemId: 106, published: published });
+        if (createBandana) productsArray.push({ itemId: 107, published: published });
+        if (createReusablBag) productsArray.push({ itemId: 108, published: published });
+        if (createThermoTumbler) productsArray.push({ itemId: 109, published: published });
+        if (createFullGraphicMask) productsArray.push({ itemId: 110, published: published });
+        if (createOrganicCottonTshirt) productsArray.push({ itemId: 111, published: published });
+        if (createDryTshirt) productsArray.push({ itemId: 112, published: published });
+        if (createAcrylicKeychain) productsArray.push({ itemId: 147, published: published });
+        if (createHeavyweightTshirt) productsArray.push({ itemId: 148, published: published });
+        if (createOversizedTshirt) productsArray.push({ itemId: 149, published: published });
+        if (createLongSizedWaterGlass) productsArray.push({ itemId: 150, published: published });
+        if (createCushion) productsArray.push({ itemId: 151, published: published });
+        if (createHeavyweightHoodie) productsArray.push({ itemId: 152, published: published });
+        if (createHeavyweightZipHoodie) productsArray.push({ itemId: 153, published: published });
+        if (createHeavyweightSweat) productsArray.push({ itemId: 154, published: published });
+        if (createEmbroideredTshirt) productsArray.push({ itemId: 155, published: published });
+        if (createLunchToteBag) productsArray.push({ itemId: 158, published: published });
+        if (createAcrylicStand) productsArray.push({ itemId: 159, published: published });
+        if (createAnkleSocks) productsArray.push({ itemId: 160, published: published });
+        if (createSocks) productsArray.push({ itemId: 161, published: published });
+        if (createOnePointTshirt) productsArray.push({ itemId: 162, published: published });
+        if (createSmartphoneStrap) productsArray.push({ itemId: 195, published: published });
+        if (createFlatCanCase) productsArray.push({ itemId: 228, published: published });
+        if (createMaskingTape) productsArray.push({ itemId: 261, published: published });
+        if (createAndroidSmartphoneCase) productsArray.push({ itemId: 294, published: published });
+        if (createEmbroideredFleeceJacket) productsArray.push({ itemId: 327, published: published });
+        if (createLightweightTshirt) productsArray.push({ itemId: 360, published: published });
+        if (createFaceTowel) productsArray.push({ itemId: 393, published: published });
+        if (createFlatPouch) productsArray.push({ itemId: 426, published: published });
 
         // Material + Products を1リクエストで作成
         console.log(`📤 Material + ${productsArray.length}種類の商品を作成中...`);

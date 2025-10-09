@@ -3443,28 +3443,23 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                             imageUrl: compressedImage,
                             title: suzuriTitle,
                             published: true,
-                            // すべてのアイテムを自動作成（62種類）
-                            // 衣類（16種類）
-                            createTshirt: true, createHoodie: true, createSweatshirt: true, createLongSleeveTshirt: true,
-                            createBigSilhouetteTshirt: true, createFullGraphicTshirt: true, createOversizeTshirt: true,
-                            createHeavyweightTshirt: true, createTankTop: true, createDryTshirt: true, createPoloShirt: true,
-                            createCoach: true, createAnorak: true, createZipHoodie: true, createCardigan: true, createWideSweat: true,
-                            // バッグ・小物（11種類）
-                            createToteBag: true, createSacoche: true, createPouch: true, createBackpack: true, createBodyBag: true,
-                            createKnapSack: true, createFlatPouch: true, createPenCase: true, createTravelPouch: true,
-                            createPassCase: true, createWallet: true,
-                            // 雑貨（20種類）
-                            createMug: true, createSticker: true, createAcrylicKeychain: true, createAcrylicBlock: true,
-                            createCushion: true, createBlanket: true, createCanBadge: true, createBigCanBadge: true,
-                            createCompactMirror: true, createPhoneRing: true, createTowel: true, createHandkerchief: true,
-                            createBandana: true, createWashTowel: true, createMaskingTape: true, createCanCase: true,
-                            createAcrylicStand: true, createJigsawPuzzle: true, createWallClock: true, createNeckPillow: true,
-                            // デジタル・ケース（7種類）
-                            createPhoneCase: true, createNotebook: true, createClearFile: true, createBookCover: true,
-                            createGlassCase: true, createAirPodsCase: true, createPCCase: true,
-                            // ファッション小物（8種類）
-                            createCap: true, createBucketHat: true, createKnitCap: true, createSocks: true,
-                            createCrewSocks: true, createEcoFurBag: true, createBigScarf: true, createBandanaScarf: true
+                            // SUZURI 全商品タイプ（61種類）
+                            createStandardTshirt: true, createToteBag: true, createMug: true, createPhoneCase: true,
+                            createSweatshirt: true, createFullGraphicTshirt: true, createHoodie: true, createNotebook: true,
+                            createSticker: true, createBlanket: true, createTowelHandkerchief: true, createLongSleeveTshirt: true,
+                            createSacoche: true, createCanBadge: true, createClearSmartphoneCase: true, createTarpaulin: true,
+                            createAcrylicBlock: true, createBookStyleSmartphoneCase: true, createZipHoodie: true, createKinchaku: true,
+                            createBigShoulderBag: true, createBigSweat: true, createBigHoodie: true, createWaterGlass: true,
+                            createSoftClearSmartphoneCase: true, createFivePanelCap: true, createBigTshirt: true, createClearFileFolder: true,
+                            createBucketHat: true, createClearMultiCase: true, createMiniClearMultiCase: true, createSandal: true,
+                            createBigLongSleeveTshirt: true, createBandana: true, createReusablBag: true, createThermoTumbler: true,
+                            createFullGraphicMask: true, createOrganicCottonTshirt: true, createDryTshirt: true, createAcrylicKeychain: true,
+                            createHeavyweightTshirt: true, createOversizedTshirt: true, createLongSizedWaterGlass: true, createCushion: true,
+                            createHeavyweightHoodie: true, createHeavyweightZipHoodie: true, createHeavyweightSweat: true, createEmbroideredTshirt: true,
+                            createLunchToteBag: true, createAcrylicStand: true, createAnkleSocks: true, createSocks: true,
+                            createOnePointTshirt: true, createSmartphoneStrap: true, createFlatCanCase: true, createMaskingTape: true,
+                            createAndroidSmartphoneCase: true, createEmbroideredFleeceJacket: true, createLightweightTshirt: true, createFaceTowel: true,
+                            createFlatPouch: true
                         };
 
                         const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
@@ -3687,28 +3682,23 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                         imageUrl: compressedImage,
                         title: suzuriTitle,
                         published: true,
-                        // すべてのアイテムを自動作成（62種類）
-                        // 衣類（16種類）
-                        createTshirt: true, createHoodie: true, createSweatshirt: true, createLongSleeveTshirt: true,
-                        createBigSilhouetteTshirt: true, createFullGraphicTshirt: true, createOversizeTshirt: true,
-                        createHeavyweightTshirt: true, createTankTop: true, createDryTshirt: true, createPoloShirt: true,
-                        createCoach: true, createAnorak: true, createZipHoodie: true, createCardigan: true, createWideSweat: true,
-                        // バッグ・小物（11種類）
-                        createToteBag: true, createSacoche: true, createPouch: true, createBackpack: true, createBodyBag: true,
-                        createKnapSack: true, createFlatPouch: true, createPenCase: true, createTravelPouch: true,
-                        createPassCase: true, createWallet: true,
-                        // 雑貨（20種類）
-                        createMug: true, createSticker: true, createAcrylicKeychain: true, createAcrylicBlock: true,
-                        createCushion: true, createBlanket: true, createCanBadge: true, createBigCanBadge: true,
-                        createCompactMirror: true, createPhoneRing: true, createTowel: true, createHandkerchief: true,
-                        createBandana: true, createWashTowel: true, createMaskingTape: true, createCanCase: true,
-                        createAcrylicStand: true, createJigsawPuzzle: true, createWallClock: true, createNeckPillow: true,
-                        // デジタル・ケース（7種類）
-                        createPhoneCase: true, createNotebook: true, createClearFile: true, createBookCover: true,
-                        createGlassCase: true, createAirPodsCase: true, createPCCase: true,
-                        // ファッション小物（8種類）
-                        createCap: true, createBucketHat: true, createKnitCap: true, createSocks: true,
-                        createCrewSocks: true, createEcoFurBag: true, createBigScarf: true, createBandanaScarf: true
+                        // SUZURI 全商品タイプ（61種類）
+                        createStandardTshirt: true, createToteBag: true, createMug: true, createPhoneCase: true,
+                        createSweatshirt: true, createFullGraphicTshirt: true, createHoodie: true, createNotebook: true,
+                        createSticker: true, createBlanket: true, createTowelHandkerchief: true, createLongSleeveTshirt: true,
+                        createSacoche: true, createCanBadge: true, createClearSmartphoneCase: true, createTarpaulin: true,
+                        createAcrylicBlock: true, createBookStyleSmartphoneCase: true, createZipHoodie: true, createKinchaku: true,
+                        createBigShoulderBag: true, createBigSweat: true, createBigHoodie: true, createWaterGlass: true,
+                        createSoftClearSmartphoneCase: true, createFivePanelCap: true, createBigTshirt: true, createClearFileFolder: true,
+                        createBucketHat: true, createClearMultiCase: true, createMiniClearMultiCase: true, createSandal: true,
+                        createBigLongSleeveTshirt: true, createBandana: true, createReusablBag: true, createThermoTumbler: true,
+                        createFullGraphicMask: true, createOrganicCottonTshirt: true, createDryTshirt: true, createAcrylicKeychain: true,
+                        createHeavyweightTshirt: true, createOversizedTshirt: true, createLongSizedWaterGlass: true, createCushion: true,
+                        createHeavyweightHoodie: true, createHeavyweightZipHoodie: true, createHeavyweightSweat: true, createEmbroideredTshirt: true,
+                        createLunchToteBag: true, createAcrylicStand: true, createAnkleSocks: true, createSocks: true,
+                        createOnePointTshirt: true, createSmartphoneStrap: true, createFlatCanCase: true, createMaskingTape: true,
+                        createAndroidSmartphoneCase: true, createEmbroideredFleeceJacket: true, createLightweightTshirt: true, createFaceTowel: true,
+                        createFlatPouch: true
                     };
 
                     const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
