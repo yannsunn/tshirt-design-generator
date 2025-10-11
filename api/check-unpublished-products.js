@@ -61,11 +61,15 @@ export default async function handler(req, res) {
             let allPricesValid = true;
 
             for (const variant of variants) {
-                const price = variant.price; // セント単位
-                const cost = variant.cost || blueprintCosts[blueprintId]?.base || 0;
+                const price = variant.price; // USDセント単位
+                const costJpy = variant.cost || blueprintCosts[blueprintId]?.base || 0;
+
+                // JPYをUSDセントに変換
+                const JPY_TO_USD = 150;
+                const costUsd = (costJpy / JPY_TO_USD) * 100; // USDセントに変換
 
                 // マージン計算
-                const margin = cost > 0 ? ((price - cost) / price * 100) : 0;
+                const margin = costUsd > 0 ? ((price - costUsd) / price * 100) : 0;
 
                 // 価格チェック: 38%マージン、末尾99セント
                 const isMarginOk = margin >= 37.5 && margin <= 38.5; // 38% ± 0.5%
