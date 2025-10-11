@@ -387,13 +387,6 @@
                             <!-- Generated images will be inserted here -->
                         </div>
                         <p class="text-sm text-gray-400 mb-3">🤍 白Tシャツ用デザイン（黒文字・背景透過）</p>
-                        <div class="flex gap-3 justify-center flex-wrap">
-                            <button
-                                id="create-all-printify-btn"
-                                class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300">
-                                🛒 全画像でPrintify商品作成（順次実行）
-                            </button>
-                        </div>
                         <!-- SNS Post Section -->
                         <div id="sns-section" class="hidden mt-6 bg-gray-800 rounded-lg p-4">
                             <h3 class="font-semibold text-purple-300 mb-2">📱 SNS投稿文</h3>
@@ -415,10 +408,10 @@
             <div class="mt-8 bg-gray-800 rounded-lg p-6 border-2 border-purple-700">
                 <h2 class="text-xl font-bold mb-2 text-purple-300 flex items-center gap-2">
                     <span>🌐</span>
-                    <span>グローバルPOD連携</span>
+                    <span>Printify・SUZURI・eBay 一括出品</span>
                 </h2>
                 <p class="text-sm text-gray-400 mb-6">
-                    Printify・SUZURIに商品を出品します（現在のデザインを使用）
+                    Printify・SUZURI・eBayに商品を出品します（現在のデザインを使用）
                 </p>
 
                 <!-- メイン機能：一括出品ボタン -->
@@ -433,17 +426,17 @@
                         class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-5 px-8 rounded-xl transition duration-300 flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         disabled>
                         <span class="text-2xl">🌐</span>
-                        <span>Printify + SUZURIに一括出品</span>
+                        <span>Printify・SUZURI・eBay 一括出品</span>
                     </button>
                     <p class="text-xs text-gray-400 mt-3 text-center">
-                        ✨ 両プラットフォームに同時出品（最も効率的）
+                        ✨ 3プラットフォームに同時出品（最も効率的）
                     </p>
                 </div>
 
 
                 <div class="text-xs text-gray-500 mt-4 border-t border-gray-700 pt-3 flex items-center gap-2">
                     <span>💡</span>
-                    <span>Printify（国際市場・英語）+ SUZURI（日本市場・日本語）で自動最適化されます</span>
+                    <span>Printify（Storefront・eBay）+ SUZURI（日本市場）で自動最適化されます</span>
                 </div>
             </div>
         </main>
@@ -1642,7 +1635,7 @@
                     <p class="text-xs text-gray-400 mb-1">${imgData.idea.phrase}</p>
                     <p class="text-xs text-purple-300">${imgData.api === 'gemini' ? 'Gemini' : 'Seedream 4.0'}</p>
                     <button class="mt-2 text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-2 rounded text-center manual-publish-btn" data-index="${index}">
-                        🚀 手動出品（全プラットフォーム）
+                        🛍️ Etsy出品
                     </button>
                     <a href="${imgData.imageData}" download="design-${index + 1}.png" class="mt-2 text-xs bg-pink-600 hover:bg-pink-700 text-white py-1 px-2 rounded text-center">
                         ダウンロード
@@ -3136,7 +3129,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
 
             const imageCount = generatedImages.length;
-            if (!confirm(`${imageCount}つのデザインをPrintify + SUZURIに一括出品しますか？\n\n出品先:\n• Printify Storefront (自動)\n• Printify eBay (自動)\n• SUZURI (Tシャツ/パーカー/スウェット)\n\n※ Etsyは手動選択で出品できます`)) {
+            if (!confirm(`${imageCount}つのデザインをPrintify・SUZURI・eBayに一括出品しますか？\n\n出品先:\n• Printify Storefront (自動)\n• Printify eBay (自動)\n• SUZURI (61商品タイプ)\n\n※ Etsyは個別に「Etsy出品」ボタンで出品できます`)) {
                 return;
             }
 
@@ -3336,7 +3329,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 progressText.textContent = 'エラーが発生しました';
             } finally {
                 publishAllBtn.disabled = false;
-                publishAllBtn.innerHTML = '<span>🌐</span><span>Printify + SUZURIに一括出品</span>';
+                publishAllBtn.innerHTML = '<span>🌐</span><span>Printify・SUZURI・eBay 一括出品</span>';
             }
         };
 
