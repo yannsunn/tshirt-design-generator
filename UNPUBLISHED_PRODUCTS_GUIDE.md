@@ -16,7 +16,14 @@
 
 ---
 
-## 🗄️ Supabase履歴のクリーンアップ
+## 🗄️ Supabase履歴のスマートクリーンアップ
+
+### 重要な変更点
+
+⚠️ **新しいロジック**: 出品できない商品に対応するアイデアのみ削除します
+
+- ✅ **出品可能な商品**: アイデアを保持（重複管理に使用）
+- ❌ **出品不可な商品**: アイデアを削除（価格不正など）
 
 ### 履歴確認
 ```bash
@@ -26,30 +33,75 @@ curl -X POST https://design-generator-puce.vercel.app/api/get-idea-history \
   -d '{"limit": 100}'
 ```
 
-### 履歴削除
+### スマートクリーンアップ（推奨）
 
-#### オプション1: 全削除
+#### ドライラン（確認のみ）
+```bash
+# Storefrontの出品不可商品に対応するアイデアを確認
+curl -X POST https://design-generator-puce.vercel.app/api/cleanup-unpublishable-ideas \
+  -H "Content-Type: application/json" \
+  -d '{
+    "shopId": "24566516",
+    "dryRun": true
+  }'
+```
+
+**ドライランレスポンス例**:
+```json
+{
+  "dryRun": true,
+  "message": "15件のアイデアが削除対象です（ドライラン）",
+  "note": "dryRun=false で実際に削除します",
+  "unpublishableProducts": 30,
+  "ideasToDelete": [
+    {
+      "id": "abc123",
+      "character": "日本の侍",
+      "phrase": "武士道の精神",
+      "created_at": "2025-10-01T12:00:00Z"
+    }
+  ]
+}
+```
+
+#### 実際に削除
+```bash
+# 出品不可商品に対応するアイデアを削除
+curl -X POST https://design-generator-puce.vercel.app/api/cleanup-unpublishable-ideas \
+  -H "Content-Type: application/json" \
+  -d '{
+    "shopId": "24566516",
+    "dryRun": false
+  }'
+```
+
+**実行レスポンス例**:
+```json
+{
+  "success": true,
+  "deleted": 15,
+  "remaining": 105,
+  "unpublishableProducts": 30,
+  "message": "出品不可商品に対応する 15件のアイデアを削除しました（残り: 105件）"
+}
+```
+
+### 従来のクリーンアップ（非推奨）
+
+⚠️ **警告**: これらのAPIは全削除するため、出品可能な商品のアイデアも削除されます
+
+#### オプション1: 全削除（非推奨）
 ```bash
 curl -X POST https://design-generator-puce.vercel.app/api/cleanup-idea-history \
   -H "Content-Type: application/json" \
   -d '{"deleteAll": true}'
 ```
 
-#### オプション2: 古いデータのみ削除（30日以上前）
+#### オプション2: 古いデータのみ削除（30日以上前、非推奨）
 ```bash
 curl -X POST https://design-generator-puce.vercel.app/api/cleanup-idea-history \
   -H "Content-Type: application/json" \
   -d '{"deleteAll": false, "keepDays": 30}'
-```
-
-**レスポンス例**:
-```json
-{
-  "success": true,
-  "deleted": 150,
-  "remaining": 25,
-  "message": "全アイデア履歴を削除しました（残り: 25件）"
-}
 ```
 
 ---
@@ -282,12 +334,15 @@ curl -X POST https://design-generator-puce.vercel.app/api/auto-publish-ready-pro
 1. SUZURI管理画面にログイン
 2. 61商品にトリブン +800円を設定
 
-### Step 6: Supabase履歴クリーンアップ
+### Step 6: Supabase履歴クリーンアップ（スマート）
 ```bash
-# 全削除（出品済みなので不要）
-curl -X POST https://design-generator-puce.vercel.app/api/cleanup-idea-history \
+# 出品不可商品のアイデアのみ削除（推奨）
+curl -X POST https://design-generator-puce.vercel.app/api/cleanup-unpublishable-ideas \
   -H "Content-Type: application/json" \
-  -d '{"deleteAll": true}'
+  -d '{
+    "shopId": "24566516",
+    "dryRun": false
+  }'
 ```
 
 ---
