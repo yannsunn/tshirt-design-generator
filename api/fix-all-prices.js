@@ -27,7 +27,22 @@ export default async function handler(req, res) {
         const calculateOptimalPrice = (costJpy) => {
             const costUsd = costJpy / JPY_TO_USD;
             const exactPriceUsd = costUsd / (1 - TARGET_MARGIN / 100);
-            const priceUsd = Math.ceil(exactPriceUsd) - 0.01;
+
+            // $X.99形式に調整（切り上げではなく、最も近い$X.99を選択）
+            const floorPrice = Math.floor(exactPriceUsd);
+            const ceilPrice = Math.ceil(exactPriceUsd);
+
+            const floorPriceWith99 = floorPrice + 0.99;
+            const ceilPriceWith99 = ceilPrice + 0.99;
+
+            // 38%に最も近い価格を選択
+            const marginFloor = ((floorPriceWith99 - costUsd) / floorPriceWith99) * 100;
+            const marginCeil = ((ceilPriceWith99 - costUsd) / ceilPriceWith99) * 100;
+
+            const priceUsd = (Math.abs(marginFloor - TARGET_MARGIN) < Math.abs(marginCeil - TARGET_MARGIN))
+                ? floorPriceWith99
+                : ceilPriceWith99;
+
             return Math.round(priceUsd * 100); // セント単位
         };
 
