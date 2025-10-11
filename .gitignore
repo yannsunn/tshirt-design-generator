@@ -13,9 +13,24 @@ npm-debug.log*
 pricing-reports/*.json
 !pricing-reports/.gitkeep
 
+# Testing
+coverage/
+*.test.log
+
 # OS files
 .DS_Store
 Thumbs.db
 
 # Vercel
 .vercel
+
+# Claude
+.claude/
+
+# Backup files
+*.backup.js
+*.old.js
+
+# Data files
+suzuri-items.json
+price-fix-log.txt

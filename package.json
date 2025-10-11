@@ -6,7 +6,9 @@
   "scripts": {
     "pricing:check": "node scripts/auto-pricing-check.js --analyze",
     "pricing:fix": "node scripts/auto-pricing-check.js --auto-fix",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "keywords": [
     "tshirt",
@@ -20,5 +22,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0"
   }
 }
