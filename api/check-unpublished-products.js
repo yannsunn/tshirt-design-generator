@@ -30,13 +30,21 @@ export default async function handler(req, res) {
         const result = await response.json();
         const products = result.data || [];
 
-        // Blueprint原価データ
+        // Blueprint原価データ (JPY)
         const blueprintCosts = {
+            // 旧データ
             706: { base: 1241, sizes: { '2XL': 1367, '3XL': 1571, '4XL': 1766 } },
             1296: { base: 3064, sizes: { '2XL': 3548, '3XL': 4181 } },
-            6: { base: 1167, sizes: { '2XL': 1544, '3XL': 1636, '4XL': 1636, '5XL': 1636 } },
-            49: { base: 2230, sizes: {} },
-            12: { base: 1636, sizes: { '2XL': 2039 } }
+            12: { base: 1636, sizes: { '2XL': 2039 } },
+            // 新データ
+            6: { base: 900, sizes: { '2XL': 1200, '3XL': 1500 } },
+            26: { base: 1050, sizes: { '2XL': 1350, '3XL': 1650 } },
+            36: { base: 1200, sizes: { '2XL': 1500, '3XL': 1800 } },
+            145: { base: 1050, sizes: { '2XL': 1350, '3XL': 1650 } },
+            157: { base: 750, sizes: {} },
+            80: { base: 1350, sizes: { '2XL': 1650, '3XL': 1950 } },
+            49: { base: 2100, sizes: { '2XL': 2550, '3XL': 3000 } },
+            77: { base: 2550, sizes: { '2XL': 3000, '3XL': 3450 } }
         };
 
         const unpublished = [];
