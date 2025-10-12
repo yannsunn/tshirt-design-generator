@@ -83,11 +83,11 @@ export default async function handler(req, res) {
 
                 const variantsData = await variantsResponse.json();
 
-                // 商品ペイロード作成
-                const variants = variantsData.variants.map(v => ({
+                // 商品ペイロード作成（最初の100バリアントのみ有効化）
+                const variants = variantsData.variants.map((v, index) => ({
                     id: v.id,
                     price: 2999,
-                    is_enabled: true
+                    is_enabled: index < 100
                 }));
 
                 const productPayload = {
