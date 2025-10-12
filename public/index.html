@@ -3294,7 +3294,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                         const uploadResult = await uploadResponse.json();
                         printifyImageId = uploadResult.imageId;
-                        console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId);
+                        const printifyImageUrl = uploadResult.previewUrl;  // SUZURI用の公開URL
+                        console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId, printifyImageUrl);
 
                         // Step 3: Create products for ALL auto-publish shops (Storefront + eBay)
                         progressText.textContent = `[${i + 1}/${imageCount}] Printify: 商品作成中...`;
@@ -3347,7 +3348,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                     try {
                         progressText.textContent = `[${i + 1}/${imageCount}] SUZURI: 商品作成中...`;
                         const suzuriBody = {
-                            imageUrl: compressedImage,
+                            imageUrl: printifyImageUrl || compressedImage,  // Printifyの公開URLを使用（フォールバックはbase64）
                             title: suzuriTitle,
                             published: true  // 自動公開（トリブンはデフォルト0%）
                         };
@@ -3497,7 +3498,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                         const uploadResult = await uploadResponse.json();
                         printifyImageId = uploadResult.imageId;
-                        console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId);
+                        const printifyImageUrl = uploadResult.previewUrl;  // SUZURI用の公開URL
+                        console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId, printifyImageUrl);
 
                         // Step 2: Create products for Storefront + eBay
                         progressText.textContent = `[${i + 1}/${imageCount}] Printify: 商品作成中...`;
@@ -3542,7 +3544,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                     try {
                         progressText.textContent = `[${i + 1}/${imageCount}] SUZURI: 商品作成中...`;
                         const suzuriBody = {
-                            imageUrl: compressedImage,
+                            imageUrl: printifyImageUrl || compressedImage,  // Printifyの公開URLを使用（フォールバックはbase64）
                             title: suzuriTitle,
                             published: true,
                             // SUZURI 全商品タイプ（61種類）
@@ -3736,7 +3738,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                     const uploadResult = await uploadResponse.json();
                     printifyImageId = uploadResult.imageId;
-                    console.log(`✅ Printify画像アップロード成功:`, printifyImageId);
+                    const printifyImageUrl = uploadResult.previewUrl;  // SUZURI用の公開URL
+                    console.log(`✅ Printify画像アップロード成功:`, printifyImageId, printifyImageUrl);
 
                     // Step 2: Create products for Storefront + eBay
                     progressText.textContent = `Printify: 商品作成中...`;
@@ -3781,7 +3784,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 try {
                     progressText.textContent = `SUZURI: 商品作成中...`;
                     const suzuriBody = {
-                        imageUrl: compressedImage,
+                        imageUrl: printifyImageUrl || compressedImage,  // Printifyの公開URLを使用（フォールバックはbase64）
                         title: suzuriTitle,
                         published: true,
                         // SUZURI 全商品タイプ（61種類）

@@ -130,11 +130,10 @@ export default async function handler(req, res) {
                     is_enabled: v.is_enabled
                 };
             }),
-            print_areas: master.print_areas.map(area => ({
-                variant_ids: area.variant_ids,
-                placeholders: area.placeholders
-                    // 前面（front）のみにプリント
-                    .filter(placeholder => placeholder.position === 'front')
+            print_areas: master.print_areas.map(area => {
+                // 前面（front）のみにプリント
+                const frontPlaceholders = area.placeholders
+                    .filter(placeholder => placeholder.position === 'front' && placeholder.images && placeholder.images.length > 0)
                     .map(placeholder => ({
                         position: placeholder.position,
                         images: [
@@ -146,8 +145,13 @@ export default async function handler(req, res) {
                                 angle: placeholder.images[0]?.angle || 0
                             }
                         ]
-                    }))
-            }))
+                    }));
+
+                return {
+                    variant_ids: area.variant_ids,
+                    placeholders: frontPlaceholders
+                };
+            }).filter(area => area.placeholders.length > 0) // 空のprint_areaを除外
         };
 
         // タグを追加

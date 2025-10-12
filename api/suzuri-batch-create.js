@@ -177,7 +177,14 @@ async function handler(req, res) {
 
         if (!materialResponse.ok) {
             const errorText = await materialResponse.text();
-            throw new ExternalAPIError('SUZURI', `Material + Products作成失敗 (${materialResponse.status})`, errorText);
+            let errorDetail;
+            try {
+                errorDetail = JSON.parse(errorText);
+            } catch {
+                errorDetail = errorText;
+            }
+            console.error('❌ SUZURI APIエラー詳細:', JSON.stringify(errorDetail, null, 2));
+            throw new ExternalAPIError('SUZURI', `Material + Products作成失敗 (${materialResponse.status})`, JSON.stringify(errorDetail));
         }
 
         const result = await materialResponse.json();

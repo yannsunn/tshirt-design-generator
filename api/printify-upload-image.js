@@ -41,11 +41,13 @@ export default async function handler(req, res) {
         }
 
         const result = await response.json();
-        console.log(`Image uploaded successfully: ID=${result.id}`);
+        console.log(`Image uploaded successfully: ID=${result.id}, URL=${result.preview_url}`);
 
         res.status(200).json({
             imageId: result.id,
-            imageUrl: result.file_name,
+            imageUrl: result.preview_url || result.file_name,  // SUZURI用の公開URL
+            previewUrl: result.preview_url,  // Printifyの画像URL（HTTPS）
+            fileName: result.file_name,
             message: '画像のアップロードに成功しました'
         });
 
