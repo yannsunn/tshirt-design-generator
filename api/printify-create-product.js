@@ -20,29 +20,29 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'shopId, (imageId or imageUrl), and title are required' });
         }
 
-        // ショップごとのマスター商品IDマッピング
+        // ショップごとのマスター商品IDマッピング（2025-10-12 更新）
         const masterProductIdsByShop = {
             // Storefront (24565480)
             '24565480': {
-                tshirt: '68dffaef951b5797930ad3fa',              // Blueprint 6: Gildan 5000
-                lightweight_tee: '68dffca5f6f3f5439609a446',    // Blueprint 26: Gildan 980
-                ultra_cotton_tee: '68e00767f405aeee2807feaa',   // Blueprint 36: Gildan 2000
-                softstyle_tee: '68dffe1ff1fe6779bb0cdfb1',      // Blueprint 145: Gildan 64000
-                kids_tee: '68dfff12ccd7b22ae206682a',           // Blueprint 157: Gildan 5000B
-                longsleeve: '68e0000eb4d1554d3906a4bc',         // Blueprint 80: Gildan 2400
-                sweatshirt: '68e0050d0515f444220525d7',         // Blueprint 49: Gildan 18000
-                hoodie: '68e006307bbf5c83180c5b45'              // Blueprint 77: Gildan 18500
+                tshirt: '68eb804da0786662a60357d9',              // Blueprint 6: Gildan 5000
+                lightweight_tee: '68eb8052aa2890fa97097970',    // Blueprint 26: Gildan 980
+                ultra_cotton_tee: '68eb8054a0786662a60357da',   // Blueprint 36: Gildan 2000
+                softstyle_tee: '68eb8059aa2890fa97097974',      // Blueprint 145: Gildan 64000
+                kids_tee: '68eb805da0c8ed2f2c0f0314',           // Blueprint 157: Gildan 5000B
+                longsleeve: '68eb8060ff3c0ac2d50ebd3f',         // Blueprint 80: Gildan 2400
+                sweatshirt: '68eb8063a0786662a60357dd',         // Blueprint 49: Gildan 18000
+                hoodie: '68eb8068cb19b441780df848'              // Blueprint 77: Gildan 18500
             },
             // eBay (24566516)
             '24566516': {
-                tshirt: '68e39a095c8e09e0f20e4420',              // Blueprint 6: Gildan 5000
-                lightweight_tee: '68e39a385a740db0ee07a1ce',    // Blueprint 26: Gildan 980
-                ultra_cotton_tee: '68e39a5c0b50e61d8e0104f6',   // Blueprint 36: Gildan 2000
-                softstyle_tee: '68e39d3c83a2571b800c60b6',      // Blueprint 145: Gildan 64000
-                kids_tee: '68e39d5e362ccc36b903d329',           // Blueprint 157: Gildan 5000B
-                longsleeve: '68e39add5a740db0ee07a209',         // Blueprint 80: Gildan 2400
-                sweatshirt: '68e39b015dfb2b43940b541a',         // Blueprint 49: Gildan 18000
-                hoodie: '68e39bae0b50e61d8e01058f'              // Blueprint 77: Gildan 18500
+                tshirt: '68eb807df88f52634a10c89a',              // Blueprint 6: Gildan 5000
+                lightweight_tee: '68eb80830bb1a283330f42f0',    // Blueprint 26: Gildan 980
+                ultra_cotton_tee: '68eb8087cb19b441780df853',   // Blueprint 36: Gildan 2000
+                softstyle_tee: '68eb808ba0c8ed2f2c0f031a',      // Blueprint 145: Gildan 64000
+                kids_tee: '68eb808eaa2890fa97097981',           // Blueprint 157: Gildan 5000B
+                longsleeve: '68eb80910bb1a283330f42f2',         // Blueprint 80: Gildan 2400
+                sweatshirt: '68eb80940bb1a283330f42f3',         // Blueprint 49: Gildan 18000
+                hoodie: '68eb8098aa2890fa97097982'              // Blueprint 77: Gildan 18500
             }
         };
 
