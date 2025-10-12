@@ -53,22 +53,22 @@ export default async function handler(req, res) {
 
                 const blueprint = await blueprintResponse.json();
 
-                // Step 2: Print Provider詳細を取得
-                const providerResponse = await fetch(
-                    `https://api.printify.com/v1/catalog/blueprints/${config.blueprintId}/print_providers/${config.printProviderId}.json`,
+                // Step 2: Print Provider Variants取得
+                const variantsResponse = await fetch(
+                    `https://api.printify.com/v1/catalog/blueprints/${config.blueprintId}/print_providers/${config.printProviderId}/variants.json`,
                     {
                         headers: { 'Authorization': `Bearer ${apiKey}` }
                     }
                 );
 
-                if (!providerResponse.ok) {
-                    throw new Error(`Provider取得失敗: ${providerResponse.status}`);
+                if (!variantsResponse.ok) {
+                    throw new Error(`Variants取得失敗: ${variantsResponse.status}`);
                 }
 
-                const provider = await providerResponse.json();
+                const variantsData = await variantsResponse.json();
 
                 // Step 3: 商品作成用のペイロード構築
-                const variants = provider.variants.map(variant => ({
+                const variants = variantsData.variants.map(variant => ({
                     id: variant.id,
                     price: 2999, // 仮の価格（後で価格計算APIで更新）
                     is_enabled: true
