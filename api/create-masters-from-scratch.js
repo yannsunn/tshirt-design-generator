@@ -15,16 +15,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'shopId is required' });
     }
 
-    // Blueprint IDとPrint Provider IDのマッピング（正しいProvider IDを使用）
+    // Blueprint IDとPrint Provider IDのマッピング（Printify Choice = 99）
     const blueprintConfigs = [
-        { blueprintId: 6, printProviderId: 9, name: '[MASTER] Gildan 5000 T-Shirt', type: 'tshirt' },
-        { blueprintId: 26, printProviderId: 9, name: '[MASTER] Gildan 980 Lightweight', type: 'lightweight_tee' },
-        { blueprintId: 36, printProviderId: 9, name: '[MASTER] Gildan 2000 Ultra Cotton', type: 'ultra_cotton_tee' },
-        { blueprintId: 145, printProviderId: 9, name: '[MASTER] Gildan 64000 Softstyle', type: 'softstyle_tee' },
-        { blueprintId: 157, printProviderId: 9, name: '[MASTER] Gildan 5000B Kids Tee', type: 'kids_tee' },
-        { blueprintId: 80, printProviderId: 9, name: '[MASTER] Gildan 2400 Long Sleeve', type: 'longsleeve' },
-        { blueprintId: 49, printProviderId: 9, name: '[MASTER] Gildan 18000 Sweatshirt', type: 'sweatshirt' },
-        { blueprintId: 77, printProviderId: 9, name: '[MASTER] Gildan 18500 Hoodie', type: 'hoodie' }
+        { blueprintId: 6, printProviderId: 99, name: '[MASTER] Gildan 5000 T-Shirt', type: 'tshirt' },
+        { blueprintId: 26, printProviderId: 99, name: '[MASTER] Gildan 980 Lightweight', type: 'lightweight_tee' },
+        { blueprintId: 36, printProviderId: 99, name: '[MASTER] Gildan 2000 Ultra Cotton', type: 'ultra_cotton_tee' },
+        { blueprintId: 145, printProviderId: 99, name: '[MASTER] Gildan 64000 Softstyle', type: 'softstyle_tee' },
+        { blueprintId: 157, printProviderId: 99, name: '[MASTER] Gildan 5000B Kids Tee', type: 'kids_tee' },
+        { blueprintId: 80, printProviderId: 99, name: '[MASTER] Gildan 2400 Long Sleeve', type: 'longsleeve' },
+        { blueprintId: 49, printProviderId: 99, name: '[MASTER] Gildan 18000 Sweatshirt', type: 'sweatshirt' },
+        { blueprintId: 77, printProviderId: 99, name: '[MASTER] Gildan 18500 Hoodie', type: 'hoodie' }
     ];
 
     const results = {
