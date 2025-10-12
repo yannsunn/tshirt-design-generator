@@ -533,13 +533,6 @@
         const generateIdeasBtn = document.getElementById('generate-ideas-btn');
         const ideasSection = document.getElementById('ideas-section');
         const ideasContainer = document.getElementById('ideas-container');
-        const imageSection = document.getElementById('image-section');
-        const imageLoader = document.getElementById('image-loader');
-        const progressText = document.getElementById('progress-text');
-        const imageDisplay = document.getElementById('image-display');
-        const imagePlaceholder = document.getElementById('image-placeholder');
-        const generatedImage = document.getElementById('generated-image');
-        const downloadBtn = document.getElementById('download-btn');
         const errorSection = document.getElementById('error-section');
         const errorMessage = document.getElementById('error-message');
         const copyErrorBtn = document.getElementById('copy-error-btn');
@@ -846,62 +839,9 @@
                         <p class="text-sm text-gray-300 mt-1"><span class="font-medium text-gray-400">フレーズ:</span> ${idea.phrase}</p>
                         <p class="text-sm text-gray-300 mt-1"><span class="font-medium text-gray-400">推奨フォント:</span> ${idea.fontStyle}</p>
                     </div>
-                    <button class="generate-image-btn w-full mt-4 bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">このアイディアで画像を生成</button>
                 `;
-                card.querySelector('.generate-image-btn').addEventListener('click', (e) => handleImageGeneration(e, idea));
                 ideasContainer.appendChild(card);
             });
-        };
-
-        const handleImageGeneration = async (event, idea) => {
-            currentDesignIdea = idea;
-            toggleAllGenerateButtons(false);
-            event.target.textContent = "生成中...";
-            updateImageUI('loading', 'ステップ1/3: キャラクターを生成中...');
-            hideError();
-            snsSection.classList.add('hidden');
-
-            try {
-                const generatedImgBlob = await generateCharacterImage(idea.character);
-
-                // 簡易背景除去（無料）
-                updateImageUI('loading', 'ステップ2/3: 背景を除去中...（無料・簡易版）');
-                const transparentImgBlob = await removeBackgroundWithAPI(generatedImgBlob);
-
-                updateImageUI('loading', 'ステップ3/3: テキストを合成中...');
-
-                // 白Tシャツ用のデザインを生成
-                const finalImage = await compositeTextOntoImage(transparentImgBlob, idea.phrase, idea.fontStyle);
-
-                updateImageUI('success', null, finalImage);
-            } catch (error) {
-                console.error('Error during image generation process:', error);
-                showError(`画像生成エラー: ${error.message}`);
-                updateImageUI('error');
-            } finally {
-                toggleAllGenerateButtons(true);
-            }
-        };
-
-        const generateCharacterImage = async (character) => {
-            // Use first selected API for individual image generation
-            const selectedAPIs = getSelectedAPIs();
-            const apiToUse = selectedAPIs.length > 0 ? selectedAPIs[0] : 'gemini';
-
-            const response = await fetch(`${API_BASE_URL}/generate-image`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ character, api: apiToUse })
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || '画像の生成に失敗しました');
-            }
-
-            const result = await response.json();
-            const fetchRes = await fetch(result.image);
-            return await fetchRes.blob();
         };
 
         // 簡易的な白背景除去（無料、クライアント側処理）
@@ -1287,27 +1227,8 @@
 
         const resetUIForNewIdeas = () => {
             ideasSection.classList.add('hidden');
-            imageSection.classList.add('hidden');
             ideasContainer.innerHTML = '';
             currentDesignIdea = null;
-        };
-
-        const updateImageUI = (state, progressMessage = '', imageUrl = '') => {
-            imageSection.classList.remove('hidden');
-            imageLoader.classList.toggle('hidden', state !== 'loading');
-            imageDisplay.classList.toggle('hidden', state !== 'success');
-            imagePlaceholder.classList.toggle('hidden', state !== 'error' && state !== 'initial');
-
-            if (state === 'loading') {
-                progressText.textContent = progressMessage;
-            }
-
-            if (state === 'success') {
-                generatedImage.src = imageUrl;
-                downloadBtn.href = imageUrl;
-            } else if (state === 'error') {
-                imagePlaceholder.textContent = '画像の生成に失敗しました。';
-            }
         };
 
         const setButtonLoading = (button, isLoading) => {
@@ -1319,16 +1240,6 @@
             if (!isLoading && button.id === 'generate-ideas-btn' && serverReady) {
                 btnText.textContent = 'アイディアを生成';
             }
-        };
-
-        const toggleAllGenerateButtons = (enabled) => {
-            document.querySelectorAll('.generate-image-btn').forEach(btn => {
-                btn.disabled = !enabled;
-                btn.classList.toggle('opacity-50', !enabled);
-                if (enabled) {
-                   btn.textContent = "このアイディアで画像を生成";
-                }
-            });
         };
 
         const showError = (message) => {
