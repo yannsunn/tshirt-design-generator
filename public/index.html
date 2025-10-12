@@ -107,9 +107,82 @@
             border-color: #9333ea;
             background-color: rgba(147, 51, 234, 0.2);
         }
+        /* Custom Alert Modal */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .custom-modal-overlay.show {
+            display: flex;
+        }
+        .custom-modal {
+            background-color: #1f2937;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        .custom-modal-content {
+            color: #fff;
+            white-space: pre-wrap;
+            user-select: text;
+            cursor: text;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .custom-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .custom-modal-btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .custom-modal-btn-copy {
+            background-color: #9333ea;
+            color: white;
+        }
+        .custom-modal-btn-copy:hover {
+            background-color: #7c3aed;
+        }
+        .custom-modal-btn-close {
+            background-color: #374151;
+            color: white;
+        }
+        .custom-modal-btn-close:hover {
+            background-color: #4b5563;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4 sm:p-6 lg:p-8">
+    <!-- Custom Alert Modal -->
+    <div id="custom-modal-overlay" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <div id="custom-modal-content" class="custom-modal-content"></div>
+            <div class="custom-modal-buttons">
+                <button id="custom-modal-copy-btn" class="custom-modal-btn custom-modal-btn-copy">📋 コピー</button>
+                <button id="custom-modal-close-btn" class="custom-modal-btn custom-modal-btn-close">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <div class="w-full max-w-4xl mx-auto">
         <!-- Header -->
         <header class="text-center mb-8">
@@ -481,6 +554,42 @@
         const imagesGrid = document.getElementById('images-grid');
         const createAllPrintifyBtn = document.getElementById('create-all-printify-btn');
         const publishAllBtn = document.getElementById('publish-all-btn');
+
+        // --- Custom Alert Function (allows text selection and copying) ---
+        const customModalOverlay = document.getElementById('custom-modal-overlay');
+        const customModalContent = document.getElementById('custom-modal-content');
+        const customModalCopyBtn = document.getElementById('custom-modal-copy-btn');
+        const customModalCloseBtn = document.getElementById('custom-modal-close-btn');
+
+        function customAlert(message) {
+            customModalContent.textContent = message;
+            customModalOverlay.classList.add('show');
+        }
+
+        customModalCloseBtn.addEventListener('click', () => {
+            customModalOverlay.classList.remove('show');
+        });
+
+        customModalCopyBtn.addEventListener('click', () => {
+            const text = customModalContent.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                customModalCopyBtn.textContent = '✅ コピー完了';
+                setTimeout(() => {
+                    customModalCopyBtn.textContent = '📋 コピー';
+                }, 2000);
+            }).catch(err => {
+                console.error('コピー失敗:', err);
+            });
+        });
+
+        customModalOverlay.addEventListener('click', (e) => {
+            if (e.target === customModalOverlay) {
+                customModalOverlay.classList.remove('show');
+            }
+        });
+
+        // Override native alert
+        const alert = customAlert;
 
         // Helper function: Get selected product types from checkboxes
         function getSelectedProductTypes() {
