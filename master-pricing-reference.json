@@ -1,0 +1,358 @@
+{
+  "6": {
+    "name": "Gildan 5000",
+    "type": "tshirt",
+    "totalVariants": 560,
+    "prices": {
+      "M": {
+        "cost": 950,
+        "price": 2999,
+        "count": 70
+      },
+      "L": {
+        "cost": 950,
+        "price": 2999,
+        "count": 70
+      },
+      "XL": {
+        "cost": 950,
+        "price": 2999,
+        "count": 70
+      },
+      "S": {
+        "cost": 950,
+        "price": 2999,
+        "count": 70
+      },
+      "2XL": {
+        "cost": 1145,
+        "price": 2999,
+        "count": 70
+      },
+      "3XL": {
+        "cost": 1257,
+        "price": 2999,
+        "count": 70
+      },
+      "4XL": {
+        "cost": 1319,
+        "price": 2999,
+        "count": 70
+      },
+      "5XL": {
+        "cost": 1317,
+        "price": 2999,
+        "count": 70
+      }
+    }
+  },
+  "26": {
+    "name": "Gildan 980",
+    "type": "lightweight_tee",
+    "totalVariants": 102,
+    "prices": {
+      "2XL": {
+        "cost": 1371,
+        "price": 1377,
+        "count": 17
+      },
+      "3XL": {
+        "cost": 1556,
+        "price": 2499,
+        "count": 17
+      },
+      "S": {
+        "cost": 1162,
+        "price": 1799,
+        "count": 17
+      },
+      "XL": {
+        "cost": 1162,
+        "price": 1799,
+        "count": 17
+      },
+      "L": {
+        "cost": 1162,
+        "price": 596,
+        "count": 17
+      },
+      "M": {
+        "cost": 1162,
+        "price": 1799,
+        "count": 17
+      }
+    }
+  },
+  "36": {
+    "name": "Gildan 2000",
+    "type": "ultra_cotton_tee",
+    "totalVariants": 418,
+    "prices": {
+      "5XL": {
+        "cost": 1731,
+        "price": 2999,
+        "count": 26
+      },
+      "XL": {
+        "cost": 1051,
+        "price": 2999,
+        "count": 61
+      },
+      "S": {
+        "cost": 1051,
+        "price": 2999,
+        "count": 61
+      },
+      "L": {
+        "cost": 1051,
+        "price": 2999,
+        "count": 61
+      },
+      "M": {
+        "cost": 1051,
+        "price": 1699,
+        "count": 61
+      },
+      "2XL": {
+        "cost": 1264,
+        "price": 2999,
+        "count": 61
+      },
+      "3XL": {
+        "cost": 1363,
+        "price": 2199,
+        "count": 61
+      },
+      "4XL": {
+        "cost": 1693,
+        "price": 1693,
+        "count": 26
+      }
+    }
+  },
+  "49": {
+    "name": "Gildan 18000",
+    "type": "sweatshirt",
+    "totalVariants": 286,
+    "prices": {
+      "2XL": {
+        "cost": 2068,
+        "price": 2999,
+        "count": 38
+      },
+      "S": {
+        "cost": 1797,
+        "price": 2799,
+        "count": 38
+      },
+      "M": {
+        "cost": 1797,
+        "price": 2799,
+        "count": 38
+      },
+      "XL": {
+        "cost": 1797,
+        "price": 2999,
+        "count": 38
+      },
+      "L": {
+        "cost": 1797,
+        "price": 2799,
+        "count": 38
+      },
+      "3XL": {
+        "cost": 2214,
+        "price": 2999,
+        "count": 38
+      },
+      "5XL": {
+        "cost": 2523,
+        "price": 2999,
+        "count": 29
+      },
+      "4XL": {
+        "cost": 2502,
+        "price": 2502,
+        "count": 29
+      }
+    }
+  },
+  "77": {
+    "name": "Gildan 18500",
+    "type": "hoodie",
+    "totalVariants": 302,
+    "prices": {
+      "S": {
+        "cost": 2158,
+        "price": 3399,
+        "count": 39
+      },
+      "M": {
+        "cost": 2158,
+        "price": 2999,
+        "count": 39
+      },
+      "XL": {
+        "cost": 2158,
+        "price": 2999,
+        "count": 39
+      },
+      "L": {
+        "cost": 2158,
+        "price": 3399,
+        "count": 39
+      },
+      "2XL": {
+        "cost": 2378,
+        "price": 2999,
+        "count": 37
+      },
+      "4XL": {
+        "cost": 2549,
+        "price": 2999,
+        "count": 36
+      },
+      "5XL": {
+        "cost": 2548,
+        "price": 4099,
+        "count": 36
+      },
+      "3XL": {
+        "cost": 2503,
+        "price": 2999,
+        "count": 37
+      }
+    }
+  },
+  "80": {
+    "name": "Gildan 2400",
+    "type": "longsleeve",
+    "totalVariants": 121,
+    "prices": {
+      "3XL": {
+        "cost": 1580,
+        "price": 2499,
+        "count": 11
+      },
+      "L": {
+        "cost": 1259,
+        "price": 1999,
+        "count": 18
+      },
+      "XL": {
+        "cost": 1259,
+        "price": 1999,
+        "count": 18
+      },
+      "S": {
+        "cost": 1259,
+        "price": 1999,
+        "count": 18
+      },
+      "M": {
+        "cost": 1259,
+        "price": 1999,
+        "count": 18
+      },
+      "2XL": {
+        "cost": 1453,
+        "price": 2299,
+        "count": 18
+      },
+      "5XL": {
+        "cost": 1757,
+        "price": 2999,
+        "count": 10
+      },
+      "4XL": {
+        "cost": 1582,
+        "price": 2499,
+        "count": 10
+      }
+    }
+  },
+  "145": {
+    "name": "Gildan 64000",
+    "type": "softstyle_tee",
+    "totalVariants": 439,
+    "prices": {
+      "L": {
+        "cost": 988,
+        "price": 2999,
+        "count": 66
+      },
+      "S": {
+        "cost": 988,
+        "price": 1599,
+        "count": 66
+      },
+      "XL": {
+        "cost": 988,
+        "price": 1599,
+        "count": 66
+      },
+      "M": {
+        "cost": 988,
+        "price": 2999,
+        "count": 66
+      },
+      "XS": {
+        "cost": 988,
+        "price": 2999,
+        "count": 11
+      },
+      "4XL": {
+        "cost": 1382,
+        "price": 2999,
+        "count": 22
+      },
+      "3XL": {
+        "cost": 1248,
+        "price": 2999,
+        "count": 66
+      },
+      "2XL": {
+        "cost": 1129,
+        "price": 1799,
+        "count": 66
+      },
+      "5XL": {
+        "cost": 1502,
+        "price": 2999,
+        "count": 10
+      }
+    }
+  },
+  "157": {
+    "name": "Gildan 5000B",
+    "type": "kids_tee",
+    "totalVariants": 135,
+    "prices": {
+      "L": {
+        "cost": 698,
+        "price": 1099,
+        "count": 27
+      },
+      "XS": {
+        "cost": 698,
+        "price": 1099,
+        "count": 27
+      },
+      "M": {
+        "cost": 698,
+        "price": 1099,
+        "count": 27
+      },
+      "S": {
+        "cost": 698,
+        "price": 1099,
+        "count": 27
+      },
+      "XL": {
+        "cost": 698,
+        "price": 1099,
+        "count": 27
+      }
+    }
+  }
+}
