@@ -3238,9 +3238,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
 
             const imageCount = generatedImages.length;
-            if (!confirm(`${imageCount}つのデザインをPrintify・SUZURI・eBayに一括出品しますか？\n\n出品先:\n• Printify Storefront (自動)\n• Printify eBay (自動)\n• SUZURI (61商品タイプ)\n\n※ Etsyは個別に「Etsy出品」ボタンで出品できます`)) {
-                return;
-            }
+            // 確認なしで直接実行（ユーザーが明示的にボタンをクリックしているため）
 
             console.log(`🌐 Printify + SUZURI一括出品開始: ${imageCount}商品`);
             publishAllBtn.disabled = true;
@@ -3450,9 +3448,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
 
             const imageCount = generatedImages.length;
-            if (!confirm(`${imageCount}つのデザインを1商品ずつ全プラットフォームに出品しますか？\n\n出品先:\n• Printify Storefront (自動)\n• Printify eBay (自動)\n• SUZURI (Tシャツ/パーカー/スウェット)\n• Etsy (自動公開)\n\n処理時間が長くなりますがよろしいですか？`)) {
-                return;
-            }
+            // 確認なしで直接実行（ユーザーが明示的にボタンをクリックしているため）
 
             console.log(`🚀 全プラットフォーム個別出品開始: ${imageCount}商品`);
             publishIndividualBtn.disabled = true;
@@ -3642,11 +3638,10 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // 結果表示
                 console.log(`\n🎉 全プラットフォーム出品完了！`);
-                let successMessage = `🎉 ${imageCount}デザインの全プラットフォーム出品完了！\n\n`;
-                successMessage += `✅ Printify: ${totalPrintifyCount}商品\n`;
+                let successMessage = `🎉 ${imageCount}デザインの出品完了！\n\n`;
+                successMessage += `✅ Printify (Storefront + eBay): ${totalPrintifyCount}商品\n`;
                 successMessage += `✅ SUZURI: ${totalSuzuriCount}商品\n`;
-                successMessage += `✅ Etsy: ${totalEtsyCount}商品\n`;
-                successMessage += `\n合計: ${totalPrintifyCount + totalSuzuriCount + totalEtsyCount}商品`;
+                successMessage += `\n合計: ${totalPrintifyCount + totalSuzuriCount}商品`;
 
                 // Auto-update Printify prices
                 if (allProductIds.length > 0) {
@@ -3696,9 +3691,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
             }
 
             const productTypes = getSelectedProductTypes();
-            if (!confirm(`「${imgData.idea.phrase}」を全プラットフォームに出品しますか？\n\n出品先:\n• Printify Storefront (${productTypes.join(', ')})\n• Printify eBay (${productTypes.join(', ')})\n• SUZURI (Tシャツ/パーカー/スウェット)\n• Etsy (${productTypes.join(', ')})\n\n処理時間: 約1-2分`)) {
-                return;
-            }
+            // 確認なしで直接実行（ユーザーが明示的にボタンをクリックしているため）
 
             console.log(`🚀 手動出品開始: ${imgData.idea.phrase}`);
 
