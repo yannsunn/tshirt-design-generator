@@ -33,16 +33,16 @@ export default async function handler(req, res) {
                 sweatshirt: '68eb8063a0786662a60357dd',         // Blueprint 49: Gildan 18000
                 hoodie: '68eb8068cb19b441780df848'              // Blueprint 77: Gildan 18500
             },
-            // eBay (24566516)
+            // eBay/Samurai (24566516) - 2025-10-13 更新
             '24566516': {
-                tshirt: '68eb807df88f52634a10c89a',              // Blueprint 6: Gildan 5000
-                lightweight_tee: '68eb80830bb1a283330f42f0',    // Blueprint 26: Gildan 980
-                ultra_cotton_tee: '68eb8087cb19b441780df853',   // Blueprint 36: Gildan 2000
-                softstyle_tee: '68eb808ba0c8ed2f2c0f031a',      // Blueprint 145: Gildan 64000
-                kids_tee: '68eb808eaa2890fa97097981',           // Blueprint 157: Gildan 5000B
-                longsleeve: '68eb80910bb1a283330f42f2',         // Blueprint 80: Gildan 2400
-                sweatshirt: '68eb80940bb1a283330f42f3',         // Blueprint 49: Gildan 18000
-                hoodie: '68eb8098aa2890fa97097982'              // Blueprint 77: Gildan 18500
+                tshirt: '68ec85bca0c8ed2f2c0f46f4',              // Blueprint 6: Gildan 5000
+                lightweight_tee: '68ec85c3f88f52634a110f14',    // Blueprint 26: Gildan 980
+                ultra_cotton_tee: '68ec85c70bb1a283330f8853',   // Blueprint 36: Gildan 2000
+                softstyle_tee: '68ec85cdf92e58591d05d3c1',      // Blueprint 145: Gildan 64000
+                kids_tee: '68ec85b5a0c8ed2f2c0f46f1',           // Blueprint 157: Gildan 5000B
+                longsleeve: '68ec85afa0786662a6039bcc',         // Blueprint 80: Gildan 2400
+                sweatshirt: '68ec85abff3c0ac2d50f018a',         // Blueprint 49: Gildan 18000
+                hoodie: '68ec85a5a0c8ed2f2c0f46e9'              // Blueprint 77: Gildan 18500
             }
         };
 
