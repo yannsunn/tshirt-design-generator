@@ -46,8 +46,18 @@ export default async function handler(req, res) {
             }
         };
 
-        // ショップIDに応じたマスター商品IDを取得（デフォルトはStorefront）
-        const masterProductIds = masterProductIdsByShop[shopId] || masterProductIdsByShop['24565480'];
+        // ショップIDに応じたマスター商品IDを取得
+        const masterProductIds = masterProductIdsByShop[shopId];
+
+        if (!masterProductIds) {
+            const availableShops = Object.keys(masterProductIdsByShop).join(', ');
+            console.error(`❌ Shop ${shopId} はマスター商品マッピングに含まれていません`);
+            console.error(`   利用可能なショップ: ${availableShops}`);
+            return res.status(400).json({
+                error: `Shop ${shopId} のマスター商品が未設定です。利用可能なショップ: ${availableShops}`,
+                availableShops: Object.keys(masterProductIdsByShop)
+            });
+        }
 
         const masterProductId = masterProductIds[productType];
         if (!masterProductId) {

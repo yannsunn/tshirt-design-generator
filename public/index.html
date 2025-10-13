@@ -3358,6 +3358,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                     // Step 2: Upload to Printify
                     let printifyImageId = null;
+                    let printifyImageUrl = null;  // SUZURI用の公開URL（スコープを広げる）
                     try {
                         progressText.textContent = `[${i + 1}/${imageCount}] Printify: 画像アップロード中...`;
                         const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
@@ -3375,7 +3376,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                         const uploadResult = await uploadResponse.json();
                         printifyImageId = uploadResult.imageId;
-                        const printifyImageUrl = uploadResult.previewUrl;  // SUZURI用の公開URL
+                        printifyImageUrl = uploadResult.previewUrl;  // 公開URLを外側のスコープに保存
                         console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId, printifyImageUrl);
 
                         // Step 3: Create products for ALL auto-publish shops (Storefront + eBay)
