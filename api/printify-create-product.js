@@ -20,7 +20,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'shopId, (imageId or imageUrl), and title are required' });
         }
 
-        // ショップごとのマスター商品IDマッピング（2025-10-12 更新）
+        // ショップごとのマスター商品IDマッピング（2025-10-13 更新）
         const masterProductIdsByShop = {
             // Storefront (24565480)
             '24565480': {
@@ -33,7 +33,18 @@ export default async function handler(req, res) {
                 sweatshirt: '68eb8063a0786662a60357dd',         // Blueprint 49: Gildan 18000
                 hoodie: '68eb8068cb19b441780df848'              // Blueprint 77: Gildan 18500
             },
-            // eBay/Samurai (24566516) - 2025-10-13 更新
+            // Etsy (24566474) - 2025-10-13 作成
+            '24566474': {
+                tshirt: '68ecbc2d9b2784f69609fbb2',              // Blueprint 6: Gildan 5000
+                lightweight_tee: '68ecbc3450cf7a91a708a955',    // Blueprint 26: Gildan 980
+                ultra_cotton_tee: '68ecbc38a70adcc57007a702',   // Blueprint 36: Gildan 2000
+                softstyle_tee: '68ecbc3ebe92a956c70d0fef',      // Blueprint 145: Gildan 64000
+                kids_tee: '68ecbc2450cf7a91a708a950',           // Blueprint 157: Gildan 5000B
+                longsleeve: '68ecbc1fc26025d416096772',         // Blueprint 80: Gildan 2400
+                sweatshirt: '68ecbc15c26025d416096770',         // Blueprint 49: Gildan 18000
+                hoodie: '68ecbc1250cf7a91a708a948'              // Blueprint 77: Gildan 18500
+            },
+            // eBay/Samurai (24566516) - 2025-10-13 作成
             '24566516': {
                 tshirt: '68ec85bca0c8ed2f2c0f46f4',              // Blueprint 6: Gildan 5000
                 lightweight_tee: '68ec85c3f88f52634a110f14',    // Blueprint 26: Gildan 980
