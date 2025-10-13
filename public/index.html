@@ -1697,17 +1697,30 @@
                     </div>
                     <p class="text-xs text-gray-400 mb-1">${imgData.idea.phrase}</p>
                     <p class="text-xs text-purple-300">${imgData.api === 'gemini' ? 'Gemini' : 'Seedream 4.0'}</p>
-                    <button class="mt-2 text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-2 rounded text-center manual-publish-btn" data-index="${index}">
-                        🛍️ Etsy出品
-                    </button>
-                    <a href="${imgData.imageData}" download="design-${index + 1}.png" class="mt-2 text-xs bg-pink-600 hover:bg-pink-700 text-white py-1 px-2 rounded text-center">
-                        ダウンロード
-                    </a>
+                    <div class="mt-2 flex flex-col gap-1">
+                        <button class="text-xs bg-pink-600 hover:bg-pink-700 text-white py-1 px-2 rounded text-center suzuri-publish-btn" data-index="${index}">
+                            🎨 SUZURI出品
+                        </button>
+                        <button class="text-xs bg-purple-600 hover:bg-purple-700 text-white py-1 px-2 rounded text-center manual-publish-btn" data-index="${index}">
+                            🛍️ Etsy出品
+                        </button>
+                        <a href="${imgData.imageData}" download="design-${index + 1}.png" class="text-xs bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 rounded text-center block">
+                            📥 ダウンロード
+                        </a>
+                    </div>
                 `;
                 imagesGrid.appendChild(card);
             });
 
-            // Add event listeners to manual publish buttons
+            // Add event listeners to SUZURI publish buttons
+            document.querySelectorAll('.suzuri-publish-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    await handleSUZURIPublishSingle(index);
+                });
+            });
+
+            // Add event listeners to Etsy publish buttons
             document.querySelectorAll('.manual-publish-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const index = parseInt(e.target.dataset.index);
@@ -3053,6 +3066,122 @@ ${totalErrors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で確�
             }
         };
 
+        // SUZURI individual publish - Single design
+        const handleSUZURIPublishSingle = async (index) => {
+            const imgData = generatedImages[index];
+            if (!imgData) {
+                return showError('画像データが見つかりません');
+            }
+
+            console.log(`🎨 SUZURI個別出品開始: デザイン ${index + 1}`);
+            hideError();
+
+            try {
+                // IMPORTANT: SUZURI uses Japanese title (domestic market)
+                const title = generateJapaneseTitle(imgData.idea);
+
+                progressText.textContent = `SUZURIに商品を作成中... (デザイン ${index + 1})`;
+
+                // Compress image
+                const compressedImage = await compressImage(imgData.imageData);
+
+                const suzuriBody = {
+                    imageUrl: compressedImage,
+                    title: title,
+                    published: false,  // 下書きとして作成
+                    // 全61種類の商品を作成
+                    createStandardTshirt: true,
+                    createToteBag: true,
+                    createMug: true,
+                    createPhoneCase: true,
+                    createSweatshirt: true,
+                    createFullGraphicTshirt: true,
+                    createHoodie: true,
+                    createNotebook: true,
+                    createSticker: true,
+                    createBlanket: true,
+                    createTowelHandkerchief: true,
+                    createLongSleeveTshirt: true,
+                    createSacoche: true,
+                    createCanBadge: true,
+                    createClearSmartphoneCase: true,
+                    createTarpaulin: true,
+                    createAcrylicBlock: true,
+                    createBookStyleSmartphoneCase: true,
+                    createZipHoodie: true,
+                    createKinchaku: true,
+                    createBigShoulderBag: true,
+                    createBigSweat: true,
+                    createBigHoodie: true,
+                    createWaterGlass: true,
+                    createSoftClearSmartphoneCase: true,
+                    createFivePanelCap: true,
+                    createBigTshirt: true,
+                    createClearFileFolder: true,
+                    createBucketHat: true,
+                    createClearMultiCase: true,
+                    createMiniClearMultiCase: true,
+                    createSandal: true,
+                    createBigLongSleeveTshirt: true,
+                    createBandana: true,
+                    createReusablBag: true,
+                    createThermoTumbler: true,
+                    createFullGraphicMask: true,
+                    createOrganicCottonTshirt: true,
+                    createDryTshirt: true,
+                    createAcrylicKeychain: true,
+                    createHeavyweightTshirt: true,
+                    createOversizedTshirt: true,
+                    createLongSizedWaterGlass: true,
+                    createCushion: true,
+                    createHeavyweightHoodie: true,
+                    createHeavyweightZipHoodie: true,
+                    createHeavyweightSweat: true,
+                    createEmbroideredTshirt: true,
+                    createLunchToteBag: true,
+                    createAcrylicStand: true,
+                    createAnkleSocks: true,
+                    createSocks: true,
+                    createOnePointTshirt: true,
+                    createSmartphoneStrap: true,
+                    createFlatCanCase: true,
+                    createMaskingTape: true,
+                    createAndroidSmartphoneCase: true,
+                    createEmbroideredFleeceJacket: true,
+                    createLightweightTshirt: true,
+                    createFaceTowel: true,
+                    createFlatPouch: true
+                };
+
+                // 商品説明が生成されている場合は追加
+                if (imgData.idea && imgData.idea.description) {
+                    suzuriBody.description = imgData.idea.description;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(suzuriBody)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'SUZURI商品作成に失敗しました');
+                }
+
+                const result = await response.json();
+                console.log(`✅ SUZURI商品作成完了 (デザイン ${index + 1}):`, result);
+
+                progressText.textContent = `✅ SUZURI商品作成完了: ${result.productsCreated}件 (デザイン ${index + 1})`;
+
+                alert(`🎉 SUZURI商品を${result.productsCreated}件作成しました！\n\n下書きとして保存されました。\nSUZURIダッシュボードで確認・公開してください。\n\nhttps://suzuri.jp/dashboard`);
+
+            } catch (error) {
+                console.error(`SUZURI個別出品エラー (デザイン ${index + 1}):`, error);
+                showError(`SUZURI出品エラー (デザイン ${index + 1}): ${error.message}\n\nブラウザコンソール（F12）で詳細を確認してください。`);
+                progressText.textContent = 'エラーが発生しました';
+            }
+        };
 
         // Publish products to Etsy
         const handleEtsyPublish = async () => {
