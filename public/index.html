@@ -628,16 +628,17 @@
         const alert = customAlert;
 
         // Helper function: Get selected product types from checkboxes
+        // 🎯 売れ筋のみに最適化（2025年Etsyデータに基づく）
         function getSelectedProductTypes() {
             const checkboxes = [
-                document.getElementById('product-type-tshirt'),
-                document.getElementById('product-type-lightweight_tee'),
-                document.getElementById('product-type-ultra_cotton_tee'),
-                document.getElementById('product-type-softstyle_tee'),
-                document.getElementById('product-type-kids_tee'),
-                document.getElementById('product-type-longsleeve'),
-                document.getElementById('product-type-sweatshirt'),
-                document.getElementById('product-type-hoodie')
+                document.getElementById('product-type-tshirt'),          // ⭐ ベストセラー
+                // document.getElementById('product-type-lightweight_tee'),  // ❌ 削除: 需要限定的
+                // document.getElementById('product-type-ultra_cotton_tee'), // ❌ 削除: tshirtに劣る
+                document.getElementById('product-type-softstyle_tee'),   // ⭐ 人気上昇中
+                // document.getElementById('product-type-kids_tee'),         // ❌ 削除: ニッチすぎ
+                // document.getElementById('product-type-longsleeve'),       // ❌ 削除: 季節限定
+                document.getElementById('product-type-sweatshirt'),      // ⭐ 在宅需要
+                document.getElementById('product-type-hoodie')           // ⭐ 秋冬+ギフト
             ];
             const selected = checkboxes
                 .filter(cb => cb && cb.checked)
@@ -3380,8 +3381,10 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                         console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId, printifyImageUrl);
 
                         // Step 3: Create products for ALL auto-publish shops (Storefront + eBay)
-                        progressText.textContent = `⏳ [${i + 1}/${imageCount}] Printify: 商品作成中 (16商品) - ${imgData.idea.phrase || imgData.idea.title}`;
                         const selectedProductTypes = getSelectedProductTypes();
+                        const productsPerShop = selectedProductTypes.length;
+                        const totalProductsThisImage = productsPerShop * autoPublishShops.length;
+                        progressText.textContent = `⏳ [${i + 1}/${imageCount}] Printify: 商品作成中 (${totalProductsThisImage}商品) - ${imgData.idea.phrase || imgData.idea.title}`;
 
                         for (const shop of autoPublishShops) {
                             console.log(`   📍 ${shop.name} に出品中...`);
@@ -3493,7 +3496,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 successMessage += `   • Storefront: ${Math.floor(totalPrintifyCount / 2)}商品\n`;
                 successMessage += `   • eBay: ${Math.floor(totalPrintifyCount / 2)}商品\n`;
                 successMessage += `✅ SUZURI: ${totalSuzuriCount}商品\n`;
-                successMessage += `\n📝 説明: ${designCount}個のデザイン画像から、各${productsPerDesign}種類のTシャツ商品が作成されました\n(T-shirt, Lightweight Tee, Ultra Cotton Tee, Softstyle Tee, Kids Tee, Longsleeve, Sweatshirt, Hoodie)\n\n合計: ${totalPrintifyCount + totalSuzuriCount}商品`;
+                successMessage += `\n📝 説明: ${designCount}個のデザイン画像から、各${productsPerDesign}種類の売れ筋商品が作成されました\n(T-shirt, Softstyle Tee, Sweatshirt, Hoodie)\n\n🎯 2025年Etsyデータに基づき、最も売れる商品のみに最適化しています\n\n合計: ${totalPrintifyCount + totalSuzuriCount}商品`;
 
                 // Auto-update prices if Printify succeeded (38% profit margin)
                 if (allProductIds.length > 0) {
@@ -3588,7 +3591,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // Step 2: Create Etsy products (via Printify)
                 try {
-                    progressText.textContent = `⏳ Etsy: 商品作成中 (8種類) - ${imgData.idea.phrase || imgData.idea.title}`;
+                    const selectedProductTypes = getSelectedProductTypes();
+                    progressText.textContent = `⏳ Etsy: 商品作成中 (${selectedProductTypes.length}種類) - ${imgData.idea.phrase || imgData.idea.title}`;
                     const etsyShopId = '24566474';
                     const etsyProductIds = [];
 
@@ -3641,7 +3645,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // 結果表示
                 console.log(`\n🎉 Etsy手動出品完了！`);
-                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n📝 説明: 1つのデザイン画像から8種類のTシャツ商品が作成されました\n(T-shirt, Lightweight Tee, Ultra Cotton Tee, Softstyle Tee, Kids Tee, Longsleeve, Sweatshirt, Hoodie)\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
+                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n📝 説明: 1つのデザイン画像から${totalEtsyCount}種類の売れ筋商品が作成されました\n(T-shirt, Softstyle Tee, Sweatshirt, Hoodie)\n\n🎯 2025年Etsyデータに基づき、最も売れる商品のみに最適化しています\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
                 progressText.textContent = '✅ Etsy出品完了';
                 alert(successMessage);
 
