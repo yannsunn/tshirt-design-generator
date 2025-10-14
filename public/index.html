@@ -1504,16 +1504,26 @@
         };
 
         // Compress image to reduce file size for upload (max 2MB for Printify)
-        const compressImage = async (dataUrl, maxSizeKB = 2000) => {
+        const compressImage = async (dataUrl, maxSizeKB = 2000, platform = 'printify') => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
 
-                    // Calculate new dimensions (max 3000x3600px for Printify)
-                    const maxWidth = 3000;
-                    const maxHeight = 3600;
+                    // Platform-specific dimensions
+                    let maxWidth, maxHeight;
+                    if (platform === 'suzuri') {
+                        // SUZURI推奨: 3307x3898px (200dpi) またはシルクスクリーン用
+                        // 最大: 10205x14315px
+                        maxWidth = 3307;
+                        maxHeight = 3898;
+                    } else {
+                        // Printify: 3000x3600px
+                        maxWidth = 3000;
+                        maxHeight = 3600;
+                    }
+
                     let width = img.width;
                     let height = img.height;
 
@@ -1542,7 +1552,7 @@
                         compressed = canvas.toDataURL('image/jpeg', quality);
                     }
 
-                    console.log(`  📦 画像圧縮: ${img.width}x${img.height} → ${Math.round(width)}x${Math.round(height)}, サイズ: ${Math.round(compressed.length / 1024)}KB (品質: ${Math.round(quality * 100)}%)`);
+                    console.log(`  📦 画像圧縮 [${platform}]: ${img.width}x${img.height} → ${Math.round(width)}x${Math.round(height)}, サイズ: ${Math.round(compressed.length / 1024)}KB (品質: ${Math.round(quality * 100)}%)`);
                     resolve(compressed);
                 };
                 img.onerror = reject;
@@ -3355,7 +3365,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                     const suzuriTitle = generateJapaneseTitle(imgData.idea);
 
                     // Step 1: Compress image (2MB max for Printify)
-                    const compressedImage = await compressImage(imgData.imageData, 2000);
+                    const compressedImage = await compressImage(imgData.imageData, 2000, 'printify');
 
                     // Step 2: Upload to Printify
                     let printifyImageId = null;
@@ -3436,40 +3446,40 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                         // SUZURIは公開URLが必須、Base64は使えない
                         if (!printifyImageUrl) {
                             console.log(`⚠️ [${i + 1}/${imageCount}] SUZURI: Printify画像URLなし、スキップ`);
-                            continue;
-                        }
-
-                        const suzuriBody = {
-                            imageUrl: printifyImageUrl,  // Printifyの公開URLのみ使用
-                            title: suzuriTitle,
-                            published: true  // 自動公開（トリブンはデフォルト0%）
-                        };
-
-                        if (imgData.idea && imgData.idea.description) {
-                            suzuriBody.description = imgData.idea.description;
-                        }
-
-                        const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(suzuriBody)
-                        });
-
-                        if (suzuriResponse.ok) {
-                            const suzuriResult = await suzuriResponse.json();
-                            totalSuzuriCount++;
-                            console.log(`✅ [${i + 1}/${imageCount}] SUZURI出品成功: ${suzuriResult.productsCreated}商品`);
+                            // continue を使わずに次のイテレーションへ
                         } else {
-                            const errorText = await suzuriResponse.text();
-                            let error;
-                            try {
-                                error = JSON.parse(errorText);
-                            } catch {
-                                error = { error: errorText };
+                            const suzuriBody = {
+                                imageUrl: printifyImageUrl,  // Printifyの公開URLのみ使用
+                                title: suzuriTitle,
+                                published: true  // 自動公開（トリブンはデフォルト0%）
+                            };
+
+                            if (imgData.idea && imgData.idea.description) {
+                                suzuriBody.description = imgData.idea.description;
                             }
-                            console.error(`❌ [${i + 1}/${imageCount}] SUZURI出品失敗 (${suzuriResponse.status}):`, error.error || error);
-                            if (suzuriResponse.status === 422) {
-                                console.error('💡 422エラー原因: 画像URL、サイズ、またはタイトルの問題');
+
+                            const suzuriResponse = await fetch(`${API_BASE_URL}/suzuri-batch-create`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(suzuriBody)
+                            });
+
+                            if (suzuriResponse.ok) {
+                                const suzuriResult = await suzuriResponse.json();
+                                totalSuzuriCount++;
+                                console.log(`✅ [${i + 1}/${imageCount}] SUZURI出品成功: ${suzuriResult.productsCreated}商品`);
+                            } else {
+                                const errorText = await suzuriResponse.text();
+                                let error;
+                                try {
+                                    error = JSON.parse(errorText);
+                                } catch {
+                                    error = { error: errorText };
+                                }
+                                console.error(`❌ [${i + 1}/${imageCount}] SUZURI出品失敗 (${suzuriResponse.status}):`, error.error || error);
+                                if (suzuriResponse.status === 422) {
+                                    console.error('💡 422エラー原因: 画像URL、サイズ、またはタイトルの問題');
+                                }
                             }
                         }
                     } catch (error) {
@@ -3489,7 +3499,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 console.log(`   合計: ${totalPrintifyCount + totalSuzuriCount}商品`);
 
                 const designCount = generatedImages.length;
-                const productsPerDesign = 8; // tshirt, lightweight_tee, ultra_cotton_tee, softstyle_tee, kids_tee, longsleeve, sweatshirt, hoodie
+                const productsPerDesign = 4; // 🎯 売れ筋のみ: tshirt, softstyle_tee, sweatshirt, hoodie
 
                 let successMessage = `🎉 ${imageCount}デザインの一括出品完了！\n\n`;
                 successMessage += `✅ Printify: ${totalPrintifyCount}商品\n`;
