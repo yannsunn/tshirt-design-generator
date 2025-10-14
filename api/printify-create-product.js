@@ -93,7 +93,10 @@ export default async function handler(req, res) {
         );
 
         if (!masterResponse.ok) {
-            throw new Error(`Failed to fetch master product: ${masterResponse.status}`);
+            const errorText = await masterResponse.text();
+            console.error(`❌ マスター商品取得失敗 (${masterResponse.status}):`, errorText);
+            console.error(`   Shop: ${shopId}, ProductType: ${productType}, MasterID: ${masterProductId}`);
+            throw new Error(`Failed to fetch master product: ${masterResponse.status} - ${errorText.substring(0, 200)}`);
         }
 
         const master = await masterResponse.json();
@@ -205,6 +208,9 @@ export default async function handler(req, res) {
                 errorData = { message: responseText };
             }
             console.error('❌ 商品作成失敗:', errorData);
+            console.error(`   Shop: ${shopId}, ProductType: ${productType}, MasterID: ${masterProductId}`);
+            console.error(`   Title: ${title}`);
+            console.error(`   ImageID: ${newImageId}`);
             throw new Error(`Failed to create product: ${JSON.stringify(errorData)}`);
         }
 

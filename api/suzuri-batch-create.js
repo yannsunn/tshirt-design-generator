@@ -82,10 +82,19 @@ async function handler(req, res) {
         return res.status(400).json({ error: 'imageUrl and title are required' });
     }
 
+    // Base64画像は拒否（SUZURIは公開URLのみ対応）
+    if (imageUrl.startsWith('data:image/')) {
+        return res.status(400).json({
+            error: 'SUZURI requires a public image URL, not base64 data',
+            hint: 'Please upload the image to Printify first and use the previewUrl'
+        });
+    }
+
     const accessToken = process.env.SUZURI_ACCESS_TOKEN;
 
     try {
         console.log(`🚀 SUZURI一括商品作成: ${title}`);
+        console.log(`   画像URL: ${imageUrl.substring(0, 100)}...`);
 
         // 作成する商品の配列を準備（61種類）
         const productsArray = [];
@@ -187,6 +196,18 @@ async function handler(req, res) {
                 errorDetail = errorText;
             }
             console.error('❌ SUZURI APIエラー詳細:', JSON.stringify(errorDetail, null, 2));
+            console.error(`   Title: ${title}`);
+            console.error(`   ImageURL: ${imageUrl.substring(0, 150)}`);
+            console.error(`   Products count: ${productsArray.length}`);
+
+            // 422エラーの場合、より詳細な情報を提供
+            if (materialResponse.status === 422) {
+                console.error('💡 422エラーの一般的な原因:');
+                console.error('   - 画像URLが公開URLでない（Base64不可）');
+                console.error('   - 画像が大きすぎる（推奨: 3000x3600px以下）');
+                console.error('   - タイトルが不正（100文字以内）');
+            }
+
             throw new ExternalAPIError('SUZURI', `Material + Products作成失敗 (${materialResponse.status})`, JSON.stringify(errorDetail));
         }
 

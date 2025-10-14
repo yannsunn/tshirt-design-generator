@@ -3342,8 +3342,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 // 全画像を処理
                 for (let i = 0; i < generatedImages.length; i++) {
                     const imgData = generatedImages[i];
-                    progressText.textContent = `処理中: ${i + 1}/${imageCount} - ${imgData.idea.title || 'デザイン'}`;
-                    console.log(`\n📦 処理中 [${i + 1}/${imageCount}]: ${imgData.idea.title}`);
+                    progressText.textContent = `⏳ 処理中: ${i + 1}/${imageCount} - ${imgData.idea.phrase || imgData.idea.title || 'デザイン'}`;
+                    console.log(`\n📦 処理中 [${i + 1}/${imageCount}]: ${imgData.idea.phrase || imgData.idea.title}`);
 
                     // IMPORTANT: Different titles for different markets
                     // Printify (international): English only
@@ -3360,7 +3360,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                     let printifyImageId = null;
                     let printifyImageUrl = null;  // SUZURI用の公開URL（スコープを広げる）
                     try {
-                        progressText.textContent = `[${i + 1}/${imageCount}] Printify: 画像アップロード中...`;
+                        progressText.textContent = `⏳ [${i + 1}/${imageCount}] Printify: 画像アップロード中 - ${imgData.idea.phrase || imgData.idea.title}`;
                         const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -3380,7 +3380,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                         console.log(`✅ [${i + 1}/${imageCount}] Printify画像アップロード成功:`, printifyImageId, printifyImageUrl);
 
                         // Step 3: Create products for ALL auto-publish shops (Storefront + eBay)
-                        progressText.textContent = `[${i + 1}/${imageCount}] Printify: 商品作成中...`;
+                        progressText.textContent = `⏳ [${i + 1}/${imageCount}] Printify: 商品作成中 (16商品) - ${imgData.idea.phrase || imgData.idea.title}`;
                         const selectedProductTypes = getSelectedProductTypes();
 
                         for (const shop of autoPublishShops) {
@@ -3428,9 +3428,16 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                     // Step 4: SUZURIへの出品 (Japanese title + description)
                     try {
-                        progressText.textContent = `[${i + 1}/${imageCount}] SUZURI: 商品作成中...`;
+                        progressText.textContent = `⏳ [${i + 1}/${imageCount}] SUZURI: 商品作成中 - ${imgData.idea.phrase || imgData.idea.title}`;
+
+                        // SUZURIは公開URLが必須、Base64は使えない
+                        if (!printifyImageUrl) {
+                            console.log(`⚠️ [${i + 1}/${imageCount}] SUZURI: Printify画像URLなし、スキップ`);
+                            continue;
+                        }
+
                         const suzuriBody = {
-                            imageUrl: printifyImageUrl || compressedImage,  // Printifyの公開URLを使用（フォールバックはbase64）
+                            imageUrl: printifyImageUrl,  // Printifyの公開URLのみ使用
                             title: suzuriTitle,
                             published: true  // 自動公開（トリブンはデフォルト0%）
                         };
@@ -3446,14 +3453,24 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                         });
 
                         if (suzuriResponse.ok) {
+                            const suzuriResult = await suzuriResponse.json();
                             totalSuzuriCount++;
-                            console.log(`✅ [${i + 1}/${imageCount}] SUZURI出品成功`);
+                            console.log(`✅ [${i + 1}/${imageCount}] SUZURI出品成功: ${suzuriResult.productsCreated}商品`);
                         } else {
-                            const error = await suzuriResponse.json();
-                            console.log(`❌ [${i + 1}/${imageCount}] SUZURI出品失敗:`, error.error);
+                            const errorText = await suzuriResponse.text();
+                            let error;
+                            try {
+                                error = JSON.parse(errorText);
+                            } catch {
+                                error = { error: errorText };
+                            }
+                            console.error(`❌ [${i + 1}/${imageCount}] SUZURI出品失敗 (${suzuriResponse.status}):`, error.error || error);
+                            if (suzuriResponse.status === 422) {
+                                console.error('💡 422エラー原因: 画像URL、サイズ、またはタイトルの問題');
+                            }
                         }
                     } catch (error) {
-                        console.error(`❌ [${i + 1}/${imageCount}] SUZURI出品エラー:`, error);
+                        console.error(`❌ [${i + 1}/${imageCount}] SUZURI出品エラー:`, error.message);
                     }
 
                     // 次の画像処理前に少し待機（レート制限対策）
@@ -3468,12 +3485,15 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 console.log(`   SUZURI: ${totalSuzuriCount}商品`);
                 console.log(`   合計: ${totalPrintifyCount + totalSuzuriCount}商品`);
 
+                const designCount = generatedImages.length;
+                const productsPerDesign = 8; // tshirt, lightweight_tee, ultra_cotton_tee, softstyle_tee, kids_tee, longsleeve, sweatshirt, hoodie
+
                 let successMessage = `🎉 ${imageCount}デザインの一括出品完了！\n\n`;
                 successMessage += `✅ Printify: ${totalPrintifyCount}商品\n`;
                 successMessage += `   • Storefront: ${Math.floor(totalPrintifyCount / 2)}商品\n`;
                 successMessage += `   • eBay: ${Math.floor(totalPrintifyCount / 2)}商品\n`;
                 successMessage += `✅ SUZURI: ${totalSuzuriCount}商品\n`;
-                successMessage += `\n合計: ${totalPrintifyCount + totalSuzuriCount}商品`;
+                successMessage += `\n📝 説明: ${designCount}個のデザイン画像から、各${productsPerDesign}種類のTシャツ商品が作成されました\n(T-shirt, Lightweight Tee, Ultra Cotton Tee, Softstyle Tee, Kids Tee, Longsleeve, Sweatshirt, Hoodie)\n\n合計: ${totalPrintifyCount + totalSuzuriCount}商品`;
 
                 // Auto-update prices if Printify succeeded (38% profit margin)
                 if (allProductIds.length > 0) {
@@ -3541,8 +3561,8 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 let totalEtsyCount = 0;
                 const allProductIds = [];
 
-                progressText.textContent = `Etsy: 処理中 - ${imgData.idea.title || 'デザイン'}`;
-                console.log(`\n📦 Etsy出品処理中: ${imgData.idea.title}`);
+                progressText.textContent = `⏳ Etsy: 処理開始 - ${imgData.idea.phrase || imgData.idea.title || 'デザイン'}`;
+                console.log(`\n📦 Etsy出品処理中: ${imgData.idea.phrase || imgData.idea.title}`);
 
                 const printifyTitle = generateSEOTitle(imgData.idea);
                 const printifyDescription = getEnglishDescription(imgData.idea);
@@ -3550,7 +3570,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // Step 1: Upload to Printify
                 let printifyImageId = null;
-                progressText.textContent = `Etsy: 画像アップロード中...`;
+                progressText.textContent = `⏳ Etsy: 画像アップロード中 - ${imgData.idea.phrase || imgData.idea.title}`;
                 const uploadResponse = await fetch(`${API_BASE_URL}/printify-upload-image`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -3568,7 +3588,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // Step 2: Create Etsy products (via Printify)
                 try {
-                    progressText.textContent = `Etsy: 商品作成中...`;
+                    progressText.textContent = `⏳ Etsy: 商品作成中 (8種類) - ${imgData.idea.phrase || imgData.idea.title}`;
                     const etsyShopId = '24566474';
                     const etsyProductIds = [];
 
@@ -3602,7 +3622,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                     // Publish to Etsy
                     if (etsyProductIds.length > 0) {
-                        progressText.textContent = `Etsy: 商品公開中...`;
+                        progressText.textContent = `⏳ Etsy: 商品公開中 (${etsyProductIds.length}商品) - ${imgData.idea.phrase || imgData.idea.title}`;
                         const publishResponse = await fetch(`${API_BASE_URL}/etsy-publish-products`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -3621,7 +3641,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // 結果表示
                 console.log(`\n🎉 Etsy手動出品完了！`);
-                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
+                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n📝 説明: 1つのデザイン画像から8種類のTシャツ商品が作成されました\n(T-shirt, Lightweight Tee, Ultra Cotton Tee, Softstyle Tee, Kids Tee, Longsleeve, Sweatshirt, Hoodie)\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
                 progressText.textContent = '✅ Etsy出品完了';
                 alert(successMessage);
 
