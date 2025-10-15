@@ -183,7 +183,26 @@ export default async function handler(req, res) {
             newProduct.tags = tags;
         }
 
+        // SKUを追加（商品管理用）
+        // フォーマット: SHOP-PRODUCTTYPE-TIMESTAMP
+        const shopPrefix = {
+            '24565480': 'STF',  // Storefront
+            '24566474': 'ETY',  // Etsy
+            '24566516': 'EBY'   // eBay
+        };
+        const sku = `${shopPrefix[shopId] || 'UNK'}-${productType.toUpperCase()}-${Date.now()}`;
+
+        // バリアントにSKUを追加
+        newProduct.variants = newProduct.variants.map((v, index) => ({
+            ...v,
+            sku: `${sku}-${index + 1}`
+        }));
+
+        // Printify Express配送を有効化（より速い配送）
+        newProduct.is_printify_express_enabled = true;
+
         console.log('📦 新しい商品を作成中...');
+        console.log(`   SKU: ${sku}`);
 
         // Step 4: 新しい商品を作成
         const createResponse = await fetch(
