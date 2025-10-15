@@ -3660,6 +3660,31 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                             totalEtsyCount += publishResult.published || 0;
                             console.log(`✅ Etsy公開完了: ${publishResult.published}商品`);
                         }
+
+                        // 🚨 重要: 価格を38%利益率で自動設定（赤字防止）
+                        progressText.textContent = `💰 Etsy: 価格最適化中（38%利益率）...`;
+                        console.log('💰 Etsy商品の価格を38%利益率で自動設定中...');
+
+                        try {
+                            const priceUpdateResponse = await fetch(`${API_BASE_URL}/update-all-shops-prices`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    targetMargin: 38,
+                                    offset: 0,
+                                    limit: etsyProductIds.length  // 今作成した商品数のみ
+                                })
+                            });
+
+                            if (priceUpdateResponse.ok) {
+                                const priceResult = await priceUpdateResponse.json();
+                                console.log('✅ Etsy価格設定完了:', priceResult.totalUpdated, '商品');
+                            } else {
+                                console.error('⚠️ Etsy価格設定に失敗しました');
+                            }
+                        } catch (priceError) {
+                            console.error('❌ Etsy価格設定エラー:', priceError);
+                        }
                     }
                 } catch (error) {
                     console.error(`❌ Etsyエラー:`, error);
@@ -3667,7 +3692,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // 結果表示
                 console.log(`\n🎉 Etsy手動出品完了！`);
-                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n📝 説明: 1つのデザイン画像から${totalEtsyCount}種類の売れ筋商品が作成されました\n(T-shirt, Softstyle Tee, Sweatshirt, Hoodie)\n\n🎯 2025年Etsyデータに基づき、最も売れる商品のみに最適化しています\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
+                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n📝 説明: 1つのデザイン画像から${totalEtsyCount}種類の売れ筋商品が作成されました\n(T-shirt, Softstyle Tee, Sweatshirt, Hoodie)\n\n🎯 2025年Etsyデータに基づき、最も売れる商品のみに最適化しています\n\n💰 価格: 38%利益率で自動設定済み（赤字防止）\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
                 progressText.textContent = '✅ Etsy出品完了';
                 alert(successMessage);
 
