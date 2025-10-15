@@ -1412,7 +1412,7 @@
                             imageId: uploadResult.imageId,
                             title: title,
                             description: description,
-                            tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
+                            tags: generateEtsyTags(currentDesignIdea),
                             productType: productType
                         })
                     });
@@ -1514,6 +1514,51 @@
 
             // IMPORTANT: Do NOT include phrase (hiragana) in title
             return `${prefix} T-Shirt - ${themeEnglish} Motif`;
+        };
+
+        // Generate Etsy SEO-optimized tags (max 13 tags)
+        const generateEtsyTags = (idea) => {
+            if (!idea) return ['japanese', 'tshirt', 'culture', 'design', 'unique', 'souvenir', 'gift', 'japan', 'vintage', 'graphic tee', 'unisex', 'cotton', 'art'];
+
+            const fontStyle = idea.fontStyle || 'modern';
+            const theme = idea.theme || '';
+
+            // Base tags (always included)
+            const baseTags = ['japanese', 'japan', 'tshirt', 'graphic tee'];
+
+            // Extract English keywords from theme
+            let themeEnglish = '';
+            const themeMatch = theme.match(/\(([^)]+)\)/);
+            if (themeMatch) {
+                themeEnglish = themeMatch[1].toLowerCase();
+            }
+
+            // Theme-specific tags
+            const themeKeywords = themeEnglish.split(/\s+/).filter(word =>
+                word.length > 3 && !['with', 'and', 'the'].includes(word)
+            ).slice(0, 3);
+
+            // Style-based tags
+            const styleTags = {
+                'horror': ['horror', 'spooky', 'ghost'],
+                'pop': ['kawaii', 'cute', 'colorful'],
+                'retro': ['vintage', 'retro', 'classic'],
+                'modern': ['modern', 'contemporary', 'minimalist']
+            };
+            const styleSpecific = styleTags[fontStyle] || ['culture', 'traditional', 'art'];
+
+            // Product type tags
+            const productTags = ['unisex', 'cotton', 'gift', 'souvenir'];
+
+            // Combine all tags (max 13 for Etsy)
+            const allTags = [
+                ...baseTags,
+                ...themeKeywords,
+                ...styleSpecific,
+                ...productTags
+            ].slice(0, 13);
+
+            return allTags;
         };
 
         // Compress image to reduce file size for upload (max 2MB for Printify)
@@ -1831,7 +1876,7 @@
                                 imageId: uploadResult.imageId,
                                 title: title,
                                 description: description,
-                                tags: ['Japanese Culture', 'AI Generated', 'Custom Design', 'Tourist Souvenir', 'Japanese Art'],
+                                tags: generateEtsyTags(imgData.designIdea),
                                 productType: productType
                             })
                         });
@@ -3422,7 +3467,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                                             imageId: printifyImageId,
                                             title: printifyTitle,
                                             description: printifyDescription,
-                                            tags: ['Japanese Culture', 'AI Generated', 'Tourist Souvenir'],
+                                            tags: generateEtsyTags(imgData.idea),
                                             productType: productType
                                         })
                                     });
@@ -3629,7 +3674,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                                     imageId: printifyImageId,
                                     title: printifyTitle,
                                     description: printifyDescription,
-                                    tags: ['Japanese Culture', 'AI Generated', 'Tourist Souvenir'],
+                                    tags: generateEtsyTags(imgData.idea),
                                     productType: productType
                                 })
                             });
