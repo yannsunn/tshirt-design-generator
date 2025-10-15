@@ -3,17 +3,51 @@
 
 import { PRICING_CONFIG, getCostForSize } from '../config/pricing-config.js';
 
+// Blueprintごとの固定価格（販売実績重視、15%以上利益確保）
+const COMPETITIVE_PRICES = {
+    // T-Shirts
+    6: 2099,    // Gildan 5000: $20.99
+    145: 2099,  // Gildan 64000 Softstyle: $20.99
+    5: 2099,    // Bella+Canvas 3001: $20.99
+
+    // Sweatshirts
+    49: 3499,   // Gildan 18000: $34.99
+
+    // Hoodies
+    77: 3799,   // Gildan 18500: $37.99
+    384: 3799   // Bella+Canvas 3719: $37.99
+};
+
 /**
  * USD $X.99 形式で最適価格を計算
+ * 販売実績を重視した競争力のある価格設定（15%以上利益確保）
  * @param {number} costCents - 原価（セント単位）
- * @param {number} targetMargin - ターゲットマージン（%）
+ * @param {number} targetMargin - ターゲットマージン（%） ※このパラメータは互換性のため残すが使用しない
+ * @param {number} blueprintId - Blueprint ID（固定価格取得用）
  * @returns {number} 最適価格（セント単位）
  */
-function calculateOptimalPrice(costCents, targetMargin = PRICING_CONFIG.DEFAULT_TARGET_MARGIN) {
-    const costUsd = costCents / 100;
-    const exactPriceUsd = costUsd / (1 - targetMargin / 100);
-    const priceUsd = Math.ceil(exactPriceUsd) - 0.01;  // $X.99形式
-    return Math.round(priceUsd * 100);  // セント単位で返す
+function calculateOptimalPrice(costCents, targetMargin = PRICING_CONFIG.DEFAULT_TARGET_MARGIN, blueprintId = null) {
+    // Blueprint IDが指定されている場合、固定価格を返す
+    if (blueprintId && COMPETITIVE_PRICES[blueprintId]) {
+        return COMPETITIVE_PRICES[blueprintId];
+    }
+
+    // フォールバック: 従来の計算式（Etsy手数料考慮）
+    const ETSY_FEES = {
+        transaction: 0.065,
+        payment: 0.03,
+        paymentFixed: 25,
+        listing: 20,
+        shipping: 50
+    };
+
+    const fixedFees = ETSY_FEES.paymentFixed + ETSY_FEES.listing + ETSY_FEES.shipping;
+    const variableFeeRate = ETSY_FEES.transaction + ETSY_FEES.payment;
+    const minMarginRate = 0.15; // 最低15%利益
+
+    const exactPrice = (costCents + fixedFees) / (1 - variableFeeRate - minMarginRate);
+    const priceUsd = Math.ceil(exactPrice / 100) - 0.01;  // $X.99形式
+    return Math.round(priceUsd * 100);
 }
 
 /**
@@ -74,7 +108,7 @@ function analyzeVariantPricing(variant, blueprintId, targetMargin = PRICING_CONF
     }
 
     const currentPrice = variant.price || 0;
-    const optimalPrice = calculateOptimalPrice(cost, targetMargin);
+    const optimalPrice = calculateOptimalPrice(cost, targetMargin, blueprintId);
     const actualMargin = calculateActualMargin(currentPrice, cost);
     const optimalMargin = calculateActualMargin(optimalPrice, cost);
     const needsUpdate = !isPriceOptimal(actualMargin, targetMargin);

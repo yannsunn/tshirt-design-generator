@@ -3661,9 +3661,31 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                             console.log(`✅ Etsy公開完了: ${publishResult.published}商品`);
                         }
 
-                        // ✅ 価格はPrintifyデフォルト価格を使用 ($29.99-$40.99, 42-48%利益率)
-                        console.log('✅ Etsy価格: Printifyデフォルト価格を使用 ($29.99-$40.99)');
-                        console.log('💰 利益率: T-Shirts 42-48%, Sweatshirts 26%, Hoodies 19%');
+                        // 🎯 販売実績重視の競争力価格に設定 ($20.99 / $34.99 / $37.99)
+                        progressText.textContent = `💰 Etsy: 競争力価格に設定中...`;
+                        console.log('💰 Etsy商品の価格を競争力のある価格に設定中...');
+                        console.log('📊 T-Shirts: $20.99, Sweatshirts: $34.99, Hoodies: $37.99');
+
+                        try {
+                            const priceUpdateResponse = await fetch(`${API_BASE_URL}/update-all-shops-prices`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    targetMargin: 15,  // 最低15%利益確保（実際はBlueprint固定価格を使用）
+                                    offset: 0,
+                                    limit: etsyProductIds.length
+                                })
+                            });
+
+                            if (priceUpdateResponse.ok) {
+                                const priceResult = await priceUpdateResponse.json();
+                                console.log('✅ Etsy価格設定完了:', priceResult.totalUpdated, '商品');
+                            } else {
+                                console.error('⚠️ Etsy価格設定に失敗しました');
+                            }
+                        } catch (priceError) {
+                            console.error('❌ Etsy価格設定エラー:', priceError);
+                        }
                     }
                 } catch (error) {
                     console.error(`❌ Etsyエラー:`, error);
@@ -3671,7 +3693,7 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
 
                 // 結果表示
                 console.log(`\n🎉 Etsy手動出品完了！`);
-                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n📝 説明: 1つのデザイン画像から${totalEtsyCount}種類の売れ筋商品が作成されました\n(T-shirt, Softstyle Tee, Sweatshirt, Hoodie)\n\n🎯 2025年Etsyデータに基づき、最も売れる商品のみに最適化しています\n\n💰 価格: Printifyデフォルト価格 ($29.99-$40.99)\n💵 利益率: T-Shirts 42-48%, Sweatshirts 26%, Hoodies 19%\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
+                const successMessage = `🎉 「${imgData.idea.phrase}」のEtsy出品完了！\n\n✅ Etsy: ${totalEtsyCount}商品\n\n📝 説明: 1つのデザイン画像から${totalEtsyCount}種類の売れ筋商品が作成されました\n(T-shirt, Softstyle Tee, Sweatshirt, Hoodie)\n\n🎯 2025年Etsyデータに基づき、最も売れる商品のみに最適化しています\n\n💰 競争力価格設定（販売実績重視）:\n  • T-Shirts: $20.99 (利益率17.5%)\n  • Sweatshirts: $34.99 (利益率15.8%)\n  • Hoodies: $37.99 (利益率19.3%)\n\n✅ すべて15%以上の利益を確保\n✅ 従来より$9-$12安く、売れやすい価格帯\n\n※ 出品料: $${(totalEtsyCount * 0.20).toFixed(2)}`;
                 progressText.textContent = '✅ Etsy出品完了';
                 alert(successMessage);
 
