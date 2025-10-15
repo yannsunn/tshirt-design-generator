@@ -3619,7 +3619,6 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                     const etsyShopId = '24566474';
                     const etsyProductIds = [];
 
-                    const selectedProductTypes = getSelectedProductTypes();
                     for (const productType of selectedProductTypes) {
                         try {
                             const productResponse = await fetch(`${API_BASE_URL}/printify-create-product`, {
