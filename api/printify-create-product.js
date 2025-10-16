@@ -236,6 +236,51 @@ export default async function handler(req, res) {
         const createdProduct = JSON.parse(responseText);
         console.log(`✅ 商品作成成功: ${createdProduct.title} (ID: ${createdProduct.id})`);
 
+        // Step 5: 自動公開（Storefront / eBay / SUZURI のみ）
+        // Etsyは手数料があるため手動公開
+        const autoPublishShops = ['24565480', '24566516']; // Storefront, eBay
+        let publishStatus = 'draft'; // デフォルトは下書き
+
+        if (autoPublishShops.includes(shopId)) {
+            try {
+                console.log('📤 商品を自動公開中...');
+                const publishResponse = await fetch(
+                    `https://api.printify.com/v1/shops/${shopId}/products/${createdProduct.id}/publish.json`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title: true,
+                            description: true,
+                            images: true,
+                            variants: true,
+                            tags: true,
+                            keyFeatures: true,
+                            shipping_template: true
+                        })
+                    }
+                );
+
+                if (publishResponse.ok) {
+                    const publishResult = await publishResponse.json();
+                    console.log(`✅ 商品公開成功: ${createdProduct.id}`);
+                    publishStatus = 'published';
+                } else {
+                    const publishError = await publishResponse.text();
+                    console.error(`⚠️ 商品公開失敗 (手動で公開が必要): ${publishError}`);
+                    publishStatus = 'publish_failed';
+                }
+            } catch (publishError) {
+                console.error(`⚠️ 公開エラー (手動で公開が必要):`, publishError);
+                publishStatus = 'publish_error';
+            }
+        } else {
+            console.log(`ℹ️ このショップ (${shopId}) は手動公開設定です`);
+        }
+
         res.status(200).json({
             success: true,
             productId: createdProduct.id,
@@ -246,7 +291,8 @@ export default async function handler(req, res) {
             imageId: newImageId,
             masterProductId: masterProductId,
             productType: productType,
-            message: `✅ マスターから商品を作成しました: ${createdProduct.title}`
+            publishStatus: publishStatus,
+            message: `✅ マスターから商品を作成しました: ${createdProduct.title}${publishStatus === 'published' ? ' (公開済み)' : ''}`
         });
 
     } catch (error) {
