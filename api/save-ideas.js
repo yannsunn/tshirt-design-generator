@@ -1,3 +1,4 @@
+// アイデア履歴保存API（画像生成成功後に呼ばれる）
 import { getSupabaseClient } from '../lib/supabase.js';
 
 export default async function handler(req, res) {
@@ -8,56 +9,60 @@ export default async function handler(req, res) {
     try {
         const { theme, ideas, productTypes = ['tshirt'] } = req.body;
 
-        if (!theme || !ideas || !Array.isArray(ideas)) {
+        // 入力バリデーション
+        if (!theme || !ideas || !Array.isArray(ideas) || ideas.length === 0) {
             return res.status(400).json({ error: 'テーマとアイデアが必要です' });
         }
 
         const supabase = getSupabaseClient();
 
+        // Supabaseが設定されていない場合はスキップ
         if (!supabase) {
-            console.warn('Supabase not configured, skipping save');
+            console.log('ℹ️ Supabase未設定のため履歴保存をスキップ');
             return res.status(200).json({
                 saved: false,
-                message: 'Supabase未設定のため保存をスキップしました'
+                message: 'Supabase未設定のため履歴保存をスキップしました'
             });
         }
 
-        // 各商品タイプごとにアイデアを保存
+        // 各アイデアを保存
         const records = [];
-        for (const productType of productTypes) {
-            for (const idea of ideas) {
+        for (const idea of ideas) {
+            // 各商品タイプについて保存（重複チェック用）
+            for (const productType of productTypes) {
                 records.push({
-                    theme,
-                    character: idea.character,
-                    phrase: idea.phrase,
-                    font_style: idea.fontStyle,
-                    description: idea.description || null,  // 商品説明を追加
-                    product_type: productType
+                    theme: theme,
+                    character: idea.character || '',
+                    phrase: idea.phrase || idea.title || '',
+                    font_style: idea.fontStyle || 'modern',
+                    product_type: productType,
+                    created_at: new Date().toISOString()
                 });
             }
         }
 
+        // 一括保存
         const { data, error } = await supabase
             .from('design_ideas')
-            .insert(records)
-            .select();
+            .insert(records);
 
         if (error) {
-            console.error('Supabase insert error:', error);
-            throw new Error(`データベース保存エラー: ${error.message}`);
+            console.error('❌ Supabase保存エラー:', error);
+            throw new Error(`履歴保存に失敗しました: ${error.message}`);
         }
 
-        const typesText = productTypes.join(', ');
-        console.log(`✅ ${data.length}件のアイデアを保存しました (${ideas.length}アイデア × ${productTypes.length}タイプ: ${typesText})`);
+        console.log(`✅ ${records.length}件のアイデアを履歴に保存しました`);
         res.status(200).json({
             saved: true,
-            count: data.length,
-            productTypes: productTypes,
-            message: `${data.length}件のアイデアを保存しました (${productTypes.length}商品タイプ)`
+            count: records.length,
+            message: `${records.length}件のアイデアを履歴に保存しました`
         });
 
     } catch (error) {
-        console.error('Error in /api/save-ideas:', error);
-        res.status(500).json({ error: error.message });
+        console.error('❌ /api/save-ideas エラー:', error);
+        res.status(500).json({
+            error: error.message || 'Internal server error',
+            details: error.stack
+        });
     }
 }
