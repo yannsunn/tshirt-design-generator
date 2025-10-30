@@ -9,7 +9,16 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { shopId, imageId, imageUrl, title, description, tags, productType = 'tshirt' } = req.body;
+        const {
+            shopId,
+            imageId,
+            imageUrl,
+            title,
+            description,
+            tags,
+            productType = 'tshirt',
+            designTheme = null  // オプション：デザインテーマ指定
+        } = req.body;
         const apiKey = process.env.PRINTIFY_API_KEY;
 
         if (!apiKey) {
@@ -43,17 +52,6 @@ export default async function handler(req, res) {
                 longsleeve: '68ecbc1fc26025d416096772',         // Blueprint 80: Gildan 2400
                 sweatshirt: '68ecbc15c26025d416096770',         // Blueprint 49: Gildan 18000
                 hoodie: '68ecbc1250cf7a91a708a948'              // Blueprint 77: Gildan 18500
-            },
-            // eBay/Samurai (24566516) - 2025-10-13 作成
-            '24566516': {
-                tshirt: '68ec85bca0c8ed2f2c0f46f4',              // Blueprint 6: Gildan 5000
-                lightweight_tee: '68ec85c3f88f52634a110f14',    // Blueprint 26: Gildan 980
-                ultra_cotton_tee: '68ec85c70bb1a283330f8853',   // Blueprint 36: Gildan 2000
-                softstyle_tee: '68ec85cdf92e58591d05d3c1',      // Blueprint 145: Gildan 64000
-                kids_tee: '68ec85b5a0c8ed2f2c0f46f1',           // Blueprint 157: Gildan 5000B
-                longsleeve: '68ec85afa0786662a6039bcc',         // Blueprint 80: Gildan 2400
-                sweatshirt: '68ec85abff3c0ac2d50f018a',         // Blueprint 49: Gildan 18000
-                hoodie: '68ec85a5a0c8ed2f2c0f46e9'              // Blueprint 77: Gildan 18500
             }
         };
 
@@ -141,13 +139,13 @@ export default async function handler(req, res) {
 
         // Step 3: マスターの構造をコピーして新しい商品データを作成
         const newProduct = {
-            title: title,
-            description: description || master.description || 'Japanese-inspired design',
+            title: productMetadata ? productMetadata.title : title,
+            description: productMetadata ? productMetadata.description : (description || master.description || 'Japanese-inspired design'),
             blueprint_id: master.blueprint_id,
             print_provider_id: master.print_provider_id,
             variants: master.variants.map(v => {
-                // 正しい価格を自動計算（38%利益率）
-                const optimalPrice = calculateVariantPrice(master.blueprint_id, v.title || '', 38);
+                // マスター商品の価格を使用（市場ベース価格）
+                const optimalPrice = calculateVariantPrice(master.blueprint_id, v.title || '');
                 return {
                     id: v.id,
                     price: optimalPrice || v.price, // 計算できない場合のみマスター価格を使用
@@ -178,8 +176,10 @@ export default async function handler(req, res) {
             }).filter(area => area.placeholders.length > 0) // 空のprint_areaを除外
         };
 
-        // タグを追加
-        if (tags && tags.length > 0) {
+        // タグを追加（eBayメタデータがあれば最適化されたタグを使用）
+        if (productMetadata && productMetadata.tags) {
+            newProduct.tags = productMetadata.tags;
+        } else if (tags && tags.length > 0) {
             newProduct.tags = tags;
         }
 
@@ -187,8 +187,7 @@ export default async function handler(req, res) {
         // フォーマット: SHOP-PRODUCTTYPE-TIMESTAMP
         const shopPrefix = {
             '24565480': 'STF',  // Storefront
-            '24566474': 'ETY',  // Etsy
-            '24566516': 'EBY'   // eBay
+            '24566474': 'ETY'   // Etsy
         };
         const sku = `${shopPrefix[shopId] || 'UNK'}-${productType.toUpperCase()}-${Date.now()}`;
 
@@ -236,9 +235,9 @@ export default async function handler(req, res) {
         const createdProduct = JSON.parse(responseText);
         console.log(`✅ 商品作成成功: ${createdProduct.title} (ID: ${createdProduct.id})`);
 
-        // Step 5: 自動公開（Storefront / eBay / SUZURI のみ）
+        // Step 5: 自動公開（Storefrontのみ）
         // Etsyは手数料があるため手動公開
-        const autoPublishShops = ['24565480', '24566516']; // Storefront, eBay
+        const autoPublishShops = ['24565480']; // Storefront
         let publishStatus = 'draft'; // デフォルトは下書き
 
         if (autoPublishShops.includes(shopId)) {
@@ -281,7 +280,7 @@ export default async function handler(req, res) {
             console.log(`ℹ️ このショップ (${shopId}) は手動公開設定です`);
         }
 
-        res.status(200).json({
+        const response = {
             success: true,
             productId: createdProduct.id,
             title: createdProduct.title,
@@ -293,7 +292,22 @@ export default async function handler(req, res) {
             productType: productType,
             publishStatus: publishStatus,
             message: `✅ マスターから商品を作成しました: ${createdProduct.title}${publishStatus === 'published' ? ' (公開済み)' : ''}`
-        });
+        };
+
+        // eBayメタデータ情報も含める
+        if (productMetadata) {
+            response.metadata = {
+                detectedTheme: productMetadata.detectedTheme,
+                subtitle: productMetadata.subtitle,
+                itemSpecificsCount: Object.keys(productMetadata.aspects).length,
+                keyFeaturesCount: productMetadata.keyFeatures.length,
+                tagsCount: productMetadata.tags.length,
+                aspects: productMetadata.aspects,
+                keyFeatures: productMetadata.keyFeatures
+            };
+        }
+
+        res.status(200).json(response);
 
     } catch (error) {
         console.error('❌ 商品作成エラー:', error);

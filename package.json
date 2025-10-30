@@ -4,8 +4,6 @@
   "description": "Tシャツデザインジェネレーター with Vercel Serverless Functions",
   "type": "module",
   "scripts": {
-    "pricing:check": "node scripts/auto-pricing-check.js --analyze",
-    "pricing:fix": "node scripts/auto-pricing-check.js --auto-fix",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
@@ -21,7 +19,11 @@
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "dotenv": "^17.2.3"
+    "cli-table3": "^0.6.5",
+    "cookie": "^1.0.2",
+    "dotenv": "^17.2.3",
+    "playwright": "^1.56.1",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
