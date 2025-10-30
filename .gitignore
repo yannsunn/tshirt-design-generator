@@ -31,6 +31,13 @@ Thumbs.db
 *.backup.js
 *.old.js
 
-# Data files
-suzuri-items.json
-price-fix-log.txt
+# Archive (old files kept for reference)
+archive/
+
+# Temporary scripts
+add-missing-env.sh
+.env.vercel.sh
+
+# Generated reports (runtime generated)
+*-report-*.json
+*-log.txt
