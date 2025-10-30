@@ -545,8 +545,7 @@
         // Helper function: Get selected product types from checkboxes
         // 🎯 売れ筋のみに最適化（2025年Etsyデータに基づく）
         function getSelectedProductTypes() {
-            // Printify Storefront: 全商品タイプを自動出品
-            // Etsy: 将来的に個別選択可能（承認後に実装）
+            // Printify Storefront: 全8商品タイプを自動出品
             return [
                 'tshirt',           // Tシャツ (Gildan 5000)
                 'lightweight_tee',  // 軽量Tシャツ (Gildan 980)
@@ -556,6 +555,17 @@
                 'longsleeve',       // 長袖Tシャツ (Gildan 2400)
                 'sweatshirt',       // スウェットシャツ (Gildan 18000)
                 'hoodie'            // フーディ・パーカー (Gildan 18500)
+            ];
+        }
+
+        // Etsy用: 2025年データに基づく売れ筋トップ4のみ
+        // 承認後に使用予定
+        function getEtsyProductTypes() {
+            return [
+                'softstyle_tee',    // ⭐ #1 最も人気（柔らかい、着心地良い）
+                'tshirt',           // ⭐ #2 ベストセラー（定番）
+                'sweatshirt',       // ⭐ #3 在宅需要（快適）
+                'hoodie'            // ⭐ #4 秋冬+ギフト（実用的）
             ];
         }
 
