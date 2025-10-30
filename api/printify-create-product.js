@@ -139,8 +139,8 @@ export default async function handler(req, res) {
 
         // Step 3: マスターの構造をコピーして新しい商品データを作成
         const newProduct = {
-            title: productMetadata ? productMetadata.title : title,
-            description: productMetadata ? productMetadata.description : (description || master.description || 'Japanese-inspired design'),
+            title: title,
+            description: description || master.description || 'Japanese-inspired design',
             blueprint_id: master.blueprint_id,
             print_provider_id: master.print_provider_id,
             variants: master.variants.map(v => {
@@ -176,10 +176,8 @@ export default async function handler(req, res) {
             }).filter(area => area.placeholders.length > 0) // 空のprint_areaを除外
         };
 
-        // タグを追加（eBayメタデータがあれば最適化されたタグを使用）
-        if (productMetadata && productMetadata.tags) {
-            newProduct.tags = productMetadata.tags;
-        } else if (tags && tags.length > 0) {
+        // タグを追加
+        if (tags && tags.length > 0) {
             newProduct.tags = tags;
         }
 
