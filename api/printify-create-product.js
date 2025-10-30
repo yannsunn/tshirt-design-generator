@@ -292,19 +292,6 @@ export default async function handler(req, res) {
             message: `✅ マスターから商品を作成しました: ${createdProduct.title}${publishStatus === 'published' ? ' (公開済み)' : ''}`
         };
 
-        // eBayメタデータ情報も含める
-        if (productMetadata) {
-            response.metadata = {
-                detectedTheme: productMetadata.detectedTheme,
-                subtitle: productMetadata.subtitle,
-                itemSpecificsCount: Object.keys(productMetadata.aspects).length,
-                keyFeaturesCount: productMetadata.keyFeatures.length,
-                tagsCount: productMetadata.tags.length,
-                aspects: productMetadata.aspects,
-                keyFeatures: productMetadata.keyFeatures
-            };
-        }
-
         res.status(200).json(response);
 
     } catch (error) {
