@@ -73,8 +73,8 @@ ${usedCharacterKeywords.slice(0, 15).map(k => `- ${k}...`).join('\n')}
             return res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
         }
 
-        // 安定版モデルを使用（正式名: gemini-1.5-flash）
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // Gemini Pro 1.5を使用（v1betaで利用可能な安定モデル）
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
         const systemPrompt = `あなたは外国人観光客向けの日本文化Tシャツをデザインするクリエイティブデザイナーです。指定されたテーマに沿って、ユニークなデザインコンセプトを4つ提案してください。
 
 🎯 ターゲット: 日本を訪れる外国人観光客
