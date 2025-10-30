@@ -722,8 +722,7 @@
                 displayIdeas(ideas);
                 ideasSection.classList.remove('hidden');
 
-                // Supabaseに保存して重複を防止
-                await saveIdeasToHistory(theme, ideas);
+                // 履歴保存は画像生成成功後に移動（無駄なアイデア消費を防ぐ）
             } catch (error) {
                 console.error('Error fetching design ideas:', error);
                 showError(`アイディアの生成に失敗しました: ${error.message}`);
@@ -749,19 +748,46 @@
             return result.ideas;
         };
 
-        const saveIdeasToHistory = async (theme, ideas) => {
+        // 画像生成成功後に呼ばれる：成功したアイデアのみ履歴保存
+        const saveSuccessfulIdeasToHistory = async () => {
+            if (generatedImages.length === 0) {
+                console.log('ℹ️ 生成された画像がないため履歴保存をスキップ');
+                return;
+            }
+
             try {
+                // 成功したアイデアを抽出（重複排除）
+                const successfulIdeas = [];
+                const seenPhrases = new Set();
+
+                for (const img of generatedImages) {
+                    const phrase = img.idea.phrase || img.idea.title;
+                    if (!seenPhrases.has(phrase)) {
+                        seenPhrases.add(phrase);
+                        successfulIdeas.push(img.idea);
+                    }
+                }
+
+                if (successfulIdeas.length === 0) {
+                    return;
+                }
+
+                // テーマを取得（最初の画像から）
+                const theme = generatedImages[0].idea.theme || selectedTheme;
                 const productTypes = getSelectedProductTypes();
+
+                console.log(`💾 画像生成成功: ${successfulIdeas.length}件のアイデアを履歴に保存中...`);
+
                 const response = await fetch(`${API_BASE_URL}/save-ideas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ theme, ideas, productTypes })
+                    body: JSON.stringify({ theme, ideas: successfulIdeas, productTypes })
                 });
 
                 if (response.ok) {
                     const result = await response.json();
                     if (result.saved) {
-                        console.log(`✅ ${result.count}件のアイデアを履歴に保存しました`);
+                        console.log(`✅ ${result.count}件のアイデアを履歴に保存しました（重複防止）`);
                     } else {
                         console.warn('⚠️ Supabase未設定のため履歴保存をスキップしました');
                     }
@@ -1595,6 +1621,9 @@
                 if (printifySection) {
                     printifySection.classList.remove('hidden');
                 }
+
+                // 画像生成成功後に履歴保存（成功したアイデアのみ）
+                await saveSuccessfulIdeasToHistory();
 
             } catch (error) {
                 console.error('Bulk image generation error:', error);
