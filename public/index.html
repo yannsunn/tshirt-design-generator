@@ -257,80 +257,6 @@
             </div>
 
             <!-- Product Type Selection -->
-            <div class="config-section mb-6">
-                <h2 class="text-lg font-semibold mb-3 text-gray-300">商品タイプ選択（複数選択可）</h2>
-                <div class="bg-gray-900 rounded-lg p-4">
-                    <label class="block text-sm text-gray-400 mb-3">Printifyで作成する商品タイプ（複数選択可）:</label>
-                    <div class="space-y-2">
-                        <!-- Tシャツ系 -->
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-tshirt" value="tshirt" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>👕 Tシャツ (Gildan 5000) <span class="text-purple-400">⭐ 推奨</span></span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥2,500</span>
-                        </label>
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-lightweight_tee" value="lightweight_tee" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>👕 軽量Tシャツ (Gildan 980)</span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥2,700</span>
-                        </label>
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-ultra_cotton_tee" value="ultra_cotton_tee" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>👕 ウルトラコットンTシャツ (Gildan 2000)</span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥2,800</span>
-                        </label>
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-softstyle_tee" value="softstyle_tee" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>👕 ソフトスタイルTシャツ (Gildan 64000) <span class="text-purple-400">⭐ 推奨</span></span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥2,700</span>
-                        </label>
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-kids_tee" value="kids_tee" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>👶 キッズTシャツ (Gildan 5000B)</span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥2,200</span>
-                        </label>
-                        <!-- 長袖 -->
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-longsleeve" value="longsleeve" class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>👔 長袖Tシャツ (Gildan 2400)</span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥3,200</span>
-                        </label>
-                        <!-- スウェット・フーディ -->
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-sweatshirt" value="sweatshirt" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>🧥 スウェットシャツ (Gildan 18000) <span class="text-purple-400">⭐ 推奨</span></span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥4,000</span>
-                        </label>
-                        <label class="flex items-center justify-between text-white cursor-pointer hover:bg-gray-800 p-2 rounded transition">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="product-type-hoodie" value="hoodie" checked class="mr-3 w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
-                                <span>🧥 フーディ・パーカー (Gildan 18500) <span class="text-purple-400">⭐ 推奨</span></span>
-                            </div>
-                            <span class="text-green-400 font-semibold">¥4,500</span>
-                        </label>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-3">
-                        💡 画像生成には影響しません。Printify商品作成時のみ使用されます。<br>
-                        🎯 <span class="text-purple-400">⭐ 推奨</span>: 2025年Etsy/eBayデータに基づく売れ筋4商品がデフォルトで選択されています<br>
-                        複数選択で同じデザインを複数商品タイプで一括作成できます（例：8デザイン × 4タイプ = 32商品）<br>
-                        🎯 おすすめ: 基本Tシャツ + スウェット + フーディの3種類で始めるのがベスト
-                    </p>
-                </div>
-            </div>
-
             <!-- Step 1: Theme Selection -->
             <div class="mb-6">
                 <div class="flex justify-between items-center mb-4">
@@ -529,14 +455,15 @@
                         <span>Printify Storefront 一括出品</span>
                     </button>
                     <p class="text-xs text-gray-400 mt-3 text-center">
-                        ✨ 現在のデザインでPrintify商品を自動作成・出品
+                        ✨ 全8種類の商品タイプで自動作成・出品<br>
+                        (Tシャツ系4種 + キッズ + 長袖 + スウェット + フーディ)
                     </p>
                 </div>
 
 
                 <div class="text-xs text-gray-500 mt-4 border-t border-gray-700 pt-3 flex items-center gap-2">
                     <span>💡</span>
-                    <span>Printify Storefrontに出品後、手動でStorefront公開してください</span>
+                    <span>各デザインが全商品タイプで自動出品されます（例: 3デザイン × 8商品タイプ = 24商品）</span>
                 </div>
             </div>
         </main>
@@ -618,20 +545,18 @@
         // Helper function: Get selected product types from checkboxes
         // 🎯 売れ筋のみに最適化（2025年Etsyデータに基づく）
         function getSelectedProductTypes() {
-            const checkboxes = [
-                document.getElementById('product-type-tshirt'),          // ⭐ ベストセラー
-                // document.getElementById('product-type-lightweight_tee'),  // ❌ 削除: 需要限定的
-                // document.getElementById('product-type-ultra_cotton_tee'), // ❌ 削除: tshirtに劣る
-                document.getElementById('product-type-softstyle_tee'),   // ⭐ 人気上昇中
-                // document.getElementById('product-type-kids_tee'),         // ❌ 削除: ニッチすぎ
-                // document.getElementById('product-type-longsleeve'),       // ❌ 削除: 季節限定
-                document.getElementById('product-type-sweatshirt'),      // ⭐ 在宅需要
-                document.getElementById('product-type-hoodie')           // ⭐ 秋冬+ギフト
+            // Printify Storefront: 全商品タイプを自動出品
+            // Etsy: 将来的に個別選択可能（承認後に実装）
+            return [
+                'tshirt',           // Tシャツ (Gildan 5000)
+                'lightweight_tee',  // 軽量Tシャツ (Gildan 980)
+                'ultra_cotton_tee', // ウルトラコットンTシャツ (Gildan 2000)
+                'softstyle_tee',    // ソフトスタイルTシャツ (Gildan 64000)
+                'kids_tee',         // キッズTシャツ (Gildan 5000B)
+                'longsleeve',       // 長袖Tシャツ (Gildan 2400)
+                'sweatshirt',       // スウェットシャツ (Gildan 18000)
+                'hoodie'            // フーディ・パーカー (Gildan 18500)
             ];
-            const selected = checkboxes
-                .filter(cb => cb && cb.checked)
-                .map(cb => cb.value);
-            return selected.length > 0 ? selected : ['tshirt']; // デフォルトはTシャツ
         }
 
         // Helper function: Update progress bar and ETA
@@ -3475,11 +3400,13 @@ ${result.errors > 0 ? '⚠️ エラーの詳細はコンソール（F12）で�
                 console.log(`   Printify: ${totalPrintifyCount}商品`);
 
                 const designCount = generatedImages.length;
-                const productsPerDesign = 4;
+                const productsPerDesign = 8; // 全商品タイプ
 
                 let successMessage = `🎉 ${imageCount}デザインのPrintify出品完了！\n\n`;
                 successMessage += `✅ Printify Storefront: ${totalPrintifyCount}商品\n`;
-                successMessage += `\n📝 説明: ${designCount}個のデザイン画像から、各${productsPerDesign}種類の売れ筋商品が作成されました\n(T-shirt, Softstyle Tee, Sweatshirt, Hoodie)\n\n🎯 2025年Etsyデータに基づき、最も売れる商品のみに最適化しています`;
+                successMessage += `\n📝 説明: ${designCount}個のデザイン画像から、全8種類の商品タイプが作成されました\n`;
+                successMessage += `(Tシャツ、軽量Tシャツ、ウルトラコットンTシャツ、ソフトスタイルTシャツ、\n`;
+                successMessage += `キッズTシャツ、長袖Tシャツ、スウェットシャツ、フーディ・パーカー)`;
 
                 // Auto-update prices if Printify succeeded (38% profit margin)
                 if (allProductIds.length > 0) {
