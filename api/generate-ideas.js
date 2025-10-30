@@ -73,7 +73,8 @@ ${usedCharacterKeywords.slice(0, 15).map(k => `- ${k}...`).join('\n')}
             return res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
         }
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+        // 安定版モデルを使用（2.0-flash-expは実験版で500エラーが多い）
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
         const systemPrompt = `あなたは外国人観光客向けの日本文化Tシャツをデザインするクリエイティブデザイナーです。指定されたテーマに沿って、ユニークなデザインコンセプトを4つ提案してください。
 
 🎯 ターゲット: 日本を訪れる外国人観光客
@@ -207,16 +208,52 @@ ${duplicateAvoidanceText}` }] }],
             }
         };
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        // リトライロジック: 500エラーの場合は最大3回リトライ
+        let response;
+        let lastError;
+        const maxRetries = 3;
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔄 Gemini API呼び出し (試行 ${attempt}/${maxRetries})...`);
+
+                response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    console.log(`✅ Gemini API成功 (試行 ${attempt})`);
+                    break; // 成功したらループを抜ける
+                }
+
+                const errorText = await response.text();
+                lastError = errorText;
+
+                // 500エラーの場合はリトライ、それ以外は即座にエラー
+                if (response.status === 500 && attempt < maxRetries) {
+                    console.warn(`⚠️ Gemini API 500エラー (試行 ${attempt}/${maxRetries}): リトライします...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 指数バックオフ
+                    continue;
+                }
+
+                console.error('Gemini API error response:', errorText);
+                throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+
+            } catch (fetchError) {
+                lastError = fetchError.message;
+                if (attempt < maxRetries) {
+                    console.warn(`⚠️ Gemini API接続エラー (試行 ${attempt}/${maxRetries}): ${fetchError.message}`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                    continue;
+                }
+                throw fetchError;
+            }
+        }
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Gemini API error response:', errorText);
-            throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+            throw new Error(`Gemini API error after ${maxRetries} retries: ${lastError}`);
         }
 
         const responseText = await response.text();
