@@ -27,16 +27,20 @@ Thumbs.db
 # Claude
 .claude/
 
-# Backup files
+# Backup files (may contain secrets)
+*.backup
 *.backup.js
 *.old.js
+.env.backup
 
 # Archive (old files kept for reference)
 archive/
 
-# Temporary scripts
+# Temporary scripts (may contain secrets)
 add-missing-env.sh
 .env.vercel.sh
+setup-vercel-*.sh
+setup-vercel-*.bat
 
 # Generated reports (runtime generated)
 *-report-*.json
