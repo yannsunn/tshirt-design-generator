@@ -631,11 +631,6 @@
                     apiStatusText.classList.add('text-green-400');
                     generateIdeasBtn.disabled = true; // テーマが選択されるまで無効
                     generateIdeasBtn.querySelector('.btn-text').textContent = 'テーマを選択してください';
-
-                    // Printifyショップ情報を取得
-                    if (data.printifyConfigured) {
-                        await fetchPrintifyShops();
-                    }
                 } else {
                     throw new Error('Server not ready');
                 }
@@ -649,63 +644,10 @@
             }
         };
 
-        // --- Printify Shop取得 ---
-        const fetchPrintifyShops = async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/printify-get-shops`);
-                const data = await response.json();
+        // Printify Shop IDはハードコード（Storefront: 24565480）
+        // APIコール不要
 
-                if (data.shops && data.shops.length > 0) {
-                    printifyShopId = data.shops[0].id;
-                    console.log('Printify Shop ID:', printifyShopId);
-                }
-            } catch (error) {
-                console.error('Printify shops取得エラー:', error);
-            }
-        };
-
-        // --- Supabase接続テスト ---
-        const testSupabaseConnection = async () => {
-            try {
-                testSupabaseBtn.disabled = true;
-                testSupabaseBtn.textContent = '確認中...';
-                supabaseStatusText.textContent = '接続確認中...';
-                supabaseStatusText.className = 'text-xs text-yellow-400 mt-1';
-
-                const response = await fetch(`${API_BASE_URL}/test-supabase`);
-                const result = await response.json();
-
-                console.log('Supabase接続テスト結果:', result);
-
-                if (result.configured && result.connected) {
-                    supabaseStatusText.textContent = `✅ 接続成功！ (履歴: ${result.stats.totalIdeas}件)`;
-                    supabaseStatusText.className = 'text-xs text-green-400 mt-1';
-
-                    if (result.stats.totalIdeas > 0) {
-                        console.log('📊 最新のアイデア履歴:');
-                        result.stats.recentIdeas.forEach((idea, i) => {
-                            console.log(`  ${i + 1}. [${idea.theme}] "${idea.phrase}" (${new Date(idea.created_at).toLocaleDateString()})`);
-                        });
-                    }
-                } else if (result.configured && !result.connected) {
-                    supabaseStatusText.textContent = `❌ 接続エラー: ${result.error}`;
-                    supabaseStatusText.className = 'text-xs text-red-400 mt-1';
-                    showWarning(`Supabase接続エラー: ${result.message}\n\nヒント: ${result.hint || 'テーブルが正しく作成されているか確認してください'}`);
-                } else {
-                    supabaseStatusText.textContent = '⚠️ 未設定（重複チェックなし）';
-                    supabaseStatusText.className = 'text-xs text-yellow-400 mt-1';
-                    console.log('ℹ️ Supabase未設定: 重複チェック機能は無効です');
-                }
-
-            } catch (error) {
-                console.error('Supabaseテストエラー:', error);
-                supabaseStatusText.textContent = `❌ エラー: ${error.message}`;
-                supabaseStatusText.className = 'text-xs text-red-400 mt-1';
-            } finally {
-                testSupabaseBtn.disabled = false;
-                testSupabaseBtn.textContent = '接続テスト';
-            }
-        };
+        // Supabase接続テスト機能は削除（APIエンドポイントが存在しないため）
 
         // --- Core Functions ---
         const handleGenerateIdeas = async () => {

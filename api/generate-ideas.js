@@ -1,12 +1,10 @@
-import { getSupabaseClient } from '../lib/supabase.js';
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
-        const { theme, productTypes = ['tshirt'] } = req.body;
+        const { theme } = req.body;
 
         // 入力バリデーション
         if (!theme || typeof theme !== 'string') {
@@ -19,53 +17,8 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'テーマを入力してください' });
         }
 
-        // 過去のアイデア履歴を取得（重複防止）
-        // 選択された商品タイプのみで重複チェック
-        const supabase = getSupabaseClient();
-        let previousIdeas = [];
+        // 重複防止は一旦無効化（Vercelタイムアウト対策）
         let duplicateAvoidanceText = '';
-
-        if (supabase) {
-            try {
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-                // 選択された商品タイプのアイデアのみ取得
-                const { data, error } = await supabase
-                    .from('design_ideas')
-                    .select('character, phrase, product_type')
-                    .gte('created_at', thirtyDaysAgo.toISOString())
-                    .in('product_type', productTypes)  // 選択されたタイプのみ
-                    .order('created_at', { ascending: false })
-                    .limit(100);
-
-                if (!error && data && data.length > 0) {
-                    previousIdeas = data;
-
-                    // フレーズのリストを作成
-                    const usedPhrases = [...new Set(data.map(d => d.phrase))];
-                    const usedCharacterKeywords = data.map(d => {
-                        // キャラクター説明から主要なキーワードを抽出（最初の20文字程度）
-                        return d.character.substring(0, 30);
-                    });
-
-                    duplicateAvoidanceText = `
-
-🚨 重複回避（超重要）:
-以下のフレーズは過去に使用されているため、**絶対に使用しないでください**:
-${usedPhrases.slice(0, 20).map(p => `- "${p}"`).join('\n')}
-
-以下のキャラクター・モチーフは過去に使用されているため、**できるだけ避けてください**:
-${usedCharacterKeywords.slice(0, 15).map(k => `- ${k}...`).join('\n')}
-
-必ず新しいフレーズと異なるキャラクター・モチーフを提案してください。`;
-
-                    console.log(`📖 過去のアイデア ${data.length}件を取得し、重複回避を指示`);
-                }
-            } catch (historyError) {
-                console.warn('履歴取得エラー（スキップ）:', historyError.message);
-            }
-        }
 
         const apiKey = process.env.GEMINI_API_KEY;
 
@@ -208,53 +161,22 @@ ${duplicateAvoidanceText}` }] }],
             }
         };
 
-        // リトライロジック: 500エラーの場合は最大3回リトライ
-        let response;
-        let lastError;
-        const maxRetries = 3;
+        // Gemini API呼び出し（Vercel 10秒タイムアウト対策でリトライなし）
+        console.log('🔄 Gemini API呼び出し...');
 
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                console.log(`🔄 Gemini API呼び出し (試行 ${attempt}/${maxRetries})...`);
-
-                response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    console.log(`✅ Gemini API成功 (試行 ${attempt})`);
-                    break; // 成功したらループを抜ける
-                }
-
-                const errorText = await response.text();
-                lastError = errorText;
-
-                // 500エラーの場合はリトライ、それ以外は即座にエラー
-                if (response.status === 500 && attempt < maxRetries) {
-                    console.warn(`⚠️ Gemini API 500エラー (試行 ${attempt}/${maxRetries}): リトライします...`);
-                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 指数バックオフ
-                    continue;
-                }
-
-                console.error('Gemini API error response:', errorText);
-                throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-
-            } catch (fetchError) {
-                lastError = fetchError.message;
-                if (attempt < maxRetries) {
-                    console.warn(`⚠️ Gemini API接続エラー (試行 ${attempt}/${maxRetries}): ${fetchError.message}`);
-                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-                    continue;
-                }
-                throw fetchError;
-            }
-        }
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
         if (!response.ok) {
-            throw new Error(`Gemini API error after ${maxRetries} retries: ${lastError}`);
+            const errorText = await response.text();
+            console.error('Gemini API error response:', errorText);
+            throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
         }
+
+        console.log('✅ Gemini API成功');
 
         const responseText = await response.text();
         let result;
