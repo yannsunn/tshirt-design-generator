@@ -30,8 +30,8 @@ AIを活用して、日本の伝統文化をテーマにしたTシャツデザ�
 - 🎆 **祭り・文化** (3): 花火大会、夏祭り、狐の嫁入り
 
 ### 🤖 AI自動生成
-1. **デザインアイデア生成**（Gemini 2.0 Flash）
-   - 3つのユニークなコンセプト
+1. **デザインアイデア生成**（Gemini 2.5 Flash - 2025最新モデル）
+   - 4つのユニークなコンセプト
    - 詳細なモチーフ描写（日本語）
    - ひらがなメインのキャッチフレーズ
 
@@ -55,8 +55,9 @@ AIを活用して、日本の伝統文化をテーマにしたTシャツデザ�
 ### 🛒 Printify Storefront自動出品
 - ワンクリックで一括出品（Storefront）
 - 自動価格最適化（38%利益率）
-- 4種類の人気商品（T-shirt, Softstyle Tee, Sweatshirt, Hoodie）
+- 8種類の商品タイプ（T-shirt, Lightweight, Ultra Cotton, Softstyle, Kids, Long Sleeve, Sweatshirt, Hoodie）
 - Printify Express配送対応
+- 自動公開（手数料なし）
 
 ---
 
@@ -81,11 +82,11 @@ cd tshirt-design-generator
 | **FAL API** | 画像生成 | $0.05/画像 | https://fal.ai/dashboard/keys |
 
 #### オプション
-| サービス | 用途 | 料金 | 取得先 |
-|---------|------|------|--------|
-| **Supabase** | アイデア履歴保存（重複防止） | 無料枠500MB | https://supabase.com/dashboard |
-| **remove.bg API** | 背景除去 | 月50枚無料、以降$0.20/枚 | https://www.remove.bg/api |
-| **Printify API** | 商品登録 | 無料 | https://printify.com/app/account/api |
+| サービス | 用途 | 料金 | 取得先 | 備考 |
+|---------|------|------|--------|------|
+| **Printify API** | 商品登録・自動出品 | 無料 | https://printify.com/app/account/api | 推奨 |
+| **remove.bg API** | 背景除去（高精度） | 月50枚無料、以降$0.20/枚 | https://www.remove.bg/api | - |
+| **Supabase** | アイデア履歴保存（重複防止） | 無料枠500MB | https://supabase.com/dashboard | 現在無効化 |
 
 ### 3️⃣ Vercelにデプロイ
 
