@@ -63,6 +63,9 @@ Japanese anime style illustration, ${randomStyle}, white background, centered, f
     // Generate unique seed using timestamp + random for maximum variation
     const uniqueSeed = Math.floor(Date.now() * Math.random()) % 1000000;
 
+    const controller1 = new AbortController();
+    const timeout1 = setTimeout(() => controller1.abort(), 30000); // 30秒（画像生成は時間がかかる）
+
     const response = await fetch('https://fal.run/fal-ai/bytedance/seedream/v4/text-to-image', {
         method: 'POST',
         headers: {
@@ -78,8 +81,10 @@ Japanese anime style illustration, ${randomStyle}, white background, centered, f
             seed: uniqueSeed,
             num_images: 1,
             enable_safety_checker: false
-        })
+        }),
+        signal: controller1.signal
     });
+    clearTimeout(timeout1);
 
     if (!response.ok) {
         const errorText = await response.text();
@@ -90,7 +95,12 @@ Japanese anime style illustration, ${randomStyle}, white background, centered, f
 
     if (result.images && result.images[0]?.url) {
         const imageUrl = result.images[0].url;
-        const imageResponse = await fetch(imageUrl);
+        const controller2 = new AbortController();
+        const timeout2 = setTimeout(() => controller2.abort(), 10000);
+
+        const imageResponse = await fetch(imageUrl, { signal: controller2.signal });
+        clearTimeout(timeout2);
+
         const imageBuffer = await imageResponse.arrayBuffer();
         const base64 = Buffer.from(imageBuffer).toString('base64');
         return res.status(200).json({ image: `data:image/png;base64,${base64}` });
@@ -136,11 +146,16 @@ DO NOT create: cute anime girl with food, cooking scene, restaurant, modern clot
         }
     };
 
+    const controller3 = new AbortController();
+    const timeout3 = setTimeout(() => controller3.abort(), 30000); // 30秒（画像生成は時間がかかる）
+
     const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller3.signal
     });
+    clearTimeout(timeout3);
 
     if (!response.ok) {
         const errorText = await response.text();

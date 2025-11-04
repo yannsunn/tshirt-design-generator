@@ -25,8 +25,30 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'PRINTIFY_API_KEY is not configured' });
         }
 
+        // 基本的な必須パラメータチェック
         if (!shopId || (!imageId && !imageUrl) || !title) {
             return res.status(400).json({ error: 'shopId, (imageId or imageUrl), and title are required' });
+        }
+
+        // imageUrlのHTTPS検証
+        if (imageUrl && !/^https:\/\//i.test(imageUrl)) {
+            return res.status(400).json({ error: 'imageUrl must be an HTTPS URL' });
+        }
+
+        // tags配列のバリデーション
+        if (tags !== undefined) {
+            if (!Array.isArray(tags)) {
+                return res.status(400).json({ error: 'tags must be an array' });
+            }
+            if (!tags.every(tag => typeof tag === 'string' && tag.length > 0 && tag.length <= 40)) {
+                return res.status(400).json({ error: 'All tags must be non-empty strings with max 40 characters' });
+            }
+        }
+
+        // productTypeの許可リストチェック
+        const allowedProductTypes = ['tshirt', 'lightweight_tee', 'ultra_cotton_tee', 'softstyle_tee', 'kids_tee', 'longsleeve', 'sweatshirt', 'hoodie'];
+        if (!allowedProductTypes.includes(productType)) {
+            return res.status(400).json({ error: `Invalid productType. Allowed values: ${allowedProductTypes.join(', ')}` });
         }
 
         // ショップごとのマスター商品IDマッピング（2025-10-13 更新）
@@ -79,6 +101,9 @@ export default async function handler(req, res) {
         console.log(`🎯 マスターから商品作成: ${productType} (Master ID: ${masterProductId})`);
 
         // Step 1: マスター商品の詳細を取得
+        const controller1 = new AbortController();
+        const timeout1 = setTimeout(() => controller1.abort(), 10000);
+
         const masterResponse = await fetch(
             `https://api.printify.com/v1/shops/${shopId}/products/${masterProductId}.json`,
             {
@@ -86,9 +111,11 @@ export default async function handler(req, res) {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                signal: controller1.signal
             }
         );
+        clearTimeout(timeout1);
 
         if (!masterResponse.ok) {
             const errorText = await masterResponse.text();
@@ -110,6 +137,9 @@ export default async function handler(req, res) {
         } else if (imageUrl) {
             // 新しい画像をPrintifyにアップロード
             console.log('📤 画像アップロード中...');
+            const controller2 = new AbortController();
+            const timeout2 = setTimeout(() => controller2.abort(), 15000);
+
             const uploadResponse = await fetch(
                 `https://api.printify.com/v1/uploads/images.json`,
                 {
@@ -121,9 +151,11 @@ export default async function handler(req, res) {
                     body: JSON.stringify({
                         file_name: `design_${Date.now()}.png`,
                         url: imageUrl
-                    })
+                    }),
+                    signal: controller2.signal
                 }
             );
+            clearTimeout(timeout2);
 
             if (!uploadResponse.ok) {
                 const errorText = await uploadResponse.text();
@@ -202,6 +234,9 @@ export default async function handler(req, res) {
         console.log(`   SKU: ${sku}`);
 
         // Step 4: 新しい商品を作成
+        const controller3 = new AbortController();
+        const timeout3 = setTimeout(() => controller3.abort(), 20000);
+
         const createResponse = await fetch(
             `https://api.printify.com/v1/shops/${shopId}/products.json`,
             {
@@ -210,9 +245,11 @@ export default async function handler(req, res) {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(newProduct)
+                body: JSON.stringify(newProduct),
+                signal: controller3.signal
             }
         );
+        clearTimeout(timeout3);
 
         const responseText = await createResponse.text();
 
@@ -241,6 +278,9 @@ export default async function handler(req, res) {
         if (autoPublishShops.includes(shopId)) {
             try {
                 console.log('📤 商品を自動公開中...');
+                const controller4 = new AbortController();
+                const timeout4 = setTimeout(() => controller4.abort(), 15000);
+
                 const publishResponse = await fetch(
                     `https://api.printify.com/v1/shops/${shopId}/products/${createdProduct.id}/publish.json`,
                     {
@@ -257,9 +297,11 @@ export default async function handler(req, res) {
                             tags: true,
                             keyFeatures: true,
                             shipping_template: true
-                        })
+                        }),
+                        signal: controller4.signal
                     }
                 );
+                clearTimeout(timeout4);
 
                 if (publishResponse.ok) {
                     const publishResult = await publishResponse.json();
