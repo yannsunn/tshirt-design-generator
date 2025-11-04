@@ -28,7 +28,10 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error('Error in /api/generate-image:', error);
-        res.status(500).json({ error: error.message });
+        const isProd = process.env.NODE_ENV === 'production';
+        res.status(500).json({
+            error: isProd ? 'Internal server error' : error.message
+        });
     }
 }
 

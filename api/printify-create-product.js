@@ -296,9 +296,9 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error('❌ 商品作成エラー:', error);
+        const isProd = process.env.NODE_ENV === 'production';
         return res.status(500).json({
-            error: error.message || 'Internal server error',
-            details: error.stack
+            error: isProd ? 'Internal server error' : (error.message || 'Internal server error')
         });
     }
 }
