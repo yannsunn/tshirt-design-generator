@@ -1,13 +1,8 @@
 // Printify商品作成（マスター複製方式）
 // モックアップ・配送設定を保持したまま、画像・タイトル・説明だけを差し替え
+// Simplified for Vercel serverless environment
 
 import { calculateVariantPrice } from '../lib/blueprintCosts.js';
-import { asyncHandler } from '../lib/errorHandler.js';
-import { rateLimitMiddleware } from '../lib/rateLimiter.js';
-import { fetchWithTimeout, fetchJSON } from '../lib/fetchWithTimeout.js';
-import { createLogger } from '../lib/logger.js';
-
-const logger = createLogger('printify-create-product');
 
 // ショップごとのマスター商品IDマッピング（2025-10-13 更新）
 const MASTER_PRODUCTS_BY_SHOP = {
@@ -46,57 +41,65 @@ const SHOP_PREFIXES = {
  * マスター商品を取得
  */
 async function fetchMasterProduct(shopId, masterProductId, apiKey) {
-    const timer = logger.startTimer('fetch-master-product');
-    logger.info('Fetching master product', { shopId, masterProductId });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    const master = await fetchJSON(
-        `https://api.printify.com/v1/shops/${shopId}/products/${masterProductId}.json`,
-        {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
+    try {
+        const response = await fetch(
+            `https://api.printify.com/v1/shops/${shopId}/products/${masterProductId}.json`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                signal: controller.signal
             }
-        },
-        10000
-    );
+        );
 
-    timer.end();
-    logger.info('Master product fetched', {
-        title: master.title,
-        blueprintId: master.blueprint_id
-    });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch master product: ${response.status}`);
+        }
 
-    return master;
+        return await response.json();
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 /**
  * 画像をPrintifyにアップロード
  */
 async function uploadImage(imageUrl, apiKey) {
-    const timer = logger.startTimer('upload-image');
-    logger.info('Uploading image', { imageUrl: imageUrl.substring(0, 50) });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const uploadedImage = await fetchJSON(
-        `https://api.printify.com/v1/uploads/images.json`,
-        {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                file_name: `design_${Date.now()}.png`,
-                url: imageUrl
-            })
-        },
-        15000
-    );
+    try {
+        const response = await fetch(
+            `https://api.printify.com/v1/uploads/images.json`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    file_name: `design_${Date.now()}.png`,
+                    url: imageUrl
+                }),
+                signal: controller.signal
+            }
+        );
 
-    timer.end();
-    logger.info('Image uploaded', { imageId: uploadedImage.id });
+        if (!response.ok) {
+            throw new Error(`Failed to upload image: ${response.status}`);
+        }
 
-    return uploadedImage.id;
+        const result = await response.json();
+        return result.id;
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 /**
@@ -152,8 +155,6 @@ function buildProductData(master, newImageId, title, description, tags, productT
 
     newProduct.is_printify_express_enabled = true;
 
-    logger.info('Product data built', { sku, variants: newProduct.variants.length });
-
     return newProduct;
 }
 
@@ -161,44 +162,33 @@ function buildProductData(master, newImageId, title, description, tags, productT
  * 商品を作成
  */
 async function createProduct(shopId, productData, apiKey) {
-    const timer = logger.startTimer('create-product');
-    logger.info('Creating product', { shopId, title: productData.title });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
-    const response = await fetchWithTimeout(
-        `https://api.printify.com/v1/shops/${shopId}/products.json`,
-        {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(productData)
-        },
-        20000
-    );
+    try {
+        const response = await fetch(
+            `https://api.printify.com/v1/shops/${shopId}/products.json`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(productData),
+                signal: controller.signal
+            }
+        );
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-            errorData = JSON.parse(errorText);
-        } catch {
-            errorData = { message: errorText };
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Product creation failed:', response.status, errorText.substring(0, 200));
+            throw new Error(`Failed to create product: ${response.status}`);
         }
 
-        logger.error('Product creation failed', new Error(`HTTP ${response.status}`), {
-            status: response.status,
-            error: errorData
-        });
-
-        throw new Error(`Failed to create product: ${JSON.stringify(errorData)}`);
+        return await response.json();
+    } finally {
+        clearTimeout(timeout);
     }
-
-    const createdProduct = await response.json();
-    timer.end();
-    logger.info('Product created', { productId: createdProduct.id, title: createdProduct.title });
-
-    return createdProduct;
 }
 
 /**
@@ -206,15 +196,17 @@ async function createProduct(shopId, productData, apiKey) {
  */
 async function publishProduct(shopId, productId, apiKey) {
     if (!AUTO_PUBLISH_SHOPS.includes(shopId)) {
-        logger.info('Skipping auto-publish for this shop', { shopId });
+        console.log('Skipping auto-publish for shop:', shopId);
         return 'draft';
     }
 
-    try {
-        const timer = logger.startTimer('publish-product');
-        logger.info('Publishing product', { shopId, productId });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-        const response = await fetchWithTimeout(
+    try {
+        console.log('Publishing product:', productId, 'to shop:', shopId);
+
+        const response = await fetch(
             `https://api.printify.com/v1/shops/${shopId}/products/${productId}/publish.json`,
             {
                 method: 'POST',
@@ -230,28 +222,29 @@ async function publishProduct(shopId, productId, apiKey) {
                     tags: true,
                     keyFeatures: true,
                     shipping_template: true
-                })
-            },
-            15000
+                }),
+                signal: controller.signal
+            }
         );
 
         if (response.ok) {
             await response.json();
-            timer.end();
-            logger.info('Product published', { productId });
+            console.log('Product published successfully:', productId);
             return 'published';
         } else {
             const publishError = await response.text();
-            logger.warn('Product publish failed', { productId, error: publishError.substring(0, 200) });
+            console.error('Product publish failed:', productId, publishError.substring(0, 200));
             return 'publish_failed';
         }
     } catch (publishError) {
-        logger.error('Publish error', publishError, { productId });
+        console.error('Publish error:', publishError.message);
         return 'publish_error';
+    } finally {
+        clearTimeout(timeout);
     }
 }
 
-async function handler(req, res) {
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -299,7 +292,7 @@ async function handler(req, res) {
         const masterProductIds = MASTER_PRODUCTS_BY_SHOP[shopId];
         if (!masterProductIds) {
             const availableShops = Object.keys(MASTER_PRODUCTS_BY_SHOP).join(', ');
-            logger.error('Shop not found in master mapping', null, { shopId, availableShops });
+            console.error('Shop not found in master mapping:', shopId);
             return res.status(400).json({
                 error: `Shop ${shopId} のマスター商品が未設定です。利用可能なショップ: ${availableShops}`,
                 availableShops: Object.keys(MASTER_PRODUCTS_BY_SHOP)
@@ -314,12 +307,7 @@ async function handler(req, res) {
             });
         }
 
-        logger.info('Starting product creation', {
-            shopId,
-            productType,
-            masterProductId,
-            title: title.substring(0, 50)
-        });
+        console.log('Starting product creation:', { shopId, productType, title: title.substring(0, 50) });
 
         // Step 1: Fetch master product
         const master = await fetchMasterProduct(shopId, masterProductId, apiKey);
@@ -328,9 +316,10 @@ async function handler(req, res) {
         let newImageId;
         if (imageId) {
             newImageId = imageId;
-            logger.info('Using existing image ID', { imageId: newImageId });
+            console.log('Using existing image ID:', newImageId);
         } else if (imageUrl) {
             newImageId = await uploadImage(imageUrl, apiKey);
+            console.log('Image uploaded:', newImageId);
         } else {
             throw new Error('Either imageId or imageUrl must be provided');
         }
@@ -340,6 +329,7 @@ async function handler(req, res) {
 
         // Step 4: Create product
         const createdProduct = await createProduct(shopId, productData, apiKey);
+        console.log('Product created:', createdProduct.id);
 
         // Step 5: Auto-publish (Storefront only)
         const publishStatus = await publishProduct(shopId, createdProduct.id, apiKey);
@@ -358,29 +348,16 @@ async function handler(req, res) {
             message: `✅ マスターから商品を作成しました: ${createdProduct.title}${publishStatus === 'published' ? ' (公開済み)' : ''}`
         };
 
-        logger.info('Product creation completed', {
-            productId: createdProduct.id,
-            publishStatus
-        });
+        console.log('Product creation completed:', { productId: createdProduct.id, publishStatus });
 
         res.status(200).json(response);
 
     } catch (error) {
-        logger.error('Product creation failed', error, {
-            shopId: req.body?.shopId,
-            productType: req.body?.productType,
-            title: req.body?.title?.substring(0, 50)
-        });
+        console.error('Product creation failed:', error.message, error.stack?.substring(0, 500));
 
-        const isProd = process.env.NODE_ENV === 'production';
         return res.status(500).json({
-            error: isProd ? 'Internal server error' : (error.message || 'Internal server error')
+            error: error.message || 'Internal server error',
+            stack: process.env.NODE_ENV !== 'production' ? error.stack?.substring(0, 500) : undefined
         });
     }
 }
-
-// Apply rate limiting: 20 requests per minute per client (product creation is complex)
-export default rateLimitMiddleware(asyncHandler(handler), {
-    maxRequests: 20,
-    windowMs: 60000
-});
