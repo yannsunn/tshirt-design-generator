@@ -1,4 +1,7 @@
-export default async function handler(req, res) {
+import { asyncHandler } from '../lib/errorHandler.js';
+import { rateLimitMiddleware } from '../lib/rateLimiter.js';
+
+async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -192,3 +195,8 @@ DO NOT create: cute anime girl with food, cooking scene, restaurant, modern clot
     console.error('Gemini Image API - No image data found. Full response:', JSON.stringify(result, null, 2));
     throw new Error(`画像データが見つかりません。API Response: ${JSON.stringify(result?.candidates?.[0]?.content?.parts || result?.error || 'Unknown error')}`);
 }
+// Apply rate limiting: 15 requests per minute per client (image generation is resource-intensive)
+export default rateLimitMiddleware(asyncHandler(handler), {
+    maxRequests: 15,
+    windowMs: 60000
+});

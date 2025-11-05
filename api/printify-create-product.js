@@ -2,8 +2,10 @@
 // モックアップ・配送設定を保持したまま、画像・タイトル・説明だけを差し替え
 
 import { calculateVariantPrice } from '../lib/blueprintCosts.js';
+import { asyncHandler } from '../lib/errorHandler.js';
+import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -344,3 +346,9 @@ export default async function handler(req, res) {
         });
     }
 }
+
+// Apply rate limiting: 20 requests per minute per client (product creation is complex)
+export default rateLimitMiddleware(asyncHandler(handler), {
+    maxRequests: 20,
+    windowMs: 60000
+});
