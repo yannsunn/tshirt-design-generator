@@ -5,12 +5,25 @@ import { createLogger } from '../lib/logger.js';
 
 const logger = createLogger('generate-ideas');
 
+// Log initialization
+logger.info('generate-ideas handler initialized');
+
 async function handler(req, res) {
+    logger.info('Handler called', {
+        method: req.method,
+        hasBody: !!req.body
+    });
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
+        // Vercel automatically parses JSON body, but check if it exists
+        if (!req.body) {
+            logger.error('Request body is missing or not parsed');
+            return res.status(400).json({ error: 'Request body is required' });
+        }
+
         const { theme } = req.body;
 
         // 入力バリデーション
@@ -218,17 +231,28 @@ ${duplicateAvoidanceText}` }] }],
 
     } catch (error) {
         logger.error('Request failed', error, {
-            theme: req.body?.theme?.substring(0, 50)
+            theme: req.body?.theme?.substring(0, 50),
+            errorName: error.name,
+            errorStack: error.stack?.substring(0, 500)
         });
         const isProd = process.env.NODE_ENV === 'production';
-        res.status(500).json({
-            error: isProd ? 'Internal server error' : error.message
-        });
+
+        // Ensure we don't send response twice
+        if (!res.headersSent) {
+            res.status(500).json({
+                error: isProd ? 'Internal server error' : error.message,
+                ...(isProd ? {} : { stack: error.stack?.substring(0, 500) })
+            });
+        }
     }
 }
 
-// Apply rate limiting: 10 requests per minute per client
-export default rateLimitMiddleware(asyncHandler(handler), {
+// Apply error handling and rate limiting
+// Order matters: asyncHandler first (catches errors), then rateLimitMiddleware (controls traffic)
+const handlerWithErrorHandling = asyncHandler(handler);
+const handlerWithRateLimit = rateLimitMiddleware(handlerWithErrorHandling, {
     maxRequests: 10,
     windowMs: 60000
 });
+
+export default handlerWithRateLimit;
