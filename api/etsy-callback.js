@@ -71,8 +71,17 @@ export default async function handler(req, res) {
             'etsy_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
         ]);
 
-        // トークンを安全に保存（ここではHTMLで表示）
-        // 本番環境では、Vercel KVやSupabaseに保存すべき
+        // ⚠️ SECURITY: トークンをログに記録（サーバーログのみ、ブラウザに露出しない）
+        console.log('✅ Token saved to server logs (masked for security):');
+        console.log(`   Access Token: ${tokenData.access_token.substring(0, 10)}...[REDACTED]`);
+        console.log(`   Refresh Token: ${tokenData.refresh_token.substring(0, 10)}...[REDACTED]`);
+        console.log(`   Expires in: ${tokenData.expires_in} seconds`);
+        console.log('\n⚠️  NEXT STEP: Manually add these tokens to Vercel environment variables:');
+        console.log('   1. Go to Vercel Dashboard > Project Settings > Environment Variables');
+        console.log('   2. Add ETSY_ACCESS_TOKEN (copy from server logs above)');
+        console.log('   3. Add ETSY_REFRESH_TOKEN (copy from server logs above)');
+
+        // トークンをブラウザに表示しない（セキュリティリスク回避）
         res.status(200).send(`
             <!DOCTYPE html>
             <html>
@@ -94,25 +103,20 @@ export default async function handler(req, res) {
                         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                     }
                     h1 { color: #2ecc71; }
-                    .token-box {
-                        background: #f8f9fa;
-                        border: 1px solid #dee2e6;
-                        border-radius: 4px;
-                        padding: 15px;
-                        margin: 20px 0;
-                        font-family: 'Courier New', monospace;
-                        font-size: 12px;
-                        word-break: break-all;
-                    }
-                    .token-box strong {
-                        color: #e74c3c;
-                    }
                     .instructions {
                         background: #fff3cd;
                         border: 1px solid #ffc107;
                         border-radius: 4px;
                         padding: 15px;
                         margin: 20px 0;
+                    }
+                    .warning {
+                        background: #f8d7da;
+                        border: 1px solid #f5c6cb;
+                        border-radius: 4px;
+                        padding: 15px;
+                        margin: 20px 0;
+                        color: #721c24;
                     }
                     .command {
                         background: #2c3e50;
@@ -122,19 +126,7 @@ export default async function handler(req, res) {
                         font-family: 'Courier New', monospace;
                         margin: 10px 0;
                         overflow-x: auto;
-                    }
-                    button {
-                        background: #3498db;
-                        color: white;
-                        border: none;
-                        padding: 10px 20px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 14px;
-                        margin-right: 10px;
-                    }
-                    button:hover {
-                        background: #2980b9;
+                        font-size: 12px;
                     }
                 </style>
             </head>
@@ -142,59 +134,40 @@ export default async function handler(req, res) {
                 <div class="container">
                     <h1>✅ Etsy認証成功！</h1>
 
-                    <p>Etsy OAuth 2.0認証が完了しました。以下のトークンを取得しました。</p>
+                    <p>Etsy OAuth 2.0認証が完了しました。</p>
 
-                    <div class="token-box">
-                        <strong>⚠️ 重要: これらのトークンは機密情報です。誰にも共有しないでください。</strong>
+                    <div class="warning">
+                        <strong>🔒 セキュリティ保護:</strong> トークンはサーバーログに安全に記録されました。<br>
+                        ブラウザには表示されません（セキュリティリスク回避）。
                     </div>
-
-                    <h3>📋 アクセストークン</h3>
-                    <div class="token-box" id="access-token">
-                        ${tokenData.access_token}
-                    </div>
-                    <button onclick="copyToClipboard('access-token')">📋 コピー</button>
-                    <p><small>有効期限: ${tokenData.expires_in}秒（${(tokenData.expires_in / 3600).toFixed(1)}時間）</small></p>
-
-                    <h3>🔄 リフレッシュトークン</h3>
-                    <div class="token-box" id="refresh-token">
-                        ${tokenData.refresh_token}
-                    </div>
-                    <button onclick="copyToClipboard('refresh-token')">📋 コピー</button>
-                    <p><small>有効期限: 90日</small></p>
 
                     <div class="instructions">
                         <h3>📝 次のステップ:</h3>
                         <ol>
-                            <li><strong>Vercel環境変数に追加:</strong></li>
+                            <li><strong>Vercelのサーバーログを確認:</strong></li>
                         </ol>
 
-                        <p>以下のコマンドを実行してください:</p>
+                        <p>Vercel Dashboardでサーバーログを確認してください:</p>
 
                         <div class="command">
-echo "${tokenData.access_token}" | vercel env add ETSY_ACCESS_TOKEN production
+1. Vercel Dashboard > Deployments > Latest > Function Logs<br>
+2. "Access Token:" と "Refresh Token:" を探してコピー<br>
+3. Project Settings > Environment Variables に追加<br>
+   - ETSY_ACCESS_TOKEN<br>
+   - ETSY_REFRESH_TOKEN
                         </div>
+
+                        <p>または、CLIでログを確認:</p>
 
                         <div class="command">
-echo "${tokenData.refresh_token}" | vercel env add ETSY_REFRESH_TOKEN production
+vercel logs --follow
                         </div>
 
-                        <p><strong>注意:</strong> アクセストークンは1時間で期限切れになります。リフレッシュトークンを使って自動更新する仕組みが必要です。</p>
+                        <p><strong>注意:</strong> アクセストークンは${(tokenData.expires_in / 3600).toFixed(1)}時間で期限切れになります。</p>
                     </div>
 
                     <p><a href="/">トップページに戻る</a></p>
                 </div>
-
-                <script>
-                    function copyToClipboard(elementId) {
-                        const text = document.getElementById(elementId).textContent.trim();
-                        navigator.clipboard.writeText(text).then(() => {
-                            alert('クリップボードにコピーしました！');
-                        }).catch(err => {
-                            console.error('コピー失敗:', err);
-                            alert('コピーに失敗しました');
-                        });
-                    }
-                </script>
             </body>
             </html>
         `);

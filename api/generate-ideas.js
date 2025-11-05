@@ -1,5 +1,6 @@
 import { asyncHandler } from '../lib/errorHandler.js';
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -167,51 +168,37 @@ ${duplicateAvoidanceText}` }] }],
         // Gemini API呼び出し（Vercel 10秒タイムアウト対策でリトライなし）
         console.log('🔄 Gemini API呼び出し...');
 
-        // AbortControllerでタイムアウト実装（15秒）
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const response = await fetchWithTimeout(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }, 15000); // 15秒タイムアウト
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Gemini API error response:', errorText);
+            throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+        }
+
+        console.log('✅ Gemini API成功');
+
+        const responseText = await response.text();
+        let result;
 
         try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Gemini API error response:', errorText);
-                throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-            }
-
-            console.log('✅ Gemini API成功');
-
-            const responseText = await response.text();
-            let result;
-
-            try {
-                result = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error('Failed to parse Gemini API response:', responseText);
-                throw new Error(`Gemini APIから無効なレスポンスが返されました。レスポンス内容: ${responseText.substring(0, 200)}...`);
-            }
-
-            if (!result.candidates || !result.candidates[0]?.content?.parts?.[0]?.text) {
-                console.error('Unexpected Gemini API response structure:', JSON.stringify(result, null, 2));
-                throw new Error(`Gemini APIから予期しないレスポンス構造が返されました: ${JSON.stringify(result)}`);
-            }
-
-            const ideas = JSON.parse(result.candidates[0].content.parts[0].text);
-            res.status(200).json({ ideas });
-        } catch (fetchError) {
-            clearTimeout(timeoutId);
-            if (fetchError.name === 'AbortError') {
-                throw new Error('Gemini APIのリクエストがタイムアウトしました（15秒）');
-            }
-            throw fetchError;
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse Gemini API response:', responseText);
+            throw new Error(`Gemini APIから無効なレスポンスが返されました。レスポンス内容: ${responseText.substring(0, 200)}...`);
         }
+
+        if (!result.candidates || !result.candidates[0]?.content?.parts?.[0]?.text) {
+            console.error('Unexpected Gemini API response structure:', JSON.stringify(result, null, 2));
+            throw new Error(`Gemini APIから予期しないレスポンス構造が返されました: ${JSON.stringify(result)}`);
+        }
+
+        const ideas = JSON.parse(result.candidates[0].content.parts[0].text);
+        res.status(200).json({ ideas });
 
     } catch (error) {
         console.error('Error in /api/generate-ideas:', error);
