@@ -1,26 +1,13 @@
-import { asyncHandler } from '../lib/errorHandler.js';
-import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
-import { createLogger } from '../lib/logger.js';
 
-const logger = createLogger('generate-ideas');
-
-// Log initialization
-logger.info('generate-ideas handler initialized');
-
-async function handler(req, res) {
-    logger.info('Handler called', {
-        method: req.method,
-        hasBody: !!req.body
-    });
+// Simplified handler without middleware to avoid Vercel serverless issues
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
-        // Vercel automatically parses JSON body, but check if it exists
-        if (!req.body) {
-            logger.error('Request body is missing or not parsed');
+        if (!req.body || !req.body.theme) {
             return res.status(400).json({ error: 'Request body is required' });
         }
 
@@ -182,13 +169,6 @@ ${duplicateAvoidanceText}` }] }],
         };
 
         // Gemini API呼び出し（Vercel 10秒タイムアウト対策でリトライなし）
-        const timer = logger.startTimer('gemini-api-call');
-        logger.info('Calling Gemini API', {
-            theme: theme.substring(0, 50),
-            temperature: 1.5,
-            timeout: '15s'
-        });
-
         const response = await fetchWithTimeout(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -197,15 +177,9 @@ ${duplicateAvoidanceText}` }] }],
 
         if (!response.ok) {
             const errorText = await response.text();
-            logger.error('Gemini API request failed', new Error(`HTTP ${response.status}`), {
-                status: response.status,
-                errorText: errorText.substring(0, 200)
-            });
+            console.error('Gemini API request failed:', response.status, errorText.substring(0, 200));
             throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
         }
-
-        const duration = timer.end();
-        logger.info('Gemini API request successful', { duration });
 
         const responseText = await response.text();
         let result;
@@ -213,16 +187,12 @@ ${duplicateAvoidanceText}` }] }],
         try {
             result = JSON.parse(responseText);
         } catch (parseError) {
-            logger.error('Failed to parse Gemini API response', parseError, {
-                responsePreview: responseText.substring(0, 200)
-            });
+            console.error('Failed to parse Gemini API response:', parseError.message, responseText.substring(0, 200));
             throw new Error(`Gemini APIから無効なレスポンスが返されました。レスポンス内容: ${responseText.substring(0, 200)}...`);
         }
 
         if (!result.candidates || !result.candidates[0]?.content?.parts?.[0]?.text) {
-            logger.error('Unexpected Gemini API response structure', null, {
-                resultPreview: JSON.stringify(result).substring(0, 200)
-            });
+            console.error('Unexpected Gemini API response structure:', JSON.stringify(result).substring(0, 200));
             throw new Error(`Gemini APIから予期しないレスポンス構造が返されました: ${JSON.stringify(result)}`);
         }
 
@@ -230,11 +200,7 @@ ${duplicateAvoidanceText}` }] }],
         res.status(200).json({ ideas });
 
     } catch (error) {
-        logger.error('Request failed', error, {
-            theme: req.body?.theme?.substring(0, 50),
-            errorName: error.name,
-            errorStack: error.stack?.substring(0, 500)
-        });
+        console.error('Request failed:', error.message, error.stack?.substring(0, 500));
         const isProd = process.env.NODE_ENV === 'production';
 
         // Ensure we don't send response twice
@@ -246,13 +212,3 @@ ${duplicateAvoidanceText}` }] }],
         }
     }
 }
-
-// Apply error handling and rate limiting
-// Order matters: asyncHandler first (catches errors), then rateLimitMiddleware (controls traffic)
-const handlerWithErrorHandling = asyncHandler(handler);
-const handlerWithRateLimit = rateLimitMiddleware(handlerWithErrorHandling, {
-    maxRequests: 10,
-    windowMs: 60000
-});
-
-export default handlerWithRateLimit;
