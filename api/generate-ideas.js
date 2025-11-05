@@ -203,13 +203,13 @@ ${duplicateAvoidanceText}` }] }],
 
     } catch (error) {
         console.error('Request failed:', error.message, error.stack?.substring(0, 500));
-        const isProd = process.env.NODE_ENV === 'production';
 
         // Ensure we don't send response twice
         if (!res.headersSent) {
             res.status(500).json({
-                error: isProd ? 'Internal server error' : error.message,
-                ...(isProd ? {} : { stack: error.stack?.substring(0, 500) })
+                error: error.message,
+                stack: error.stack?.substring(0, 500),
+                name: error.name
             });
         }
     }
