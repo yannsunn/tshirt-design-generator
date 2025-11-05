@@ -1,5 +1,3 @@
-import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
-
 // Simplified handler without middleware to avoid Vercel serverless issues
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -168,12 +166,16 @@ ${duplicateAvoidanceText}` }] }],
             }
         };
 
-        // Gemini API呼び出し（Vercel 10秒タイムアウト対策でリトライなし）
-        const response = await fetchWithTimeout(apiUrl, {
+        // Gemini API呼び出し with timeout
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
+
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }, 15000); // 15秒タイムアウト
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        }).finally(() => clearTimeout(timeout));
 
         if (!response.ok) {
             const errorText = await response.text();
