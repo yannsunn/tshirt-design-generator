@@ -1,6 +1,9 @@
 import { asyncHandler } from '../lib/errorHandler.js';
 import { rateLimitMiddleware } from '../lib/rateLimiter.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
+import { createLogger } from '../lib/logger.js';
+
+const logger = createLogger('generate-ideas');
 
 async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -166,7 +169,12 @@ ${duplicateAvoidanceText}` }] }],
         };
 
         // Gemini API呼び出し（Vercel 10秒タイムアウト対策でリトライなし）
-        console.log('🔄 Gemini API呼び出し...');
+        const timer = logger.startTimer('gemini-api-call');
+        logger.info('Calling Gemini API', {
+            theme: theme.substring(0, 50),
+            temperature: 1.5,
+            timeout: '15s'
+        });
 
         const response = await fetchWithTimeout(apiUrl, {
             method: 'POST',
@@ -176,11 +184,15 @@ ${duplicateAvoidanceText}` }] }],
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Gemini API error response:', errorText);
+            logger.error('Gemini API request failed', new Error(`HTTP ${response.status}`), {
+                status: response.status,
+                errorText: errorText.substring(0, 200)
+            });
             throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
         }
 
-        console.log('✅ Gemini API成功');
+        const duration = timer.end();
+        logger.info('Gemini API request successful', { duration });
 
         const responseText = await response.text();
         let result;
@@ -188,12 +200,16 @@ ${duplicateAvoidanceText}` }] }],
         try {
             result = JSON.parse(responseText);
         } catch (parseError) {
-            console.error('Failed to parse Gemini API response:', responseText);
+            logger.error('Failed to parse Gemini API response', parseError, {
+                responsePreview: responseText.substring(0, 200)
+            });
             throw new Error(`Gemini APIから無効なレスポンスが返されました。レスポンス内容: ${responseText.substring(0, 200)}...`);
         }
 
         if (!result.candidates || !result.candidates[0]?.content?.parts?.[0]?.text) {
-            console.error('Unexpected Gemini API response structure:', JSON.stringify(result, null, 2));
+            logger.error('Unexpected Gemini API response structure', null, {
+                resultPreview: JSON.stringify(result).substring(0, 200)
+            });
             throw new Error(`Gemini APIから予期しないレスポンス構造が返されました: ${JSON.stringify(result)}`);
         }
 
@@ -201,7 +217,9 @@ ${duplicateAvoidanceText}` }] }],
         res.status(200).json({ ideas });
 
     } catch (error) {
-        console.error('Error in /api/generate-ideas:', error);
+        logger.error('Request failed', error, {
+            theme: req.body?.theme?.substring(0, 50)
+        });
         const isProd = process.env.NODE_ENV === 'production';
         res.status(500).json({
             error: isProd ? 'Internal server error' : error.message
