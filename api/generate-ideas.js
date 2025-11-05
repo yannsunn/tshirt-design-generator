@@ -166,16 +166,21 @@ ${duplicateAvoidanceText}` }] }],
             }
         };
 
-        // Gemini API呼び出し with timeout
+        // Gemini API呼び出し with timeout (Vercel has 60s limit for Hobby plan)
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
+        const timeout = setTimeout(() => controller.abort(), 55000); // 55秒タイムアウト
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        }).finally(() => clearTimeout(timeout));
+        let response;
+        try {
+            response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
 
         if (!response.ok) {
             const errorText = await response.text();
