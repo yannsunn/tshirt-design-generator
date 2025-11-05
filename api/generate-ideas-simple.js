@@ -27,13 +27,59 @@ export default async function handler(req, res) {
     console.log('API Key exists:', !!apiKey);
     console.log('API Key length:', apiKey.length);
 
-    // Simple test response
+    // Try importing fetchWithTimeout
+    const { fetchWithTimeout } = await import('../lib/fetchWithTimeout.js');
+    console.log('fetchWithTimeout imported successfully');
+
+    // Try calling Gemini API
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const payload = {
+      contents: [{ parts: [{ text: `テーマ: ${theme}` }] }],
+      generationConfig: {
+        temperature: 1.0,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              character: { type: "STRING" },
+              phrase: { type: "STRING" }
+            }
+          }
+        }
+      }
+    };
+
+    console.log('Calling Gemini API...');
+    const response = await fetchWithTimeout(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }, 15000);
+
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', errorText);
+      return res.status(500).json({
+        error: 'Gemini API failed',
+        details: errorText.substring(0, 200)
+      });
+    }
+
+    const responseText = await response.text();
+    const result = JSON.parse(responseText);
+
+    console.log('Gemini API success');
+
     res.status(200).json({
       status: 'ok',
-      message: 'Simple handler works',
+      message: 'Full flow works',
       theme,
-      hasApiKey: true,
-      timestamp: new Date().toISOString()
+      result: result.candidates?.[0]?.content?.parts?.[0]?.text || 'No result'
     });
 
   } catch (error) {
